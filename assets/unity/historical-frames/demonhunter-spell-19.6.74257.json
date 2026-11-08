@@ -1,0 +1,18 @@
+{
+  "version": "19.6.74257",
+  "platform": "iOS",
+  "appStoreId": 625257520,
+  "externalVersionId": "840473960",
+  "sourceArchive": "Hearthstone-19.6.74257.ipa",
+  "archiveSHA256": "ff2cb38ab5221a77493c6513eb68be4d5c5d1d2bf5d0a0b43f6e1c1b3506fa42",
+  "sourceBundle": "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-16.unity3d",
+  "serializedFile": "CAB-9539eb617fa7376e4e20f1c2a6872db7",
+  "pathId": "-4450781410588843614",
+  "texture": "Card_Inhand_Ability_DemonHunter",
+  "sourceFormat": "PVRTC_RGB4",
+  "width": 1024,
+  "height": 1024,
+  "pngSHA256": "8a0333e716ab537fa9cc9af510d159f3679b5558d4602e0625f62823b4bcef68",
+  "unityRgbaSHA256": "3d4fe792db4c6c45ff5acac5bf4cffe24163722f1022a08ec4fdf6d15deecf23",
+  "extraction": "Original texture decoded to PNG at native resolution. Only row order is reversed when embedding RGBA for Unity; no resizing or repainting."
+}

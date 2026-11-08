@@ -1,0 +1,1261 @@
+{
+  "schema": 1,
+  "status": "PASSED",
+  "sources": [
+    {
+      "version": "25.2.162867",
+      "archiveSha256": "6d7e6473527a1e751faf7e92fb27b11adc2648b66e0d107ed3632a802d9136f3",
+      "archiveHashSource": "Existing full-archive audit; selected bundle ZIP CRCs and native class texture hashes reverified",
+      "sourceBundles": [
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-0.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-14.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-15.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-16.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-18.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-21.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-22.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-23.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-26.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-31.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-55.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-66.unity3d"
+      ],
+      "packages": [
+        {
+          "kind": "SPELL",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:4059131887406258651",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:-5052360293444123862",
+              "sourceSha256": "7f924cd81bb6b37ad0a07dd355967d641c1da3d1d47c471ac253b9b8dd530ba4"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:8583496195272876282",
+              "sourceSha256": "9667fd498f0ee9bc23662b907b11e1ce8b1d8a085bed81228fed30fffc63efc2"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:7381880167162761428",
+              "sourceSha256": "cc0060622a3b32efc17bdd5884a79bb8cd95c678ef88e698d8104be9d5a4bba5"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:-4061288505581145945",
+              "sourceSha256": "0175d37bdbde8c639a82043e45a041fb2c3d03d4ac78675e2e65a405d2d0673e"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4559671327034166546",
+              "sourceSha256": "25a3c5e1267235927bfd5e24f35297b5ac071e609e68a3f70428adf243332cd7"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:9126672105344113319",
+              "sourceSha256": "2c5797583f5d9a44777b65ea64f2f55aeca0085014524baa50f5cc83d1a98a6c"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:6530152644004967357",
+              "sourceSha256": "79b229e540a11753d36716c88afe7d72e61e2d6ab85aca4522fc543b29659a3b"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon/InHand_Ability_Unique_Dragon_shadow",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:8224565751950384797",
+              "sourceSha256": "66db6f6c824736703021800e2d4a045249f0ab792006cafc65b29c979481fe22"
+            }
+          ]
+        },
+        {
+          "kind": "SPELL",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:2207981938274841105",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3300352773338276533",
+              "sourceSha256": "d3685eaf691c020235a6435fb81f5b6a0a840a85a300ec1b210d93830695d565"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6820401808422861568",
+              "sourceSha256": "253435e0dbf89d2ea5e0474bb2eaa5955de05c686597a6ef1f5d0626e8884ac9"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3934679964261201244",
+              "sourceSha256": "9e853111b09c5663f70f0d061e27d450af5bffa4e475561329cfb48028b5bb47"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-342699709328593077",
+              "sourceSha256": "5576e522a9f2413f4875678077a3de35a5d30f41f05a9652f81a58815741385d"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4559671327034166546",
+              "sourceSha256": "25a3c5e1267235927bfd5e24f35297b5ac071e609e68a3f70428adf243332cd7"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4857827723700826434",
+              "sourceSha256": "1cd773fea18d0e60dcb3106a79d532da92b9958277131a9cd51a007b7ec29f11"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon_Premium",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6254556408941741811",
+              "sourceSha256": "b28cde1478a0c9371b87e3c94d7d4d8f56a68e50520f5256a65bde6803043e93"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon_Premium/InHand_Ability_Unique_Dragon_shadow",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-977863159935209446",
+              "sourceSha256": "b12d97e0e256f0526d006800db485ad7c04f6bdaa8799d7cc3943abcad2c14d3"
+            }
+          ]
+        },
+        {
+          "kind": "MINION",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-4713276165548337837",
+          "meshBindings": [
+            {
+              "path": "RootObject/AttackObject/Gem_Attack",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-1021260342823062155",
+              "sourceSha256": "d9ca47ef012afd6ec8a00b9fc10d4109c3ee2bd9eecf08f2df370b43c57d014d"
+            },
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/HealthObject/Gem_Health",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:1605745454539432948",
+              "sourceSha256": "5de7eedfb79d3778894757e61c71933de39dfb555c484ce4762edcab5cab9a2a"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:6991540915832371446",
+              "sourceSha256": "384bafdd0997bd0c643bf10a6cb74bd664d5262e814fdb24298d210de0834234"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:6288784520305127774",
+              "sourceSha256": "9dd199e6191f82e94d62ee2cdc7d81c655a2f1ebeaf16db24639afab7b920a03"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:2728714124625674340",
+              "sourceSha256": "54c416413ec0bdb29aabe8135dfd6f575dc1b52c3828e7ad14cc7565ccacfdff"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-596359867116409324",
+              "sourceSha256": "b0ac73db557514b52014f2cb99658cb89bc0c08ecf639d224f234e3f30d64cba"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:8938499623043980926",
+              "sourceSha256": "83bb49d6e4ef922b2e89f50932e6df72b300567234934769ae3a9785a2ab8d7c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:5113890904089118147",
+              "sourceSha256": "4a21977794a7f11c921fc574c23450076d995fea639854844c5e5b5498067f7c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:7410862598165501855",
+              "sourceSha256": "129b8f977cb3ca2b90065680dcff1b695b2ef16c1c990eaecfd1b3716c4a6e9a"
+            }
+          ]
+        },
+        {
+          "kind": "MINION",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-5766080441957518391",
+          "meshBindings": [
+            {
+              "path": "RootObject/AttackObject/Gem_Attack",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-1021260342823062155",
+              "sourceSha256": "d9ca47ef012afd6ec8a00b9fc10d4109c3ee2bd9eecf08f2df370b43c57d014d"
+            },
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/HealthObject/Gem_Health",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:1605745454539432948",
+              "sourceSha256": "5de7eedfb79d3778894757e61c71933de39dfb555c484ce4762edcab5cab9a2a"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:8767603376621725056",
+              "sourceSha256": "1bad77cd6f64498b8e055f473df8c7a799148bd34350a2a231e30fd80a46a266"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3109804851605549192",
+              "sourceSha256": "b41c68f3f7b1c1a615e97942520171cb9a0d52820c605542a8d6f882079aca56"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:2728714124625674340",
+              "sourceSha256": "54c416413ec0bdb29aabe8135dfd6f575dc1b52c3828e7ad14cc7565ccacfdff"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:8819492536594043398",
+              "sourceSha256": "99edfc7540547376499d1548f7d8dcbca31da26c5a508d734333490e6cf866cd"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-8682070432072900792",
+              "sourceSha256": "bd7e1365d060fb4c510f530012782b192cb338d800bbf7062dceabc69ea71ad8"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4562948763665128083",
+              "sourceSha256": "253f44ebf9049923509e23b4b28976b57e63f48c18f0a05f4dff4f524a0d9fce"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:238372847439733438",
+              "sourceSha256": "60b0f77783dd8bf319ed28383892d240253c63db472521e719832c31bb6c82e9"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon/Unique_Ally_Dragon_Shadow",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:378098700833610490",
+              "sourceSha256": "594bf72bf2ec18aacfe4809eb447a6c25e23daa0b0255958f623c3293521e905"
+            }
+          ]
+        },
+        {
+          "kind": "WEAPON",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:4482917841527534200",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6963725338139681408",
+              "sourceSha256": "c0e1e11e5682f855428dcc9a8b1d95cb91ecca41fe18f4a05b8d0ff2d4c43a2b"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-6316016633372724667",
+              "sourceSha256": "64e4a7a5ac60d4e863cb591673f18ca8b8c62b71373b22912a866f42f61611b5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:9017990880150134521",
+              "sourceSha256": "2ce39e9d10896238389b4e662c9a471306b623a2d2d02fa8d62618380581e04a"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3501644725329528950",
+              "sourceSha256": "600f6110d929ac9bdb2ab155d6c705548bbb147002e3b2547bc3695489ba135e"
+            },
+            {
+              "path": "RootObject/Mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:4932743345298317166",
+              "sourceSha256": "facf18c082771025289c3882a0e25401666cff5f4cfb676549fac318e2b232aa"
+            },
+            {
+              "path": "RootObject/Mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/Unique_Weapon_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:536702650055063420",
+              "sourceSha256": "b7ad728f1767cafd9812383f662fe476408c916ebb639f3097f4701fb816ef0f"
+            },
+            {
+              "path": "RootObject/Wep_SheildBroken",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-1366202081067921189",
+              "sourceSha256": "e13f672b6ffdb776766eac84b12ee1b8600874f855294a1324f865e5baad5e27"
+            },
+            {
+              "path": "RootObject/Wep_Swords",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-9131724904206370529",
+              "sourceSha256": "a857cd8d287b71d5c73cdf34e675e5b9382bce7d215e1a54e0ad31fe5fa015d8"
+            }
+          ]
+        },
+        {
+          "kind": "WEAPON",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-1723362142193641394",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4858458525269124135",
+              "sourceSha256": "ae30e5f2ed1a2ea17abdbc056c766bed25acbc35092905b21091984bab80d1c4"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4466309537872685589",
+              "sourceSha256": "4460803c94d298c1432f3e6eebadd3af3ad74c245a4c23aeed547bf6b3dc2e6c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:4932743345298317166",
+              "sourceSha256": "facf18c082771025289c3882a0e25401666cff5f4cfb676549fac318e2b232aa"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:9017990880150134521",
+              "sourceSha256": "2ce39e9d10896238389b4e662c9a471306b623a2d2d02fa8d62618380581e04a"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3501644725329528950",
+              "sourceSha256": "600f6110d929ac9bdb2ab155d6c705548bbb147002e3b2547bc3695489ba135e"
+            },
+            {
+              "path": "RootObject/Mesh/Unique_Weapon_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:536702650055063420",
+              "sourceSha256": "b7ad728f1767cafd9812383f662fe476408c916ebb639f3097f4701fb816ef0f"
+            },
+            {
+              "path": "RootObject/Wep_SheildBroken",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-1366202081067921189",
+              "sourceSha256": "e13f672b6ffdb776766eac84b12ee1b8600874f855294a1324f865e5baad5e27"
+            },
+            {
+              "path": "RootObject/Wep_Swords",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-9131724904206370529",
+              "sourceSha256": "a857cd8d287b71d5c73cdf34e675e5b9382bce7d215e1a54e0ad31fe5fa015d8"
+            }
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "Card_Inhand_Ability_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5146921835738306699",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "a8fba55ed012bbc36b1f4f7f2979e2dffbe193fa38b4945e944526aeff589f5c",
+          "rgbaSha256": "5a71e1cc162d74965c637e30ac4437d0099e973e1f8f1d1f288ded1267a2c647"
+        },
+        {
+          "name": "Card_Inhand_Minion_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:2366545167420612920",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "044ba9eb0df1699d945580b73a78e9697bc1d98670872db3ffd8e0a0ee913306",
+          "rgbaSha256": "ee125537a99217fb565c69e0c33b23a32bf354832b5d27eee30b454ecbc3674a"
+        },
+        {
+          "name": "Card_Inhand_Weapon_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8456760981617626065",
+          "width": 1024,
+          "height": 1024,
+          "nativeSha256": "98b916533129bfa0046e3ac44ee4d89d620ee38a37477f83a2d537ff248e51d6",
+          "rgbaSha256": "285580fbd141bd043f981f04ebce9fbdfbf41359cf84de9db52f01bbf0fc87a3"
+        },
+        {
+          "name": "GenFX_Gem_Mana_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-4800014879969404473",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "bb5542100b1133538672403ae8af08163d1cfaeec6328aa467036f3371767d30",
+          "rgbaSha256": "f2cfb650c07950ed85db33715815f391586b68695fef586b35f03b559b738453"
+        },
+        {
+          "name": "GenFX_clouds03",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:6002873620581301226",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "2713cb41e635899dd72417e077066787ef14cc630888755aea7724fe4a9ccb3e",
+          "rgbaSha256": "4f8a89429348e3693d1001fa912f3d5ed1305e1c48bb93b6451676e9a5b83f96"
+        },
+        {
+          "name": "Card_Inhand_Ability_Warlock",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-3143455699563751008",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "370f1e7c3913afbd2ca1fde1cc1ec91dcf933b54aa6528b8f31c031fc68f84bf",
+          "rgbaSha256": "b61daa390eb723e2a56c6033f436f0341e9e2352cbb66ba207e7f65f6496a3cd"
+        },
+        {
+          "name": "GenFX_RarityGems",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-2141096270297865793",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "2a409f778a071f368d0bf25f6f7817a25abb7de0fa04ddb3e5414aa55b1ee7df",
+          "rgbaSha256": "56f008eabdda69ae4f11d02244ea85017ee2b4abb6ee7174085293c589e1f0de"
+        },
+        {
+          "name": "GenFX_Card_InHand_BannerAtlas",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:4406745614006036651",
+          "width": 512,
+          "height": 512,
+          "nativeSha256": "25f961f87a2e297172db67fb49ede6536fd2571f60baa310c38696976e78fc63",
+          "rgbaSha256": "5e0ca3873f35914f4588c025274aed5ef0eac84aea707ec4d11dd8b98b8c4b98"
+        },
+        {
+          "name": "Card_Inhand_Ability_Premium",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:4930008832636642545",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "1e1eacaa1516f71668daae72a1e348cb5a44d4cd2d68950a82ea6debf3df8f83",
+          "rgbaSha256": "e22a61adc5fd28513ab21fc784506e864b57e333940ad09a68bffe49c86588d1"
+        },
+        {
+          "name": "GenFX_clouds7",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-3211415064182128899",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "57b21fcb81eb7310221bb2f3dc29071db30915bc0b21a9954ebb07aea2e8bc42",
+          "rgbaSha256": "eed1f433a9e7e524b4c630439af5bcc4b8aee56795103d5ca251cd612cdb76a5"
+        },
+        {
+          "name": "Card_Inhand_Ability_Premium_Spec",
+          "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:7876153960991483518",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "cd0d4231895451f23d18a0a1222ab2888348ed451a8612fda691591b8dad1b05",
+          "rgbaSha256": "e7eab960a7f06780c5f1fdf4e52133c6359bc9bfc2f1d0ab3a34f926b00fd21b"
+        },
+        {
+          "name": "GenFX_Gem_Attack_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:6722744389905244349",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "ee604b996e324569fada79905cc979f199e4bba39150312ccf8206f9f2a10892",
+          "rgbaSha256": "de6e34a336c96a55910f194792f8586c88305a3f6d65f83e39e5535def07c800"
+        },
+        {
+          "name": "GenFX_Gem_Health_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:4841682641979961570",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "cf46fee21425987699a010edb78f6c9dd467a55fe5b3c7b3221940e0e02c9981",
+          "rgbaSha256": "d4f68ad146d9c878fe72efd66b0f795d18b72d3fb4d72b04373707ab043d33e1"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Warlock",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:89939072053956574",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "b7bdab5af105399d7132cfcee34175bc45abff1e871f1cb5bbcc7a7806ec238f",
+          "rgbaSha256": "dbc387e65165b580f64e0ccba381affe4c0d19b882edd58574226476b01e0cd2"
+        },
+        {
+          "name": "Gem_Attack_Premium",
+          "key": "cab-a733f2fe2a627aa5b1e2cab41af08bcb:8634031257550806926",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "e49d0b93640151fb2ac482f11b7cc3fb23eaa012276b82f02118340520372e4a",
+          "rgbaSha256": "6c2211618f3f651f68ce4211c431fb1bbc520ff45fdb42de1051281044deb363"
+        },
+        {
+          "name": "Gem_Health_Premium",
+          "key": "cab-a733f2fe2a627aa5b1e2cab41af08bcb:6617844255614658572",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "aa3e9678c259ea9f6128fe883fdaaa311c5cba5bda4c7faab15f39464df6d7d9",
+          "rgbaSha256": "4976405a5d43cf4a59d0a20f9dc8dac6a0d6360db57d903ea0362f7addf726cb"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Premium",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-5752151651167454924",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "c39d710bd300b126c75c30cfc2c0dbc5322cebd77f9a3b796261fc51d1880726",
+          "rgbaSha256": "f727fa9ee0f6bcaaec87d9ca0f06037399cd1a236f8ec815deb9234dea56c9a7"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Premium_Spec",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:7202258443259967363",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "e63d104e040be98a3a5cae086a48a01ed31e377f5d63c9f7b5ac7328a3a779bb",
+          "rgbaSha256": "f4a4349081c8db105fe346df260790545506701e64f98bfd0b5db3f88544215e"
+        },
+        {
+          "name": "GenFX_Card_InHand_Premium_BannerAtlas",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-386453874513982650",
+          "width": 512,
+          "height": 512,
+          "nativeSha256": "68c14478c498e93e6d65c393fe16e3f666c692f0c8e73810ded807cace4e50bc",
+          "rgbaSha256": "ff1bb788a61a2a2eebacfecb9ef643681d3fc3f27b66bad02a047daa7bd4edb7"
+        },
+        {
+          "name": "GenFX_Card_InHand_Premium_BannerAtlas_Spec",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-2872119820506760587",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "3e3b7771a71f1a48465ab69139075c2c198fee3ccc8b7444da298d84cdc5eb25",
+          "rgbaSha256": "cd1d4690c776cd341825a4a4378740d2e7a6d513481d0d2360a4d901e1ae0075"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Warlock",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6086070313953402517",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "85f117dc28e0b48a246624f129f8620d19ed61a419da4a095a6f3691acc958a7",
+          "rgbaSha256": "d984a7c2a7f1166135a590540ef736a165b4635e715704346e96c91aa94448ad"
+        },
+        {
+          "name": "Card_Inhand_Weapon_LegendaryDrake",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5447034120807746012",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "94a3ead60052fb6e6660c1313c1c1747ec24a6322fe421830f48d328dd3e59b1",
+          "rgbaSha256": "63b22a8ba5b191fa3802053a1e6cf08794df34aea183ada16febb38efa1ba373"
+        },
+        {
+          "name": "Card_Weapon_Icons_D",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8123621218677757929",
+          "width": 256,
+          "height": 128,
+          "nativeSha256": "5c0e90741f43f7179257ad0baef56d947143d433dd5e08f1df2621ba945a3ee4",
+          "rgbaSha256": "5750a12f852a939d99aa8811e6502776284b45bb969fb83bceb6c902824eb53b"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Premium",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6655329179618210905",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "81522eaee72a95ef33f1476da642cd6ad35f2e9c2f197fb55c31eedf2eba6c2d",
+          "rgbaSha256": "5d120e6e6f8ec29cb9c87c87a5b529d295c8759563719f87db6bfdabda24be69"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Premium_Spec",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:1041745993745240957",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "17040c6fe4bda09d1febbb7a8a3eabc7cfbc6400807ba64dd598813e05065018",
+          "rgbaSha256": "0be03c170b607a2c99fe3c81d81f096a98a5259a438b73507bab3823f3c11198"
+        },
+        {
+          "name": "Card_Inhand_Weapon_LegendaryDrake_Gold",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6858642624220912869",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "9bc1f689896c5dfbefd41655179816efc1b8c37246dd90472c9991a13033546c",
+          "rgbaSha256": "c9fac8aeb185a2f5c43dd9cb77a2fc733ff8883c945e4cbd3cd5e35e89b73ccf"
+        },
+        {
+          "name": "Card_Weapon_Icons_Silver",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:3230903881217831080",
+          "width": 256,
+          "height": 128,
+          "nativeSha256": "50280586ae83466386f2d6d9b149c2c99d401a16f6e36387189505316f818477",
+          "rgbaSha256": "edec146900ad1bf1f7d39218176c7c80578324de1911864bd92039c8f867cbb2"
+        }
+      ]
+    },
+    {
+      "version": "25.4.165029",
+      "archiveSha256": "12bcc058642b99b701be495e3da43cc5642dd6d4fb01c81740f15893bb59804d",
+      "archiveHashSource": "Existing full-archive audit; selected bundle ZIP CRCs and native class texture hashes reverified",
+      "sourceBundles": [
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-0.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-14.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-15.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-16.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-18.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-21.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-22.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-23.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-26.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-31.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-55.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-66.unity3d",
+        "Payload/hearthstone.app/Data/Raw/Data/initial_base_global-67.unity3d"
+      ],
+      "packages": [
+        {
+          "kind": "SPELL",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:4059131887406258651",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:-5052360293444123862",
+              "sourceSha256": "7f924cd81bb6b37ad0a07dd355967d641c1da3d1d47c471ac253b9b8dd530ba4"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:8583496195272876282",
+              "sourceSha256": "9667fd498f0ee9bc23662b907b11e1ce8b1d8a085bed81228fed30fffc63efc2"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:7381880167162761428",
+              "sourceSha256": "cc0060622a3b32efc17bdd5884a79bb8cd95c678ef88e698d8104be9d5a4bba5"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:-4061288505581145945",
+              "sourceSha256": "0175d37bdbde8c639a82043e45a041fb2c3d03d4ac78675e2e65a405d2d0673e"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4559671327034166546",
+              "sourceSha256": "25a3c5e1267235927bfd5e24f35297b5ac071e609e68a3f70428adf243332cd7"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:9126672105344113319",
+              "sourceSha256": "2c5797583f5d9a44777b65ea64f2f55aeca0085014524baa50f5cc83d1a98a6c"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:6530152644004967357",
+              "sourceSha256": "79b229e540a11753d36716c88afe7d72e61e2d6ab85aca4522fc543b29659a3b"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon/InHand_Ability_Unique_Dragon_shadow",
+              "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:8224565751950384797",
+              "sourceSha256": "66db6f6c824736703021800e2d4a045249f0ab792006cafc65b29c979481fe22"
+            }
+          ]
+        },
+        {
+          "kind": "SPELL",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:2207981938274841105",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3300352773338276533",
+              "sourceSha256": "d3685eaf691c020235a6435fb81f5b6a0a840a85a300ec1b210d93830695d565"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6820401808422861568",
+              "sourceSha256": "253435e0dbf89d2ea5e0474bb2eaa5955de05c686597a6ef1f5d0626e8884ac9"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3934679964261201244",
+              "sourceSha256": "9e853111b09c5663f70f0d061e27d450af5bffa4e475561329cfb48028b5bb47"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh/RarityFrame_mesh/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-342699709328593077",
+              "sourceSha256": "5576e522a9f2413f4875678077a3de35a5d30f41f05a9652f81a58815741385d"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4559671327034166546",
+              "sourceSha256": "25a3c5e1267235927bfd5e24f35297b5ac071e609e68a3f70428adf243332cd7"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4857827723700826434",
+              "sourceSha256": "1cd773fea18d0e60dcb3106a79d532da92b9958277131a9cd51a007b7ec29f11"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon_Premium",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6254556408941741811",
+              "sourceSha256": "832a8d5bcd0c936d260f100a0319d7051a972b434f8e1c6a87e86dc576f34c97"
+            },
+            {
+              "path": "RootObject/Mesh/InHand_Ability_Unique_Dragon_Premium/InHand_Ability_Unique_Dragon_shadow",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-977863159935209446",
+              "sourceSha256": "b12d97e0e256f0526d006800db485ad7c04f6bdaa8799d7cc3943abcad2c14d3"
+            }
+          ]
+        },
+        {
+          "kind": "MINION",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-4713276165548337837",
+          "meshBindings": [
+            {
+              "path": "RootObject/AttackObject/Gem_Attack",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-1021260342823062155",
+              "sourceSha256": "d9ca47ef012afd6ec8a00b9fc10d4109c3ee2bd9eecf08f2df370b43c57d014d"
+            },
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/HealthObject/Gem_Health",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:1605745454539432948",
+              "sourceSha256": "5de7eedfb79d3778894757e61c71933de39dfb555c484ce4762edcab5cab9a2a"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:6991540915832371446",
+              "sourceSha256": "384bafdd0997bd0c643bf10a6cb74bd664d5262e814fdb24298d210de0834234"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:6288784520305127774",
+              "sourceSha256": "9dd199e6191f82e94d62ee2cdc7d81c655a2f1ebeaf16db24639afab7b920a03"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:2728714124625674340",
+              "sourceSha256": "54c416413ec0bdb29aabe8135dfd6f575dc1b52c3828e7ad14cc7565ccacfdff"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-596359867116409324",
+              "sourceSha256": "b0ac73db557514b52014f2cb99658cb89bc0c08ecf639d224f234e3f30d64cba"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:8938499623043980926",
+              "sourceSha256": "83bb49d6e4ef922b2e89f50932e6df72b300567234934769ae3a9785a2ab8d7c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:5113890904089118147",
+              "sourceSha256": "4a21977794a7f11c921fc574c23450076d995fea639854844c5e5b5498067f7c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:7410862598165501855",
+              "sourceSha256": "129b8f977cb3ca2b90065680dcff1b695b2ef16c1c990eaecfd1b3716c4a6e9a"
+            }
+          ]
+        },
+        {
+          "kind": "MINION",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-5766080441957518391",
+          "meshBindings": [
+            {
+              "path": "RootObject/AttackObject/Gem_Attack",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:-1021260342823062155",
+              "sourceSha256": "d9ca47ef012afd6ec8a00b9fc10d4109c3ee2bd9eecf08f2df370b43c57d014d"
+            },
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/HealthObject/Gem_Health",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:1605745454539432948",
+              "sourceSha256": "5de7eedfb79d3778894757e61c71933de39dfb555c484ce4762edcab5cab9a2a"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:8767603376621725056",
+              "sourceSha256": "1bad77cd6f64498b8e055f473df8c7a799148bd34350a2a231e30fd80a46a266"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3109804851605549192",
+              "sourceSha256": "b41c68f3f7b1c1a615e97942520171cb9a0d52820c605542a8d6f882079aca56"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh/Card_InHand_Ally_CurvedText",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:2728714124625674340",
+              "sourceSha256": "54c416413ec0bdb29aabe8135dfd6f575dc1b52c3828e7ad14cc7565ccacfdff"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:8819492536594043398",
+              "sourceSha256": "99edfc7540547376499d1548f7d8dcbca31da26c5a508d734333490e6cf866cd"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-8682070432072900792",
+              "sourceSha256": "bd7e1365d060fb4c510f530012782b192cb338d800bbf7062dceabc69ea71ad8"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4562948763665128083",
+              "sourceSha256": "253f44ebf9049923509e23b4b28976b57e63f48c18f0a05f4dff4f524a0d9fce"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:238372847439733438",
+              "sourceSha256": "60b0f77783dd8bf319ed28383892d240253c63db472521e719832c31bb6c82e9"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/Unique_Ally_Dragon/Unique_Ally_Dragon_Shadow",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:378098700833610490",
+              "sourceSha256": "594bf72bf2ec18aacfe4809eb447a6c25e23daa0b0255958f623c3293521e905"
+            }
+          ]
+        },
+        {
+          "kind": "WEAPON",
+          "premium": false,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:4482917841527534200",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:6963725338139681408",
+              "sourceSha256": "c0e1e11e5682f855428dcc9a8b1d95cb91ecca41fe18f4a05b8d0ff2d4c43a2b"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-6316016633372724667",
+              "sourceSha256": "64e4a7a5ac60d4e863cb591673f18ca8b8c62b71373b22912a866f42f61611b5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:9017990880150134521",
+              "sourceSha256": "2ce39e9d10896238389b4e662c9a471306b623a2d2d02fa8d62618380581e04a"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3501644725329528950",
+              "sourceSha256": "600f6110d929ac9bdb2ab155d6c705548bbb147002e3b2547bc3695489ba135e"
+            },
+            {
+              "path": "RootObject/Mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:4932743345298317166",
+              "sourceSha256": "facf18c082771025289c3882a0e25401666cff5f4cfb676549fac318e2b232aa"
+            },
+            {
+              "path": "RootObject/Mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/Unique_Weapon_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:536702650055063420",
+              "sourceSha256": "b7ad728f1767cafd9812383f662fe476408c916ebb639f3097f4701fb816ef0f"
+            },
+            {
+              "path": "RootObject/Wep_SheildBroken",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-1366202081067921189",
+              "sourceSha256": "e13f672b6ffdb776766eac84b12ee1b8600874f855294a1324f865e5baad5e27"
+            },
+            {
+              "path": "RootObject/Wep_Swords",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-9131724904206370529",
+              "sourceSha256": "a857cd8d287b71d5c73cdf34e675e5b9382bce7d215e1a54e0ad31fe5fa015d8"
+            }
+          ]
+        },
+        {
+          "kind": "WEAPON",
+          "premium": true,
+          "sourcePrefab": "cab-9f714cdfa31a278b6b05093d6ad1edbe:-1723362142193641394",
+          "meshBindings": [
+            {
+              "path": "RootObject/CostObject/Gem_Mana",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-5653273067114890288",
+              "sourceSha256": "fb87bcfaec191398a6b28069a409a163a645c2e9f052d9e677eca48031338b16"
+            },
+            {
+              "path": "RootObject/Mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4858458525269124135",
+              "sourceSha256": "ae30e5f2ed1a2ea17abdbc056c766bed25acbc35092905b21091984bab80d1c4"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-4466309537872685589",
+              "sourceSha256": "4460803c94d298c1432f3e6eebadd3af3ad74c245a4c23aeed547bf6b3dc2e6c"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:4932743345298317166",
+              "sourceSha256": "facf18c082771025289c3882a0e25401666cff5f4cfb676549fac318e2b232aa"
+            },
+            {
+              "path": "RootObject/Mesh/PortraitFrame_mesh/RarityGemFrame/RarityGem",
+              "key": "cab-c72a866cd70cfb243db6c747abd71eda:517327085942151170",
+              "sourceSha256": "13ca1708a00af9d92c9e4b56d1f327b9b9931ebcef9def370ec00e97f1ed6ce5"
+            },
+            {
+              "path": "RootObject/Mesh/NameBanner_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:9017990880150134521",
+              "sourceSha256": "2ce39e9d10896238389b4e662c9a471306b623a2d2d02fa8d62618380581e04a"
+            },
+            {
+              "path": "RootObject/Mesh/Description_mesh",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:-3501644725329528950",
+              "sourceSha256": "600f6110d929ac9bdb2ab155d6c705548bbb147002e3b2547bc3695489ba135e"
+            },
+            {
+              "path": "RootObject/Mesh/Unique_Weapon_Dragon",
+              "key": "cab-498d42bea97e9dcf169e6bbb5e1c5907:536702650055063420",
+              "sourceSha256": "b7ad728f1767cafd9812383f662fe476408c916ebb639f3097f4701fb816ef0f"
+            },
+            {
+              "path": "RootObject/Wep_SheildBroken",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-1366202081067921189",
+              "sourceSha256": "e13f672b6ffdb776766eac84b12ee1b8600874f855294a1324f865e5baad5e27"
+            },
+            {
+              "path": "RootObject/Wep_Swords",
+              "key": "cab-878845fc40625f025b11d484cf431ae5:-9131724904206370529",
+              "sourceSha256": "a857cd8d287b71d5c73cdf34e675e5b9382bce7d215e1a54e0ad31fe5fa015d8"
+            }
+          ]
+        }
+      ],
+      "textures": [
+        {
+          "name": "Card_Inhand_Ability_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5146921835738306699",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "a8fba55ed012bbc36b1f4f7f2979e2dffbe193fa38b4945e944526aeff589f5c",
+          "rgbaSha256": "5a71e1cc162d74965c637e30ac4437d0099e973e1f8f1d1f288ded1267a2c647"
+        },
+        {
+          "name": "Card_Inhand_Minion_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:2366545167420612920",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "67fb26f89386d0c275499c263819c9de2002c8b0eb60562e0ded203c16222190",
+          "rgbaSha256": "d2d6ca5ffa4443976e36e52e362812d8c593c416a59198e0df7d8e47f51e2ae1"
+        },
+        {
+          "name": "Card_Inhand_Weapon_DK",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8456760981617626065",
+          "width": 1024,
+          "height": 1024,
+          "nativeSha256": "2464c1f7e2112d2cd0a4ab2061b004b47ad1622136a11cacefc3434427b28037",
+          "rgbaSha256": "378a0fabb1027caf593c23b15db60fd646e723350204aae612cfa4e73e22e2df"
+        },
+        {
+          "name": "GenFX_Gem_Mana_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-4800014879969404473",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "bb5542100b1133538672403ae8af08163d1cfaeec6328aa467036f3371767d30",
+          "rgbaSha256": "f2cfb650c07950ed85db33715815f391586b68695fef586b35f03b559b738453"
+        },
+        {
+          "name": "GenFX_clouds03",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:6002873620581301226",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "2713cb41e635899dd72417e077066787ef14cc630888755aea7724fe4a9ccb3e",
+          "rgbaSha256": "4f8a89429348e3693d1001fa912f3d5ed1305e1c48bb93b6451676e9a5b83f96"
+        },
+        {
+          "name": "Card_Inhand_Ability_Warlock",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-3143455699563751008",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "370f1e7c3913afbd2ca1fde1cc1ec91dcf933b54aa6528b8f31c031fc68f84bf",
+          "rgbaSha256": "b61daa390eb723e2a56c6033f436f0341e9e2352cbb66ba207e7f65f6496a3cd"
+        },
+        {
+          "name": "GenFX_RarityGems",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-2141096270297865793",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "2a409f778a071f368d0bf25f6f7817a25abb7de0fa04ddb3e5414aa55b1ee7df",
+          "rgbaSha256": "56f008eabdda69ae4f11d02244ea85017ee2b4abb6ee7174085293c589e1f0de"
+        },
+        {
+          "name": "GenFX_Card_InHand_BannerAtlas",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:4406745614006036651",
+          "width": 512,
+          "height": 512,
+          "nativeSha256": "25f961f87a2e297172db67fb49ede6536fd2571f60baa310c38696976e78fc63",
+          "rgbaSha256": "5e0ca3873f35914f4588c025274aed5ef0eac84aea707ec4d11dd8b98b8c4b98"
+        },
+        {
+          "name": "Card_Inhand_Ability_Premium",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:4930008832636642545",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "1e1eacaa1516f71668daae72a1e348cb5a44d4cd2d68950a82ea6debf3df8f83",
+          "rgbaSha256": "e22a61adc5fd28513ab21fc784506e864b57e333940ad09a68bffe49c86588d1"
+        },
+        {
+          "name": "GenFX_clouds7",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-3211415064182128899",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "57b21fcb81eb7310221bb2f3dc29071db30915bc0b21a9954ebb07aea2e8bc42",
+          "rgbaSha256": "eed1f433a9e7e524b4c630439af5bcc4b8aee56795103d5ca251cd612cdb76a5"
+        },
+        {
+          "name": "Card_Inhand_Ability_Premium_Spec",
+          "key": "cab-7f6038b66191ee7f2bb93d3225fd4c27:7876153960991483518",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "cd0d4231895451f23d18a0a1222ab2888348ed451a8612fda691591b8dad1b05",
+          "rgbaSha256": "e7eab960a7f06780c5f1fdf4e52133c6359bc9bfc2f1d0ab3a34f926b00fd21b"
+        },
+        {
+          "name": "GenFX_Gem_Attack_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:6722744389905244349",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "ee604b996e324569fada79905cc979f199e4bba39150312ccf8206f9f2a10892",
+          "rgbaSha256": "de6e34a336c96a55910f194792f8586c88305a3f6d65f83e39e5535def07c800"
+        },
+        {
+          "name": "GenFX_Gem_Health_D",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:4841682641979961570",
+          "width": 128,
+          "height": 128,
+          "nativeSha256": "cf46fee21425987699a010edb78f6c9dd467a55fe5b3c7b3221940e0e02c9981",
+          "rgbaSha256": "d4f68ad146d9c878fe72efd66b0f795d18b72d3fb4d72b04373707ab043d33e1"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Warlock",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:89939072053956574",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "b7bdab5af105399d7132cfcee34175bc45abff1e871f1cb5bbcc7a7806ec238f",
+          "rgbaSha256": "dbc387e65165b580f64e0ccba381affe4c0d19b882edd58574226476b01e0cd2"
+        },
+        {
+          "name": "Gem_Attack_Premium",
+          "key": "cab-a733f2fe2a627aa5b1e2cab41af08bcb:8634031257550806926",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "e49d0b93640151fb2ac482f11b7cc3fb23eaa012276b82f02118340520372e4a",
+          "rgbaSha256": "6c2211618f3f651f68ce4211c431fb1bbc520ff45fdb42de1051281044deb363"
+        },
+        {
+          "name": "Gem_Health_Premium",
+          "key": "cab-a733f2fe2a627aa5b1e2cab41af08bcb:6617844255614658572",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "aa3e9678c259ea9f6128fe883fdaaa311c5cba5bda4c7faab15f39464df6d7d9",
+          "rgbaSha256": "4976405a5d43cf4a59d0a20f9dc8dac6a0d6360db57d903ea0362f7addf726cb"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Premium",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-5752151651167454924",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "c39d710bd300b126c75c30cfc2c0dbc5322cebd77f9a3b796261fc51d1880726",
+          "rgbaSha256": "f727fa9ee0f6bcaaec87d9ca0f06037399cd1a236f8ec815deb9234dea56c9a7"
+        },
+        {
+          "name": "GenFX_Card_Inhand_Premium_Spec",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:7202258443259967363",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "e63d104e040be98a3a5cae086a48a01ed31e377f5d63c9f7b5ac7328a3a779bb",
+          "rgbaSha256": "f4a4349081c8db105fe346df260790545506701e64f98bfd0b5db3f88544215e"
+        },
+        {
+          "name": "GenFX_Card_InHand_Premium_BannerAtlas",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-386453874513982650",
+          "width": 512,
+          "height": 512,
+          "nativeSha256": "68c14478c498e93e6d65c393fe16e3f666c692f0c8e73810ded807cace4e50bc",
+          "rgbaSha256": "ff1bb788a61a2a2eebacfecb9ef643681d3fc3f27b66bad02a047daa7bd4edb7"
+        },
+        {
+          "name": "GenFX_Card_InHand_Premium_BannerAtlas_Spec",
+          "key": "cab-ff8d23de9df3f825c947725cd50c2047:-2872119820506760587",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "3e3b7771a71f1a48465ab69139075c2c198fee3ccc8b7444da298d84cdc5eb25",
+          "rgbaSha256": "cd1d4690c776cd341825a4a4378740d2e7a6d513481d0d2360a4d901e1ae0075"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Warlock",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6086070313953402517",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "85f117dc28e0b48a246624f129f8620d19ed61a419da4a095a6f3691acc958a7",
+          "rgbaSha256": "d984a7c2a7f1166135a590540ef736a165b4635e715704346e96c91aa94448ad"
+        },
+        {
+          "name": "Card_Inhand_Weapon_LegendaryDrake",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5447034120807746012",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "94a3ead60052fb6e6660c1313c1c1747ec24a6322fe421830f48d328dd3e59b1",
+          "rgbaSha256": "63b22a8ba5b191fa3802053a1e6cf08794df34aea183ada16febb38efa1ba373"
+        },
+        {
+          "name": "Card_Weapon_Icons_D",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8123621218677757929",
+          "width": 256,
+          "height": 128,
+          "nativeSha256": "5c0e90741f43f7179257ad0baef56d947143d433dd5e08f1df2621ba945a3ee4",
+          "rgbaSha256": "5750a12f852a939d99aa8811e6502776284b45bb969fb83bceb6c902824eb53b"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Premium",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6655329179618210905",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "81522eaee72a95ef33f1476da642cd6ad35f2e9c2f197fb55c31eedf2eba6c2d",
+          "rgbaSha256": "5d120e6e6f8ec29cb9c87c87a5b529d295c8759563719f87db6bfdabda24be69"
+        },
+        {
+          "name": "Card_Inhand_Weapon_Premium_Spec",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:1041745993745240957",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "17040c6fe4bda09d1febbb7a8a3eabc7cfbc6400807ba64dd598813e05065018",
+          "rgbaSha256": "0be03c170b607a2c99fe3c81d81f096a98a5259a438b73507bab3823f3c11198"
+        },
+        {
+          "name": "Card_Inhand_Weapon_LegendaryDrake_Gold",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-6858642624220912869",
+          "width": 256,
+          "height": 256,
+          "nativeSha256": "9bc1f689896c5dfbefd41655179816efc1b8c37246dd90472c9991a13033546c",
+          "rgbaSha256": "c9fac8aeb185a2f5c43dd9cb77a2fc733ff8883c945e4cbd3cd5e35e89b73ccf"
+        },
+        {
+          "name": "Card_Weapon_Icons_Silver",
+          "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:3230903881217831080",
+          "width": 256,
+          "height": 128,
+          "nativeSha256": "50280586ae83466386f2d6d9b149c2c99d401a16f6e36387189505316f818477",
+          "rgbaSha256": "edec146900ad1bf1f7d39218176c7c80578324de1911864bd92039c8f867cbb2"
+        }
+      ]
+    }
+  ],
+  "comparison": [
+    {
+      "name": "Card_Inhand_Ability_DK",
+      "before": {
+        "name": "Card_Inhand_Ability_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5146921835738306699",
+        "width": 256,
+        "height": 256,
+        "nativeSha256": "a8fba55ed012bbc36b1f4f7f2979e2dffbe193fa38b4945e944526aeff589f5c",
+        "rgbaSha256": "5a71e1cc162d74965c637e30ac4437d0099e973e1f8f1d1f288ded1267a2c647"
+      },
+      "after": {
+        "name": "Card_Inhand_Ability_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:-5146921835738306699",
+        "width": 256,
+        "height": 256,
+        "nativeSha256": "a8fba55ed012bbc36b1f4f7f2979e2dffbe193fa38b4945e944526aeff589f5c",
+        "rgbaSha256": "5a71e1cc162d74965c637e30ac4437d0099e973e1f8f1d1f288ded1267a2c647"
+      },
+      "pixelsChanged": false
+    },
+    {
+      "name": "Card_Inhand_Minion_DK",
+      "before": {
+        "name": "Card_Inhand_Minion_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:2366545167420612920",
+        "width": 256,
+        "height": 256,
+        "nativeSha256": "044ba9eb0df1699d945580b73a78e9697bc1d98670872db3ffd8e0a0ee913306",
+        "rgbaSha256": "ee125537a99217fb565c69e0c33b23a32bf354832b5d27eee30b454ecbc3674a"
+      },
+      "after": {
+        "name": "Card_Inhand_Minion_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:2366545167420612920",
+        "width": 256,
+        "height": 256,
+        "nativeSha256": "67fb26f89386d0c275499c263819c9de2002c8b0eb60562e0ded203c16222190",
+        "rgbaSha256": "d2d6ca5ffa4443976e36e52e362812d8c593c416a59198e0df7d8e47f51e2ae1"
+      },
+      "pixelsChanged": true
+    },
+    {
+      "name": "Card_Inhand_Weapon_DK",
+      "before": {
+        "name": "Card_Inhand_Weapon_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8456760981617626065",
+        "width": 1024,
+        "height": 1024,
+        "nativeSha256": "98b916533129bfa0046e3ac44ee4d89d620ee38a37477f83a2d537ff248e51d6",
+        "rgbaSha256": "285580fbd141bd043f981f04ebce9fbdfbf41359cf84de9db52f01bbf0fc87a3"
+      },
+      "after": {
+        "name": "Card_Inhand_Weapon_DK",
+        "key": "cab-9539eb617fa7376e4e20f1c2a6872db7:8456760981617626065",
+        "width": 1024,
+        "height": 1024,
+        "nativeSha256": "2464c1f7e2112d2cd0a4ab2061b004b47ad1622136a11cacefc3434427b28037",
+        "rgbaSha256": "378a0fabb1027caf593c23b15db60fd646e723350204aae612cfa4e73e22e2df"
+      },
+      "pixelsChanged": true
+    }
+  ]
+}
