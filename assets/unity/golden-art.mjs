@@ -37,8 +37,8 @@ async function pixels(root,path){
  const url=sameSetPath(root,path,/^golden\/textures\/[a-f0-9]{64}\.bin$/),hash=path.split('/').pop().slice(0,-4);
  return cached(textures,hash,async()=>{const bytes=await download(url,32*1024*1024);
   const actual=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');if(actual!==hash)throw Error('Golden texture checksum mismatch');
-  const image=decodeTexture(bytes);if(image.width>4096||image.height>4096||![28,29,65,71,72,77,78,85].includes(image.format))throw Error('Unsupported golden texture');
-  for(let i=0;i<image.levels.length;i++){const w=Math.max(1,image.width>>i),h=Math.max(1,image.height>>i),compressed=[71,72,77,78].includes(image.format),size=compressed?Math.ceil(w/4)*Math.ceil(h/4)*([71,72].includes(image.format)?8:16):w*h*(image.format===65?1:image.format===85?2:4);if(image.levels[i].byteLength!==size)throw Error('Invalid golden mip size');}
+  const image=decodeTexture(bytes);if(image.width>4096||image.height>4096||![28,29,65,71,72,77,78,85,98,99].includes(image.format))throw Error('Unsupported golden texture');
+  for(let i=0;i<image.levels.length;i++){const w=Math.max(1,image.width>>i),h=Math.max(1,image.height>>i),compressed=[71,72,77,78,98,99].includes(image.format),size=compressed?Math.ceil(w/4)*Math.ceil(h/4)*([71,72].includes(image.format)?8:16):w*h*(image.format===65?1:image.format===85?2:4);if(image.levels[i].byteLength!==size)throw Error('Invalid golden mip size');}
   return{value:image,bytes:image.levels.reduce((n,b)=>n+b.byteLength,0)};
  },128,96*1024*1024);
 }

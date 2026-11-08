@@ -22,7 +22,7 @@ export class WebGLNativeRenderer {
   constructor(canvas,programs,sources){
     this.canvas=canvas;this.gl=canvas.getContext('webgl2',{alpha:true,antialias:false,premultipliedAlpha:false,depth:true,stencil:true,preserveDrawingBuffer:true});if(!this.gl)throw Error('WebGL 2 is unavailable');
     this.programs=programs;this.sources=sources;this.compiled=new Map();this.meshes=new Map();this.textures=new WeakMap();this.textureOrder=new Map();this.textureBytes=0;this.samplers=new Map();this.vaos=new Map();this.vaoOrder=new Map();this.vaoBytes=0;
-    this.s3tc=this.gl.getExtension('WEBGL_compressed_texture_s3tc');this.s3tcSrgb=this.gl.getExtension('WEBGL_compressed_texture_s3tc_srgb');this.anisotropy=this.gl.getExtension('EXT_texture_filter_anisotropic');
+    this.bptc=this.gl.getExtension('EXT_texture_compression_bptc');this.s3tc=this.gl.getExtension('WEBGL_compressed_texture_s3tc');this.s3tcSrgb=this.gl.getExtension('WEBGL_compressed_texture_s3tc_srgb');this.anisotropy=this.gl.getExtension('EXT_texture_filter_anisotropic');
   }
   program(vertex,fragment){
     const id=vertex+':'+fragment;if(this.compiled.has(id)){const value=this.compiled.get(id);this.compiled.delete(id);this.compiled.set(id,value);return value;}const gl=this.gl,v=this.programs[vertex],f=this.programs[fragment];if(!v||!f)throw Error('Original shader program missing');
@@ -51,6 +51,7 @@ export class WebGLNativeRenderer {
       if(comparison){if(pixels.format!==28||srgb)throw Error('Unsupported original shadow texture');const depth=new Float32Array(w*h);for(let n=0;n<depth.length;n++)depth[n]=raw[n*4]/255;gl.texImage2D(gl.TEXTURE_2D,i,gl.DEPTH_COMPONENT32F,w,h,0,gl.DEPTH_COMPONENT,gl.FLOAT,depth);}
       else if(pixels.format===28||pixels.format===29)gl.texImage2D(gl.TEXTURE_2D,i,srgb?gl.SRGB8_ALPHA8:gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,raw);
       else if(pixels.format===85){if(srgb||raw.byteLength!==w*h*2)throw Error('Invalid original RGB565 texture');const rgb=new Uint16Array(w*h);for(let n=0;n<rgb.length;n++)rgb[n]=raw[n*2]|raw[n*2+1]<<8;gl.texImage2D(gl.TEXTURE_2D,i,gl.RGB565,w,h,0,gl.RGB,gl.UNSIGNED_SHORT_5_6_5,rgb);}
+      else if(pixels.format===98||pixels.format===99){if(!this.bptc)throw Error('Original BC7 texture format is not supported');gl.compressedTexImage2D(gl.TEXTURE_2D,i,srgb?this.bptc.COMPRESSED_SRGB_ALPHA_BPTC_UNORM_EXT:this.bptc.COMPRESSED_RGBA_BPTC_UNORM_EXT,w,h,0,raw);}
       else if(pixels.format===65){const rgba=new Uint8Array(w*h*4);for(let n=0;n<raw.length;n++)rgba[n*4+3]=raw[n];gl.texImage2D(gl.TEXTURE_2D,i,gl.RGBA8,w,h,0,gl.RGBA,gl.UNSIGNED_BYTE,rgba);}
       else if([71,72,77,78].includes(pixels.format)){const ext=srgb?this.s3tcSrgb:this.s3tc;if(!ext)throw Error('Original compressed texture format is not supported');const dxt1=[71,72].includes(pixels.format),format=srgb?(dxt1?ext.COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:ext.COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT):(dxt1?ext.COMPRESSED_RGBA_S3TC_DXT1_EXT:ext.COMPRESSED_RGBA_S3TC_DXT5_EXT);gl.compressedTexImage2D(gl.TEXTURE_2D,i,format,w,h,0,raw);}
       else throw Error('Unsupported source texture format '+pixels.format);
