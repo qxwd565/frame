@@ -1,4 +1,4 @@
-import {loadGoldenPortrait} from './golden-art.mjs?ver=golden-api-1';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=golden-rgb565-1';
 const sourceCache=new Map(),artCache=new Map(),deckUrlsCache=new WeakMap(),tasks=[];let active=0,artBytes=0;
 const races={ALL:'모두',BEAST:'야수',DEMON:'악마',DRAGON:'용족',DRAENEI:'드레나이',ELEMENTAL:'정령',MECHANICAL:'기계',MURLOC:'멀록',NAGA:'나가',PIRATE:'해적',QUILBOAR:'가시멧돼지',TOTEM:'토템',UNDEAD:'언데드'};
 const schools={ARCANE:'비전',FEL:'지옥',FIRE:'화염',FROST:'냉기',HOLY:'신성',NATURE:'자연',SHADOW:'암흑'};

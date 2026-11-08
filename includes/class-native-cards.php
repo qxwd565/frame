@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class Native_Cards {
  public static function enqueue() {
-  $revision = 'hsplus-cards-29';
+  $revision = 'hsplus-cards-30';
   wp_enqueue_script_module( 'hscard-native-cards', plugins_url( 'assets/unity/deck-cards.js', HSCARD_PATH . 'hscard.php' ), array(), $revision );
   wp_enqueue_style( 'hscard-native-cards', plugins_url( 'assets/unity/deck-cards.css', HSCARD_PATH . 'hscard.php' ), array(), $revision );
  }
