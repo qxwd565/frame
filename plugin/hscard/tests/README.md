@@ -4,6 +4,8 @@ These files are development-only and are excluded from the WordPress ZIP.
 Run `node tests/asset-revisions.mjs` to check unchanged builds and dependency/CSS
 cache invalidation, including the module import graph, without changing sources.
 Run `php tests/enqueue-revision.php` for PHP's matching script/style cache key.
+Run `node tests/shader-time.mjs` to verify normal/golden stat-effect time vectors
+at 0, 1, 10 and 60 seconds and unchanged native X/Y speed values.
 Use a compatible Chrome/Edge WebGPU adapter; the browser must report its actual
 adapter. No software renderer is silently substituted.
 
@@ -19,6 +21,8 @@ adapter. No software renderer is silently substituted.
      normal/golden toggles, hover, scrolling and deliberate device loss/recovery.
      Use a viewport at least 821 px wide. The 10-card fixture repeats EX1_350.
      It also checks ongoing normal-frame animation and zero offscreen updates.
+     A deliberately delayed first preparation checks startup clock jumps; normal
+     and golden playback must advance at wall-clock speed within 5% tolerance.
    - `http://127.0.0.1:19420/work/frame-animation.html`: GPU readback at two times;
      normal minion mana/attack/health regions must change in current, 3664 and
      3890 frames. Historical spells/weapons must retain their mana effects.

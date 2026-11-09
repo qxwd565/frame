@@ -80,6 +80,21 @@ at zero. Uploaded mip payload was about 50.1 MiB, not a driver VRAM measurement.
 
 ## Remaining acceptance work
 
+Animation speed audit, 2026-11-09: the installed game's
+`ShaderTime.UpdateShaderAnimationTime` advances its global by deltaTime/20.
+The native mana/stat scroller instead reads `_Time.x` and multiplies the original
+material's XSpeed=5 and YSpeed=0.2. Uniform tests at 0/1/10/60 seconds verified the
+Unity `(t/20,t,2t,3t)` vector and unchanged speed values for all six normal/golden
+mana/health/attack bindings. Reference: [Unity shader variables](https://docs.unity.com/en-us/engine/6000.0/manual/materials-and-shaders/shaders/reference/sl-unity-shader-variables).
+
+The page previously used the rAF timestamp captured before asynchronous card
+preparation; its next update could count loading time as visible animation time.
+It now samples the monotonic clock after preparation. With a forced 350 ms first
+prepare delay, the entry fixture measured a maximum startup delta discrepancy
+of 1.8 ms, normal playback at 1.000407x and golden at 0.999500x over one-second
+intervals. Offscreen updates remained zero and device recovery passed. These
+are browser timing/native-data checks, not a simultaneous native-game recording.
+
 Normal-frame animation correction, 2026-11-09: the page scheduler incorrectly
 assumed only golden cards animate. It now uses the selected native shaders'
 time uniforms and material animation data, with the same paused/offscreen clock

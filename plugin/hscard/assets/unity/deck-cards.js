@@ -1,5 +1,5 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-e4bab6c5a884206c';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-e4bab6c5a884206c';
+import {resourceURL} from './resource-url.mjs?ver=hscard-d5544104773f6694';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-d5544104773f6694';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-e4bab6c5a884206c';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-e4bab6c5a884206c';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-e4bab6c5a884206c';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-e4bab6c5a884206c';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-e4bab6c5a884206c';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-e4bab6c5a884206c';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-e4bab6c5a884206c';
-import {resolveCard} from './card-data.mjs?ver=hscard-e4bab6c5a884206c';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-e4bab6c5a884206c';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-e4bab6c5a884206c';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-e4bab6c5a884206c';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-d5544104773f6694';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-d5544104773f6694';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-d5544104773f6694';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-d5544104773f6694';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-d5544104773f6694';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-d5544104773f6694';
+import {resolveCard} from './card-data.mjs?ver=hscard-d5544104773f6694';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-d5544104773f6694';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-d5544104773f6694';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-d5544104773f6694';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;
@@ -187,7 +187,7 @@ function scheduleLayout(){
  // Scheduling another frame shader pass would be wasted GPU work.
  if(!ready||[...items.values()].some(needsFrame))schedule();
 }
-async function tick(now){
+async function tick(){
  frame=0;if(running||!desktop.matches||document.hidden)return;running=true;pending=false;const version=epoch;
  try{
   if(ready&&layoutDirty)presentCards(ready);const visible=[...items.values()].filter(x=>x.visible&&!x.failed&&x.element.isConnected&&!x.element.classList.contains('is-frame-unavailable'));
@@ -227,7 +227,9 @@ async function tick(now){
     // Replay original time-dependent effects on both normal and golden cards.
     // Static programs and offscreen cards do not keep an animation loop alive.
     if(item.dirty||(item.animated&&item.onScreen&&!reduced.matches)){
-     const clock=now/1000;
+     // rAF's timestamp predates async artwork/font/pipeline preparation.
+     // Sample after those awaits so loading time cannot become a speed jump.
+     const clock=performance.now()/1000;
      if(item.onScreen&&!reduced.matches&&item.animationClock!=null)item.animationTime+=Math.max(0,clock-item.animationClock);
      item.animationClock=item.onScreen&&!reduced.matches?clock:null;
      await r.surface.update(item.key,reduced.matches?1:item.animationTime);

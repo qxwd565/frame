@@ -1,6 +1,6 @@
 /** Synchronize mobile deck tiles and GPU placeholders with ONE dates-v1 reducer. */
-import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-e4bab6c5a884206c';
-import {readDatedCard} from './card-data.mjs?ver=hscard-e4bab6c5a884206c';
+import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-d5544104773f6694';
+import {readDatedCard} from './card-data.mjs?ver=hscard-d5544104773f6694';
 
 const activeDecks = new WeakMap();
 const raritySet = new Set(['LEGENDARY','EPIC','RARE','COMMON','FREE']);
