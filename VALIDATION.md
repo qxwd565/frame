@@ -80,6 +80,17 @@ at zero. Uploaded mip payload was about 50.1 MiB, not a driver VRAM measurement.
 
 ## Remaining acceptance work
 
+Normal-frame animation correction, 2026-11-09: the page scheduler incorrectly
+assumed only golden cards animate. It now uses the selected native shaders'
+time uniforms and material animation data, with the same paused/offscreen clock
+for both finishes. Original shader math, meshes and textures are unchanged.
+GPU readbacks confirmed moving mana/attack/health pixels in current, 3664 and
+3890 normal minions, and mana/rarity effects in historical spells/weapons.
+The 10-card entry fixture recorded 310 normal-card updates in 500 ms, zero
+updates during a settled offscreen interval, then resumed. Golden round trips,
+hover and device-loss recovery passed with no errors. This is not a general FPS
+claim; the older 15-of-30 animation benchmark above omits normal stat effects.
+
 Live-page cache diagnosis, 2026-11-09: the installed entry matched this branch,
 but WordPress.com served Chrome a stale compressed response for the unchanged
 `?ver=7.14.4-webgpu-dates-v1-preview` URL. It requested the removed packed

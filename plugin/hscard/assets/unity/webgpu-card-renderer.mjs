@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-2c8d95b9b73e896b';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-2c8d95b9b73e896b';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-2c8d95b9b73e896b';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-2c8d95b9b73e896b';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-2c8d95b9b73e896b';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-2c8d95b9b73e896b';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-2c8d95b9b73e896b';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-e4bab6c5a884206c';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-e4bab6c5a884206c';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-e4bab6c5a884206c';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-e4bab6c5a884206c';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-e4bab6c5a884206c';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-e4bab6c5a884206c';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-e4bab6c5a884206c';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -125,6 +125,9 @@ export class WebGPUCardRenderer {
       return this.builder.draw(current,context);
     }));
     const draws=groups.flat();draws.push(...textDraws,...quantityDraws);
+    // Native mana/stat effects animate on normal frames too. Classify the
+    // selected shader programs, rather than assuming only golden cards move.
+    prepared.animated=!!prepared.animation||draws.some(draw=>draw.animated);
     if(transparent)await this.renderer.transparent(context.width,context.height,draws,destination);else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
     return{width:context.width,height:context.height,frameParts:frame.parts.length,textDraws:textDraws.length};
   }

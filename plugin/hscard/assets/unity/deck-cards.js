@@ -1,5 +1,5 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-2c8d95b9b73e896b';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-2c8d95b9b73e896b';
+import {resourceURL} from './resource-url.mjs?ver=hscard-e4bab6c5a884206c';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-e4bab6c5a884206c';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-2c8d95b9b73e896b';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-2c8d95b9b73e896b';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-2c8d95b9b73e896b';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-2c8d95b9b73e896b';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-2c8d95b9b73e896b';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-2c8d95b9b73e896b';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-2c8d95b9b73e896b';
-import {resolveCard} from './card-data.mjs?ver=hscard-2c8d95b9b73e896b';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-2c8d95b9b73e896b';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-2c8d95b9b73e896b';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-2c8d95b9b73e896b';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-e4bab6c5a884206c';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-e4bab6c5a884206c';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-e4bab6c5a884206c';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-e4bab6c5a884206c';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-e4bab6c5a884206c';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-e4bab6c5a884206c';
+import {resolveCard} from './card-data.mjs?ver=hscard-e4bab6c5a884206c';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-e4bab6c5a884206c';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-e4bab6c5a884206c';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-e4bab6c5a884206c';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;
@@ -144,7 +144,7 @@ function needsFrame(item){
  if(!item.visible||item.failed||!item.element.isConnected||item.element.classList.contains('is-frame-unavailable'))return false;
  const stale=item.preparedVersion!==item.version||item.loadingFrame;
  if(stale)return item.request?.version===item.version&&item.request.status!=='pending';
- return !!item.dirty||!!(item.golden&&item.onScreen&&!reduced.matches);
+ return !!item.dirty||!!(item.animated&&item.onScreen&&!reduced.matches);
 }
 function cardClip(element){let r={x:-OVERSCAN,y:-OVERSCAN,width:innerWidth+2*OVERSCAN,height:innerHeight+2*OVERSCAN};for(let p=element.parentElement;p;p=p.parentElement){const s=getComputedStyle(p);if(!/(hidden|clip|scroll|auto)/.test(s.overflowX+' '+s.overflowY))continue;const b=p.getBoundingClientRect(),x=Math.max(r.x,b.left),y=Math.max(r.y,b.top),right=Math.min(r.x+r.width,b.right),bottom=Math.min(r.y+r.height,b.bottom);r={x,y,width:Math.max(0,right-x),height:Math.max(0,bottom-y)};}return r;}
 /** Follow the real HTML position without waiting for expensive WebGPU rendering. */
@@ -214,28 +214,27 @@ async function tick(now){
      const loadingFrame=item.loadingFrame&&item.preparedVersion===itemVersion?r.surface.items.get(item.key)?.prepared:null;
      await r.surface.prepare(candidateKey,result.card,loadingFrame);
      if(version!==epoch||item.version!==itemVersion||!item.visible||!item.element.isConnected){r.surface.remove(candidateKey);candidateKey=null;continue;}
-     const initialTime=result.card.golden?(reduced.matches?1:0):(reduced.matches?1:now/1000);
+     const initialTime=reduced.matches?1:0;
      await r.surface.update(candidateKey,initialTime);
      if(version!==epoch||item.version!==itemVersion||!item.visible||!item.element.isConnected){r.surface.remove(candidateKey);candidateKey=null;continue;}
      r.surface.adopt(candidateKey,item.key);candidateKey=null;
      item.preparedVersion=itemVersion;item.loadingFrame=false;item.element.dataset.hscardDisplayGolden=String(result.card.golden);newlyPrepared=true;item.animationTime=0;item.animationClock=null;item.element.classList.remove('is-frame-unavailable');
      const placeholder=item.element.querySelector('.hscard-card-placeholder'),prepared=r.surface.items.get(item.key)?.prepared;
+     item.animated=!!prepared?.animated;
      if(placeholder&&prepared)placeholder.style.aspectRatio=prepared.context.width+'/'+prepared.context.height;
      item.dirty=false;layoutDirty=true;
     }
-    // Normal cards are static. Repainting all their original shader passes on
-    // every animation frame needlessly saturates the GPU on 5-column decks.
-    // Golden cards keep their animated shader timings unless reduced motion
-    // is requested; newly prepared or toggled cards repaint once regardless.
-    if(item.dirty||(item.golden&&item.onScreen&&!reduced.matches)){
+    // Replay original time-dependent effects on both normal and golden cards.
+    // Static programs and offscreen cards do not keep an animation loop alive.
+    if(item.dirty||(item.animated&&item.onScreen&&!reduced.matches)){
      const clock=now/1000;
      if(item.onScreen&&!reduced.matches&&item.animationClock!=null)item.animationTime+=Math.max(0,clock-item.animationClock);
      item.animationClock=item.onScreen&&!reduced.matches?clock:null;
-     await r.surface.update(item.key,item.golden?(reduced.matches?1:item.animationTime):(reduced.matches?1:now/1000));
+     await r.surface.update(item.key,reduced.matches?1:item.animationTime);
      item.dirty=false;
     }
-    if(item===hovered&&(newlyPrepared||item.previewDirty||(item.golden&&item.onScreen&&!reduced.matches))){
-     await r.surface.updatePreview(item.key,item.golden?(reduced.matches?1:item.animationTime):(reduced.matches?1:now/1000));
+    if(item===hovered&&(newlyPrepared||item.previewDirty||(item.animated&&item.onScreen&&!reduced.matches))){
+     await r.surface.updatePreview(item.key,reduced.matches?1:item.animationTime);
      item.previewDirty=false;layoutDirty=true;
     }
     // Publish each newly completed card while later API/artwork loads wait.

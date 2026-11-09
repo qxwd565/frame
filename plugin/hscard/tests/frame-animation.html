@@ -1,0 +1,29 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><canvas></canvas><script type="module">
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+window.result={running:true};const errors=[],cases=[];
+try {
+ const bytes=async n=>new Uint8Array(await(await fetch('/resources/'+n)).arrayBuffer()),json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts),textures=new Map();
+ const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;const key=t.key||t.embedded;if(!textures.has(key))textures.set(key,(async()=>{if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};})());return textures.get(key);});
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ async function read(target){const {width,height}=target,stride=Math.ceil(width*4/256)*256,buffer=renderer.device.createBuffer({size:stride*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});try{const encoder=renderer.device.createCommandEncoder();encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:stride},{width,height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);const padded=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(width*height*4);for(let y=0;y<height;y++)pixels.set(padded.subarray(y*stride,y*stride+width*4),y*width*4);return pixels;}finally{buffer.destroy();}}
+ const base={cardClass:'NEUTRAL',golden:false,name:'효과 확인',text:'일반 카드 효과',race:'',cost:3,attack:2,health:2,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
+ for(const [kind,frameProfile,renderDate] of [['MINION','current','2026-11-09'],['MINION','historical','2013-08-17'],['MINION','historical','2013-10-03'],['SPELL','historical','2013-08-17'],['WEAPON','historical','2013-08-17']]){
+  window.result={running:true,case:[kind,renderDate]};const prepared=await cards.prepare({...base,kind,frameProfile,renderDate}),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+  try {await cards.renderPrepared(prepared,{transparent:true,time:.23,destination:target});const first=await read(target);await cards.renderPrepared(prepared,{transparent:true,time:1.61,destination:target});const second=await read(target),regions={mana:0,attack:0,health:0,other:0};
+   for(let y=0;y<target.height;y++)for(let x=0;x<target.width;x++){const at=(y*target.width+x)*4;if(Math.max(...[0,1,2,3].map(c=>Math.abs(first[at+c]-second[at+c])))<3)continue;const region=x<target.width*.35&&y<target.height*.35?'mana':y>target.height*.6&&x<target.width*.35?'attack':y>target.height*.6&&x>target.width*.65?'health':'other';regions[region]++;}
+   const moving=[];for(const part of prepared.frame.parts)if((await builder.draw(part,{...prepared.context,time:1})).some(d=>d.animated))moving.push({path:part.path,shader:part.material.shader});
+   cases.push({kind,frameProfile,renderDate,animated:prepared.animated,regions,moving});if(!prepared.animated||!regions.mana||kind==='MINION'&&(!regions.attack||!regions.health))throw Error('Normal mana/stat effects did not animate: '+kind+' '+renderDate);
+  }finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
+ }
+ renderer.dispose();raster.dispose();window.result={running:false,cases,errors};
+}catch(error){window.result={running:false,error:error.stack,cases,errors};}
+</script>

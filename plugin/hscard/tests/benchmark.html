@@ -30,12 +30,13 @@ try{
  const positions=Array.from({length:30},(_,i)=>({key:String(i),x:(i%5)*210,y:Math.floor(i/5)*320,width:210,height:320}));
  for(let i=0;i<30;i++){await surface.prepare(String(i),{...goldenCard,name:'예언자 벨렌',golden:i%2===1,goldenPortrait:i%2===1?goldenPortrait:null});await surface.update(String(i),0);surface.present(1050,1920,positions.slice(0,i+1));if(i===0)first=performance.now()-start;window.result={running:true,prepared:i+1};}
  await renderer.device.queue.onSubmittedWorkDone();const preparedMs=performance.now()-start,counts=()=>({meshes:renderer.meshResources.size,textures:renderer.textureEntries.size,textureBytes:renderer.textureBytes,targets:renderer.targets.size});const baseline=counts();
- for(let i=0;i<8;i++){const begin=performance.now();for(let k=0;k<30;k++)if(k%2===1)await surface.update(String(k),i/30);surface.present(1050,1920,positions);await renderer.device.queue.onSubmittedWorkDone();samples.push(performance.now()-begin);}
+ const animatedKeys=[...surface.items].filter(([,item])=>item.prepared.animated).map(([key])=>key);
+ for(let i=0;i<8;i++){const begin=performance.now();for(const key of animatedKeys)await surface.update(key,i/30);surface.present(1050,1920,positions);await renderer.device.queue.onSubmittedWorkDone();samples.push(performance.now()-begin);}
  const scroll=[];for(let i=0;i<30;i++){const begin=performance.now();surface.present(1050,1920,positions.map(p=>({...p,y:p.y-i*10})));await renderer.device.queue.onSubmittedWorkDone();scroll.push(performance.now()-begin);}
  surface.dispose();const afterFirst=counts();
  for(let round=0;round<3;round++){for(let i=0;i<5;i++){await surface.prepare(String(i),goldenCard);await surface.update(String(i),round);}surface.dispose();}
  const afterRepeats=counts();renderer.dispose();const afterDispose=counts();
- const median=a=>[...a].sort((x,y)=>x-y)[Math.floor(a.length/2)];window.result={running:false,firstCardMs:first,all30Ms:preparedMs,animated15Of30FrameMedianMs:median(samples),animatedFPS:1000/median(samples),scrollMedianMs:median(scroll),baseline,afterFirst,afterRepeats,afterDispose,errors};
+ const median=a=>[...a].sort((x,y)=>x-y)[Math.floor(a.length/2)];window.result={running:false,firstCardMs:first,all30Ms:preparedMs,animatedCards:animatedKeys.length,animatedFrameMedianMs:median(samples),animatedFPS:1000/median(samples),scrollMedianMs:median(scroll),baseline,afterFirst,afterRepeats,afterDispose,errors};
 
 }catch(e){window.result={running:false,error:e.stack,errors};}
 </script>

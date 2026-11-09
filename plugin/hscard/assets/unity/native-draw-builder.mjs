@@ -4,6 +4,11 @@ const f=Math.fround;
 export function multiply(a,b){const out=new Float32Array(16);for(let col=0;col<4;col++)for(let row=0;row<4;row++){let v=0;for(let k=0;k<4;k++)v=f(v+f(a[k*4+row]*b[col*4+k]));out[col*4+row]=v;}return out;}
 export function inverse(input){const a=Array.from({length:4},(_,r)=>Array.from({length:8},(_,c)=>c<4?input[c*4+r]:(c-4===r?1:0)));for(let c=0;c<4;c++){let pivot=c;for(let r=c+1;r<4;r++)if(Math.abs(a[r][c])>Math.abs(a[pivot][c]))pivot=r;if(Math.abs(a[pivot][c])<1e-12)throw Error('Singular original transform');[a[c],a[pivot]]=[a[pivot],a[c]];const scale=a[c][c];for(let k=0;k<8;k++)a[c][k]/=scale;for(let r=0;r<4;r++)if(r!==c){const v=a[r][c];for(let k=0;k<8;k++)a[r][k]-=v*a[c][k];}}const out=new Float32Array(16);for(let r=0;r<4;r++)for(let c=0;c<4;c++)out[c*4+r]=a[r][c+4];return out;}
 const shaderVariantCache=new WeakMap();
+const animatedVariantCache=new WeakMap();
+function usesTime(variant){
+ if(!animatedVariantCache.has(variant))animatedVariantCache.set(variant,variant.layout.buffers.some(buffer=>buffer.vectors.some(value=>['_Time','_SinTime','_CosTime','_ShaderTime'].includes(value.name))));
+ return animatedVariantCache.get(variant);
+}
 function select(stage,keywords){
  let info=shaderVariantCache.get(stage);
  if(!info){info={relevant:new Set(stage.variants.flatMap(v=>v.keywords||[])),chosen:new Map()};shaderVariantCache.set(stage,info);}
@@ -64,7 +69,7 @@ export class NativeDrawBuilder {
     for(const pass of shader.subshaders[sub].passes){const mode=(pass.lightMode||'').toLowerCase();if(!['srpdefaultunlit','universalforward','lightweightforward'].includes(mode)||used.has(mode))continue;used.add(mode);
       const vertex=select(pass.vertex,keywords),fragment=select(pass.fragment,keywords);
       const bindings=layout=>layout.textures.map(t=>{let texture=material.textures[t.name];if(!texture){const name=properties.get(t.name)?.m_DefTexture?.m_DefaultName,v=name==='black'?0:name==='gray'?128:255;if(!this.defaults.has(v))this.defaults.set(v,{pixels:{width:1,height:1,format:28,levels:[new Uint8Array([v,v,v,255])]},sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]});texture=this.defaults.get(v);}return{slot:t.slot,sampler:t.sampler,texture,srgb:[29,72,78,99].includes(texture.pixels.format)};});
-      output.push({path:part.path,slot:part.slot,mesh:part.mesh,shader:shader.name,subshader:sub,pass:pass.index,keywords,vertexProgram:vertex.sha256,fragmentProgram:fragment.sha256,vertexBuffers:buffers(vertex.layout,material,properties,ctx,matrix),fragmentBuffers:buffers(fragment.layout,material,properties,ctx,matrix),vertexTextures:bindings(vertex.layout),fragmentTextures:bindings(fragment.layout),state:state(pass.state,material,properties,ctx)});
+      output.push({path:part.path,slot:part.slot,mesh:part.mesh,shader:shader.name,subshader:sub,pass:pass.index,keywords,animated:usesTime(vertex)||usesTime(fragment),vertexProgram:vertex.sha256,fragmentProgram:fragment.sha256,vertexBuffers:buffers(vertex.layout,material,properties,ctx,matrix),fragmentBuffers:buffers(fragment.layout,material,properties,ctx,matrix),vertexTextures:bindings(vertex.layout),fragmentTextures:bindings(fragment.layout),state:state(pass.state,material,properties,ctx)});
     }
     return output;
   }

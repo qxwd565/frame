@@ -18,6 +18,10 @@ adapter. No software renderer is silently substituted.
    - `http://127.0.0.1:19420/work/entry.html`: real page entry module, live API/CDN,
      normal/golden toggles, hover, scrolling and deliberate device loss/recovery.
      Use a viewport at least 821 px wide. The 10-card fixture repeats EX1_350.
+     It also checks ongoing normal-frame animation and zero offscreen updates.
+   - `http://127.0.0.1:19420/work/frame-animation.html`: GPU readback at two times;
+     normal minion mana/attack/health regions must change in current, 3664 and
+     3890 frames. Historical spells/weapons must retain their mana effects.
 
 The entry/benchmark fixtures use the public legacy card and golden APIs.
 They test browser integration, not WordPress installation/activation. No test
