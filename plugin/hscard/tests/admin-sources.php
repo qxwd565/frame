@@ -76,11 +76,13 @@ $GLOBALS['allowed']=true;$_SERVER['REQUEST_METHOD']='POST';
 $_POST=array('_wpnonce'=>'test-nonce','source_label'=>'검사','source_repository'=>'Curse-of-Naxxramas','hscard_add_method'=>'url','source_enabled'=>'1');
 try{$admin->save_source();}catch(Test_Redirect $r){verify(!$GLOBALS['notice']['error'],'Repository save failed');}
 $saved=Json_Sources::all();$newId=array_key_last($saved);verify($saved[$newId]['url']===Json_Sources::repository_url('Curse-of-Naxxramas'),'Server did not construct URL');
+verify($saved[$newId]['set']==='Curse-of-Naxxramas'&&Json_Sources::repository_set_id($saved[$newId])==='Curse-of-Naxxramas','Repository set ID not assigned at creation');
 try{$admin->save_source();}catch(Test_Redirect $r){verify($GLOBALS['notice']['error'],'Duplicate source accepted');}
 verify(Json_Sources::all()===$saved,'Duplicate changed source data');
 $_POST=array('_wpnonce'=>'test-nonce','source_id'=>$newId,'source_label'=>'기존 연결','source_url'=>'https://example.test/custom/cards.json','source_enabled'=>'1');
 try{$admin->save_source();}catch(Test_Redirect $r){verify(!$GLOBALS['notice']['error'],'Existing URL edit failed');}
 verify(Json_Sources::all()[$newId]['url']==='https://example.test/custom/cards.json','Existing custom URL changed');
+verify(Json_Sources::all()[$newId]['set']==='Curse-of-Naxxramas','URL edit renamed the set');
 $admin->enqueue_styles('toplevel_page_hscard-api');verify($GLOBALS['script'][2]===array('jquery-ui-sortable'),'WordPress sortable dependency missing');verify($GLOBALS['script'][3]===$GLOBALS['style'][3]&&$GLOBALS['script'][3]!==HSCARD_VERSION,'Admin asset revisions missing');
 $_GET=array();$GLOBALS['options']=array(Json_Sources::OPTION=>$original);
 $method=new ReflectionMethod($admin,'render_source_form');$method->setAccessible(true);
@@ -89,5 +91,8 @@ verify(strpos($form,'name="source_repository"')!==false&&strpos($form,'name="sou
 ob_start();$method->invoke($admin,'legacy',$original['legacy']);$edit=ob_get_clean();verify(strpos($edit,'name="source_url"')!==false,'Existing form changed');
 $method=new ReflectionMethod($admin,'render_sources');$method->setAccessible(true);ob_start();$method->invoke($admin,$original,array());$list=ob_get_clean();
 verify(substr_count($list,'data-source-id=')===4&&strpos($list,'data-order-nonce="test-nonce"')!==false,'Missing sortable markup');
-if(in_array('--fixture',$argv,true)){echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/plugin/admin/css/data-manager.css"><style>body{font:13px Arial;margin:20px;background:#f0f0f1}.button{background:white;border:1px solid #2271b1;color:#2271b1;border-radius:3px;padding:6px 10px}.hscard-sort-handle .dashicons:before{content:"☰"}input,textarea{padding:8px;border:1px solid #8c8f94;border-radius:4px}</style><div class="hscard-manager">'.$list.$form.'</div>';}
+$fixtureSources=$original;$fixtureSources['managed']=array_merge($original['naxx'],array('repository'=>'Curse-of-Naxxramas','set'=>'Curse-of-Naxxramas'));
+$method=new ReflectionMethod($admin,'render_set_form');$method->setAccessible(true);ob_start();$method->invoke($admin,'',array(),$fixtureSources);$setForm=ob_get_clean();
+verify(strpos($setForm,'data-set-id="Curse-of-Naxxramas"')!==false&&strpos($setForm,'data-hscard-auto-set')!==false,'Automatic set form metadata missing');
+if(in_array('--fixture',$argv,true)){echo '<!doctype html><meta charset="utf-8"><link rel="stylesheet" href="/plugin/admin/css/data-manager.css"><style>body{font:13px Arial;margin:20px;background:#f0f0f1}.button{background:white;border:1px solid #2271b1;color:#2271b1;border-radius:3px;padding:6px 10px}.hscard-sort-handle .dashicons:before{content:"☰"}input,textarea{padding:8px;border:1px solid #8c8f94;border-radius:4px}</style><div class="hscard-manager">'.$list.$form.$setForm.'</div>';}
 else echo json_encode(array('ok'=>true,'ordering'=>'full/filtered/reload/add/delete/storage failure','security'=>'capability/nonce/method/IDs','repository'=>'validation/server expansion/duplicate/edit preservation','markup'=>true)).PHP_EOL;

@@ -87,6 +87,12 @@ final class Json_Sources {
   return self::REPOSITORY_PREFIX . $repository . self::REPOSITORY_SUFFIX;
  }
 
+ /** Only newly repository-managed sources opt in; old set IDs stay intact. */
+ public static function repository_set_id( array $source ) {
+  $repository = isset( $source['repository'] ) ? $source['repository'] : '';
+  return is_wp_error( self::repository_url( $repository ) ) ? '' : trim( $repository );
+ }
+
  public static function new_id( array $sources ) {
   do { $id = 'src_' . strtolower( wp_generate_password( 16, false, false ) ); } while ( isset( $sources[ $id ] ) );
   return $id;

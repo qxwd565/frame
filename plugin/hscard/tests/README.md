@@ -4,6 +4,10 @@ These files are development-only and are excluded from the WordPress ZIP.
 Run `php tests/admin-sources.php` for source ordering, filtered slots, storage
 failures, authorization/nonce checks, repository URL construction and existing
 URL compatibility. `--fixture` emits the production source-list/new-source markup
+and set form. `php tests/repository-set-id.php` exercises the real parser/importer
+with storage seams: repository ID stability, old IDs, native card metadata,
+dated URL routing, conflicts and server-side form derivation.
+The source fixture is intended
 for browser testing. Serve generated fixtures from `.build/` via `/fixtures/`.
 Load WordPress's jQuery, jQuery UI core/mouse/sortable, then
 `admin-sources-browser.js`, the production `admin/js/data-manager.js`, and call

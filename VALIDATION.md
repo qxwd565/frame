@@ -224,3 +224,20 @@ focus restoration, failed-save rollback, mobile menu moves at 390 px, and
 repository preview/mode switching. Browser AJAX was simulated; handlers used
 in-memory WordPress option stubs. No live WordPress admin installation or DB
 mutation was performed. Existing WebGPU/native resource files are unchanged.
+
+## Automatic repository-based set IDs, 2026-11-09
+
+New repository connections store the entered repository name as their set ID.
+The importer retains that ID across header changes and repeated imports; older
+connections retain their existing IDs. The blank-set form fills and locks the ID
+when a repository-managed connection is selected, and the server derives it
+independently of submitted form values. Per-card IDs, native game sets and
+watermarks are unaffected. Existing source keys and dated-card URLs remain valid.
+
+`repository-set-id.php` exercised the production parser/importer/source mapping
+with in-memory WordPress/card-store seams: different JSON header vs repository,
+reimport with changed header and mana, old-source compatibility, conflicts,
+server-derived form IDs, dot/100-character repository names and detachment.
+Chrome passed automatic ID selection/manual fallback alongside source ordering,
+repository completion and mobile controls. PHP/JS syntax checks passed. No live
+WordPress database was changed during these tests.

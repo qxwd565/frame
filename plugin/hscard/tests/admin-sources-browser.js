@@ -27,6 +27,11 @@ window.runAdminSourceChecks = async function () {
   form.querySelector('input[value=file]').click();assert(repo.disabled&&!repo.required,'Repository required for upload');
   form.querySelector('input[value=text]').click();assert(repo.disabled&&form.querySelector('textarea').required,'Text mode broken');
   form.querySelector('input[value=url]').click();assert(!repo.disabled&&repo.required,'Repository mode broken');
+  const setKey=document.querySelector('[data-hscard-auto-set]'),linked=setKey.form.querySelector('[name=source_id]');
+  setKey.value='Manual Set';linked.value='managed';linked.dispatchEvent(new Event('change'));
+  assert(setKey.value==='Curse-of-Naxxramas'&&setKey.readOnly,'Set ID not generated from repository');
+  linked.value='legacy';linked.dispatchEvent(new Event('change'));
+  assert(setKey.value==='Manual Set'&&!setKey.readOnly,'Manual ID not restored for older/local sources');
   const handle=list.querySelector('[data-source-id=legacy] .hscard-sort-handle');handle.focus();
   handle.dispatchEvent(new KeyboardEvent('keydown',{key:'ArrowDown',bubbles:true,cancelable:true}));
   await idle();assert(ids().join()==='naxx,legacy,gvg,brm','Keyboard move failed');assert(document.activeElement===handle,'Keyboard focus lost after saving');
@@ -45,6 +50,6 @@ window.runAdminSourceChecks = async function () {
   const row=list.querySelector('[data-source-id=brm]');row.querySelector('details').open=true;row.querySelector('[data-hscard-move=down]').click();
   await idle();assert(ids().join()==='naxx,brm,legacy,gvg','Mobile menu move failed');
   assert(document.documentElement.scrollWidth<=innerWidth,'Mobile horizontal overflow');
-  window.result={running:false,calls:4,order:ids(),drag:true,keyboard:true,mobile:true,rollback:true,repository:true};
+  window.result={running:false,calls:4,order:ids(),drag:true,keyboard:true,mobile:true,rollback:true,repository:true,automaticSetId:true};
  }catch(error){window.result={running:false,error:error.stack,calls};}
 };

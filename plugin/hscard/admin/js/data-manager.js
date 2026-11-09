@@ -6,6 +6,21 @@
   if (!root) return;
 
   const form = root.querySelector('[data-hscard-source-form]');
+  const setKey = root.querySelector('[data-hscard-auto-set]');
+  if (setKey) {
+    const source = setKey.form.querySelector('[name="source_id"]');
+    const help = setKey.form.querySelector('[data-hscard-set-help]');
+    let manual = setKey.value;
+    function updateSetKey() {
+      const repository = source.options[source.selectedIndex].dataset.setId || '';
+      if (!setKey.readOnly) manual = setKey.value;
+      setKey.value = repository || manual;
+      setKey.readOnly = !!repository;
+      help.textContent = repository ? '저장소 이름으로 자동 지정됩니다.' : '저장소 연결을 선택하면 ID가 자동으로 입력됩니다.';
+    }
+    source.addEventListener('change', updateSetKey);
+    updateSetKey();
+  }
   const choices = form && form.querySelector('[data-hscard-methods]');
   const repository = form && form.querySelector('[name="source_repository"]');
   if (repository) {

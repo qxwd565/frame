@@ -128,7 +128,7 @@ final class Admin_Page {
  }
  private function source_id() { return $this->post( 'source_id' ); }
  private function canonical_set( $value ) {
-  return is_string( $value ) && preg_match( '/\A[A-Za-z0-9][A-Za-z0-9 _-]{0,95}\z/D', $value );
+  return is_string( $value ) && ( preg_match( '/\A[A-Za-z0-9][A-Za-z0-9 _-]{0,95}\z/D', $value ) || ! is_wp_error( Json_Sources::repository_url( $value ) ) );
  }
 
  public function render() {
@@ -233,6 +233,7 @@ final class Admin_Page {
  private function render_set_form( $editing, array $imports, array $sources ) {
   $existing = '' !== $editing && isset( $imports[ $editing ] ) && is_array( $imports[ $editing ] ) ? $imports[ $editing ] : array();
   $current = $existing ? $this->linked_source_id( $editing, $existing, $sources ) : '';
+  $automatic_id = isset( $sources[ $current ] ) ? Json_Sources::repository_set_id( $sources[ $current ] ) : '';
   ?>
   <a class="hscard-back" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sets' ) ) ); ?>">&larr; 카드 세트 목록</a>
   <div class="hscard-panel hscard-form-panel">
@@ -243,9 +244,9 @@ final class Admin_Page {
     <?php wp_nonce_field( 'hscard_save_set' ); ?>
     <div class="hscard-form-stack">
      <div class="hscard-field"><label for="hscard-set-label">표시 이름</label><input id="hscard-set-label" class="regular-text" name="set_label" maxlength="100" value="<?php echo esc_attr( isset( $existing['label'] ) ? $existing['label'] : ( $existing ? $editing : '' ) ); ?>" placeholder="예: 시간의 길"></div>
-     <div class="hscard-field"><label for="hscard-set-key">세트 식별자</label><input id="hscard-set-key" class="regular-text code" name="set_key" maxlength="96" value="<?php echo esc_attr( $existing ? $editing : '' ); ?>" <?php echo $existing ? 'readonly' : 'required'; ?> placeholder="예: Across The Timeways"><p class="hscard-help">JSON의 <code>set</code>과 일치해야 합니다. 기존 세트의 식별자는 변경할 수 없습니다.</p></div>
+     <div class="hscard-field"><label for="hscard-set-key">세트 ID</label><input id="hscard-set-key" class="regular-text code" name="set_key" maxlength="100" value="<?php echo esc_attr( $existing ? $editing : '' ); ?>" <?php echo $existing ? 'readonly' : 'required data-hscard-auto-set'; ?> placeholder="예: Across-The-Timeways"><p class="hscard-help" data-hscard-set-help><?php echo '' !== $automatic_id ? '저장소 이름으로 자동 지정됩니다.' : ( $existing ? '기존 세트 ID는 유지됩니다.' : '저장소 연결을 선택하면 ID가 자동으로 입력됩니다.' ); ?></p></div>
      <div class="hscard-field"><label for="hscard-set-source">연결된 JSON</label><select id="hscard-set-source" name="source_id"><option value="">연결 없음</option>
-      <?php foreach ( $sources as $id => $source ) : if ( ! is_array( $source ) ) { continue; } ?><option value="<?php echo esc_attr( $id ); ?>" <?php selected( $current, $id ); ?>><?php echo esc_html( $source['label'] ); ?></option><?php endforeach; ?>
+      <?php foreach ( $sources as $id => $source ) : if ( ! is_array( $source ) ) { continue; } ?><option value="<?php echo esc_attr( $id ); ?>" data-set-id="<?php echo esc_attr( Json_Sources::repository_set_id( $source ) ); ?>" <?php selected( $current, $id ); ?>><?php echo esc_html( $source['label'] ); ?></option><?php endforeach; ?>
      </select></div>
     </div>
     <div class="hscard-form-actions"><?php submit_button( $existing ? '변경 사항 저장' : '빈 세트 추가', 'primary', 'submit', false ); ?><a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sets' ) ) ); ?>">취소</a></div>
@@ -550,11 +551,13 @@ final class Admin_Page {
   $label = $this->label( $this->post( 'source_label' ) );
   if ( '' === $label ) { $this->finish( true, 'JSON 소스 이름을 입력하세요.' ); }
   $url = $this->post( 'source_url' );
+  $repository = '';
   if ( ! $is_edit && isset( $_POST['source_repository'] ) ) {
    if ( in_array( $this->post( 'hscard_add_method' ), array( 'file', 'text' ), true ) ) { $url = ''; }
    else {
     $url = Json_Sources::repository_url( $this->post( 'source_repository' ) );
     if ( is_wp_error( $url ) ) { $this->finish_result( $url ); }
+    $repository = trim( $this->post( 'source_repository' ) );
    }
   }
   $art_base = $this->post( 'source_art_base' );
@@ -582,6 +585,7 @@ final class Admin_Page {
   }
   $id = Json_Sources::new_id( $sources );
   $source = array( 'label' => $label, 'url' => $url, 'art_base' => $art_base, 'mode' => '' !== $raw ? 'local' : 'remote', 'enabled' => isset( $_POST['source_enabled'] ) ? 1 : 0, 'set' => '', 'count' => 0 );
+  if ( '' !== $repository ) { $source['repository'] = $repository; $source['set'] = $repository; }
   if ( '' === $raw ) {
    $sources[ $id ] = $source;
    Json_Sources::save( $sources );
@@ -598,10 +602,15 @@ final class Admin_Page {
   $original = $this->post( 'original_set' );
   $set = $this->post( 'set_key' );
   $source_id = $this->source_id();
-  if ( ! $this->canonical_set( $set ) || ( '' !== $original && ( ! isset( $imports[ $original ] ) || $original !== $set ) ) ) {
+  if ( '' !== $source_id && ! isset( $sources[ $source_id ] ) ) { $this->finish( true, '선택한 JSON 소스가 없습니다.', 'sets' ); }
+  $automatic_id = '' !== $source_id ? Json_Sources::repository_set_id( $sources[ $source_id ] ) : '';
+  if ( '' !== $automatic_id ) {
+   if ( '' !== $original && $original !== $automatic_id ) { $this->finish( true, '기존 세트 ID와 저장소 이름이 다릅니다. JSON 관리에서 가져오기를 사용하세요.', 'sets' ); }
+   $set = $automatic_id;
+  }
+  if ( ( '' === $automatic_id && ! $this->canonical_set( $set ) ) || ( '' !== $original && ( ! isset( $imports[ $original ] ) || $original !== $set ) ) ) {
    $this->finish( true, '세트 식별자가 올바르지 않습니다.', 'sets' );
   }
-  if ( '' !== $source_id && ! isset( $sources[ $source_id ] ) ) { $this->finish( true, '선택한 JSON 소스가 없습니다.', 'sets' ); }
   if ( '' === $original && isset( $imports[ $set ] ) ) { $this->finish( true, '같은 세트 식별자가 이미 있습니다.', 'sets' ); }
   if ( '' !== $source_id ) {
    foreach ( $imports as $key => $item ) {
@@ -762,7 +771,7 @@ final class Admin_Page {
    if ( ! Card_Store::maybe_upgrade() ) { return new WP_Error( 'hscard_store', '카드 저장소를 준비하지 못했습니다.' ); }
    $imports = $this->imports();
    $sources = Json_Sources::all();
-   // Detect a source whose JSON 'set' was renamed, and adopt that relationship.
+   // Repository-managed sources keep their ID even when the document label changes.
    $old_set = '';
    foreach ( $imports as $key => $item ) {
     if ( is_array( $item ) && $this->linked_source_id( $key, $item, $sources ) === $id ) {
@@ -770,7 +779,8 @@ final class Admin_Page {
      $old_set = $key;
     }
    }
-   $set = $data['set'];
+   $automatic_id = Json_Sources::repository_set_id( $source );
+   $set = '' !== $automatic_id ? $automatic_id : $data['set'];
    if ( isset( $imports[ $set ] ) && $set !== $old_set && $this->linked_source_id( $set, $imports[ $set ], $sources ) !== $id ) {
     return new WP_Error( 'hscard_set_conflict', '동일한 세트 이름이 다른 JSON 소스에 연결되어 있습니다. 세트 설정에서 연결을 수정하세요.' );
    }
