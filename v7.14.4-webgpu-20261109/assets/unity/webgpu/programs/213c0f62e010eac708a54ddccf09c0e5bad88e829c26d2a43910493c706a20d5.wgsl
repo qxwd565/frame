@@ -1,0 +1,328 @@
+struct v_buffer0_ {
+    v_cb0_: array<vec4<f32>, 83>,
+}
+
+struct v_buffer1_ {
+    v_cb1_: array<vec4<f32>, 8>,
+}
+
+struct v_buffer2_ {
+    v_cb2_: array<vec4<f32>, 17>,
+}
+
+struct VertexOutput {
+    @location(0) vs_TEXCOORD0_: vec4<f32>,
+    @location(11) vs_COLOR1_: vec4<f32>,
+    @location(10) vs_COLOR0_: vec4<f32>,
+    @location(1) vs_TEXCOORD1_: f32,
+    @builtin(position) gl_Position: vec4<f32>,
+}
+
+@group(0) @binding(0) 
+var<uniform> _v_buffer0_: v_buffer0_;
+@group(0) @binding(1) 
+var<uniform> _v_buffer1_: v_buffer1_;
+@group(0) @binding(2) 
+var<uniform> _v_buffer2_: v_buffer2_;
+var<private> in_POSITION0_1: vec4<f32>;
+var<private> in_TEXCOORD0_1: vec2<f32>;
+var<private> in_COLOR0_1: vec4<f32>;
+var<private> in_NORMAL0_1: vec3<f32>;
+var<private> vs_TEXCOORD0_: vec4<f32>;
+var<private> vs_COLOR1_: vec4<f32>;
+var<private> vs_COLOR0_: vec4<f32>;
+var<private> vs_TEXCOORD1_: f32;
+var<private> gl_Position: vec4<f32>;
+
+fn main_1() {
+    var u_xlat0_: vec4<f32> = vec4(0f);
+    var u_xlat1_: vec4<f32> = vec4(0f);
+    var u_xlat2_: vec4<f32> = vec4(0f);
+    var u_xlat3_: vec4<f32> = vec4(0f);
+    var u_xlat4_: vec4<f32> = vec4(0f);
+    var u_xlat5_: f32 = 0f;
+    var u_xlat10_: vec2<f32> = vec2(0f);
+    var u_xlat15_: f32 = 0f;
+
+    let _e47 = in_POSITION0_1;
+    let _e52 = _v_buffer1_.v_cb1_[1];
+    u_xlat0_ = (_e47.yyyy * _e52);
+    let _e57 = _v_buffer1_.v_cb1_[0];
+    let _e58 = in_POSITION0_1;
+    let _e61 = u_xlat0_;
+    u_xlat0_ = ((_e57 * _e58.xxxx) + _e61);
+    let _e66 = _v_buffer1_.v_cb1_[2];
+    let _e67 = in_POSITION0_1;
+    let _e70 = u_xlat0_;
+    u_xlat0_ = ((_e66 * _e67.zzzz) + _e70);
+    let _e72 = u_xlat0_;
+    let _e76 = _v_buffer1_.v_cb1_[3];
+    u_xlat0_ = (_e72 + _e76);
+    let _e78 = u_xlat0_;
+    let _e83 = _v_buffer0_.v_cb0_[80];
+    u_xlat1_ = (_e78.yyyy * _e83);
+    let _e88 = _v_buffer0_.v_cb0_[79];
+    let _e89 = u_xlat0_;
+    let _e92 = u_xlat1_;
+    u_xlat1_ = ((_e88 * _e89.xxxx) + _e92);
+    let _e97 = _v_buffer0_.v_cb0_[81];
+    let _e98 = u_xlat0_;
+    let _e101 = u_xlat1_;
+    u_xlat1_ = ((_e97 * _e98.zzzz) + _e101);
+    let _e107 = _v_buffer0_.v_cb0_[82];
+    let _e108 = u_xlat0_;
+    let _e111 = u_xlat1_;
+    gl_Position = ((_e107 * _e108.wwww) + _e111);
+    let _e113 = u_xlat0_;
+    let _e115 = in_TEXCOORD0_1;
+    let _e120 = _v_buffer2_.v_cb2_[1];
+    let _e126 = _v_buffer2_.v_cb2_[1];
+    let _e128 = ((_e115.xy * _e120.xy) + _e126.zw);
+    u_xlat0_.x = _e128.x;
+    u_xlat0_.y = _e128.y;
+    let _e133 = u_xlat10_;
+    let _e135 = u_xlat0_;
+    let _e138 = u_xlat0_;
+    let _e140 = (-(_e135.xy) + _e138.yx);
+    u_xlat10_.x = _e140.x;
+    u_xlat10_.y = _e140.y;
+    let _e145 = u_xlat0_;
+    let _e150 = _v_buffer2_.v_cb2_[2];
+    let _e152 = u_xlat10_;
+    let _e155 = u_xlat0_;
+    let _e157 = ((_e150.zz * _e152.xy) + _e155.xy);
+    u_xlat0_.x = _e157.x;
+    u_xlat0_.y = _e157.y;
+    let _e162 = u_xlat10_;
+    let _e167 = _v_buffer0_.v_cb0_[15];
+    let _e172 = _v_buffer2_.v_cb2_[11];
+    let _e174 = (_e167.zz * _e172.yz);
+    u_xlat10_.x = _e174.x;
+    u_xlat10_.y = _e174.y;
+    let _e179 = u_xlat10_;
+    let _e181 = u_xlat10_;
+    let _e183 = fract(_e181.xy);
+    u_xlat10_.x = _e183.x;
+    u_xlat10_.y = _e183.y;
+    let _e188 = vs_TEXCOORD0_;
+    let _e190 = u_xlat10_;
+    let _e192 = u_xlat0_;
+    let _e194 = (_e190.xy + _e192.xy);
+    vs_TEXCOORD0_.x = _e194.x;
+    vs_TEXCOORD0_.y = _e194.y;
+    let _e199 = u_xlat0_;
+    let _e201 = in_TEXCOORD0_1;
+    let _e206 = _v_buffer2_.v_cb2_[4];
+    let _e212 = _v_buffer2_.v_cb2_[4];
+    let _e214 = ((_e201.xy * _e206.xy) + _e212.zw);
+    u_xlat0_.x = _e214.x;
+    u_xlat0_.y = _e214.y;
+    let _e219 = u_xlat10_;
+    let _e221 = u_xlat0_;
+    let _e224 = u_xlat0_;
+    let _e226 = (-(_e221.xy) + _e224.yx);
+    u_xlat10_.x = _e226.x;
+    u_xlat10_.y = _e226.y;
+    let _e231 = u_xlat0_;
+    let _e236 = _v_buffer2_.v_cb2_[6];
+    let _e238 = u_xlat10_;
+    let _e241 = u_xlat0_;
+    let _e243 = ((_e236.yy * _e238.xy) + _e241.xy);
+    u_xlat0_.x = _e243.x;
+    u_xlat0_.y = _e243.y;
+    let _e248 = u_xlat10_;
+    let _e253 = _v_buffer0_.v_cb0_[15];
+    let _e258 = _v_buffer2_.v_cb2_[5];
+    let _e260 = (_e253.zz * _e258.xy);
+    u_xlat10_.x = _e260.x;
+    u_xlat10_.y = _e260.y;
+    let _e265 = u_xlat10_;
+    let _e267 = u_xlat10_;
+    let _e269 = fract(_e267.xy);
+    u_xlat10_.x = _e269.x;
+    u_xlat10_.y = _e269.y;
+    let _e274 = vs_TEXCOORD0_;
+    let _e276 = u_xlat10_;
+    let _e278 = u_xlat0_;
+    let _e280 = (_e276.xy + _e278.xy);
+    vs_TEXCOORD0_.z = _e280.x;
+    vs_TEXCOORD0_.w = _e280.y;
+    vs_COLOR1_ = vec4<f32>(0f, 0f, 0f, 0f);
+    let _e290 = u_xlat0_;
+    let _e295 = _v_buffer0_.v_cb0_[21];
+    let _e300 = _v_buffer1_.v_cb1_[5];
+    let _e302 = (_e295.yyy * _e300.xyz);
+    u_xlat0_.x = _e302.x;
+    u_xlat0_.y = _e302.y;
+    u_xlat0_.z = _e302.z;
+    let _e309 = u_xlat0_;
+    let _e314 = _v_buffer1_.v_cb1_[4];
+    let _e319 = _v_buffer0_.v_cb0_[21];
+    let _e322 = u_xlat0_;
+    let _e324 = ((_e314.xyz * _e319.xxx) + _e322.xyz);
+    u_xlat0_.x = _e324.x;
+    u_xlat0_.y = _e324.y;
+    u_xlat0_.z = _e324.z;
+    let _e331 = u_xlat0_;
+    let _e336 = _v_buffer1_.v_cb1_[6];
+    let _e341 = _v_buffer0_.v_cb0_[21];
+    let _e344 = u_xlat0_;
+    let _e346 = ((_e336.xyz * _e341.zzz) + _e344.xyz);
+    u_xlat0_.x = _e346.x;
+    u_xlat0_.y = _e346.y;
+    u_xlat0_.z = _e346.z;
+    let _e353 = u_xlat0_;
+    let _e355 = u_xlat0_;
+    let _e360 = _v_buffer1_.v_cb1_[7];
+    let _e362 = (_e355.xyz + _e360.xyz);
+    u_xlat0_.x = _e362.x;
+    u_xlat0_.y = _e362.y;
+    u_xlat0_.z = _e362.z;
+    let _e369 = u_xlat0_;
+    let _e371 = u_xlat0_;
+    let _e373 = in_POSITION0_1;
+    let _e376 = (_e371.xyz + -(_e373.xyz));
+    u_xlat0_.x = _e376.x;
+    u_xlat0_.y = _e376.y;
+    u_xlat0_.z = _e376.z;
+    let _e383 = u_xlat0_;
+    let _e385 = u_xlat0_;
+    u_xlat15_ = dot(_e383.xyz, _e385.xyz);
+    let _e388 = u_xlat15_;
+    u_xlat15_ = inverseSqrt(_e388);
+    let _e390 = u_xlat0_;
+    let _e392 = u_xlat15_;
+    let _e394 = u_xlat0_;
+    let _e396 = (vec3(_e392) * _e394.xyz);
+    u_xlat0_.x = _e396.x;
+    u_xlat0_.y = _e396.y;
+    u_xlat0_.z = _e396.z;
+    let _e404 = in_NORMAL0_1;
+    let _e406 = u_xlat0_;
+    u_xlat0_.x = dot(_e404.xyz, _e406.xyz);
+    let _e410 = u_xlat0_;
+    u_xlat0_.x = (-(abs(_e410.x)) + 1f);
+    let _e417 = u_xlat0_;
+    u_xlat0_.x = log2(abs(_e417.x));
+    let _e422 = u_xlat0_;
+    let _e427 = _v_buffer2_.v_cb2_[16];
+    u_xlat0_.x = (_e422.x * _e427.x);
+    let _e431 = u_xlat0_;
+    u_xlat0_.x = exp2(_e431.x);
+    let _e434 = u_xlat1_;
+    let _e439 = _v_buffer2_.v_cb2_[14];
+    let _e444 = _v_buffer2_.v_cb2_[16];
+    let _e446 = (_e439.xyz * _e444.yyy);
+    u_xlat1_.x = _e446.x;
+    u_xlat1_.y = _e446.y;
+    u_xlat1_.z = _e446.z;
+    let _e453 = u_xlat2_;
+    let _e458 = _v_buffer2_.v_cb2_[15];
+    let _e463 = _v_buffer2_.v_cb2_[16];
+    let _e466 = u_xlat1_;
+    let _e469 = ((_e458.xyz * _e463.zzz) + -(_e466.xyz));
+    u_xlat2_.x = _e469.x;
+    u_xlat2_.y = _e469.y;
+    u_xlat2_.z = _e469.z;
+    let _e480 = _v_buffer2_.v_cb2_[14];
+    u_xlat1_.w = _e480.w;
+    let _e483 = u_xlat1_;
+    let _e489 = _v_buffer2_.v_cb2_[15];
+    u_xlat2_.w = (-(_e483.w) + _e489.w);
+    let _e492 = u_xlat0_;
+    let _e494 = u_xlat2_;
+    let _e496 = u_xlat1_;
+    u_xlat0_ = ((_e492.xxxx * _e494) + _e496);
+    let _e499 = in_COLOR0_1;
+    let _e504 = _v_buffer2_.v_cb2_[13];
+    u_xlat1_.w = max(_e499.w, _e504.x);
+    let _e507 = u_xlat1_;
+    let _e509 = in_COLOR0_1;
+    let _e510 = _e509.xyz;
+    u_xlat1_.x = _e510.x;
+    u_xlat1_.y = _e510.y;
+    u_xlat1_.z = _e510.z;
+    let _e517 = u_xlat1_;
+    let _e521 = _v_buffer2_.v_cb2_[0];
+    u_xlat1_ = (_e517 * _e521);
+    let _e524 = u_xlat1_;
+    let _e526 = u_xlat1_;
+    u_xlat2_.x = max(_e524.y, _e526.x);
+    let _e530 = u_xlat1_;
+    let _e532 = u_xlat2_;
+    u_xlat2_.x = max(_e530.z, _e532.x);
+    let _e536 = u_xlat2_;
+    u_xlat2_.x = ((_e536.x * 2f) + -1f);
+    let _e544 = u_xlat2_;
+    u_xlat2_.x = clamp(_e544.x, 0f, 1f);
+    let _e550 = u_xlat2_;
+    u_xlat2_.w = (-(_e550.x) + 1f);
+    let _e555 = u_xlat2_;
+    let _e557 = u_xlat1_;
+    let _e559 = u_xlat1_;
+    let _e561 = (_e557.xyz + _e559.xyz);
+    u_xlat2_.x = _e561.x;
+    u_xlat2_.y = _e561.y;
+    u_xlat2_.z = _e561.z;
+    let _e569 = u_xlat1_;
+    let _e574 = _v_buffer2_.v_cb2_[2];
+    u_xlat1_.x = (_e569.w * _e574.w);
+    let _e577 = u_xlat1_;
+    let _e579 = u_xlat2_;
+    u_xlat3_ = (_e577.xxxx * _e579);
+    let _e581 = u_xlat4_;
+    let _e583 = u_xlat0_;
+    let _e585 = u_xlat3_;
+    let _e587 = (_e583.xyz * _e585.www);
+    u_xlat4_.x = _e587.x;
+    u_xlat4_.y = _e587.y;
+    u_xlat4_.z = _e587.z;
+    let _e594 = u_xlat0_;
+    let _e595 = u_xlat3_;
+    u_xlat3_ = (_e594 * _e595);
+    u_xlat4_.w = 0f;
+    let _e599 = u_xlat2_;
+    let _e600 = u_xlat1_;
+    let _e603 = u_xlat4_;
+    u_xlat1_ = ((_e599 * _e600.xxxx) + _e603);
+    let _e605 = u_xlat1_;
+    let _e606 = u_xlat0_;
+    let _e609 = u_xlat3_;
+    u_xlat0_ = ((_e605 * _e606.wwww) + -(_e609));
+    let _e615 = _v_buffer2_.v_cb2_[16];
+    let _e617 = u_xlat0_;
+    let _e619 = u_xlat3_;
+    vs_COLOR0_ = ((_e615.wwww * _e617) + _e619);
+    let _e622 = in_COLOR0_1;
+    u_xlat0_.x = (-(_e622.w) + 1f);
+    let _e628 = u_xlat0_;
+    let _e633 = _v_buffer2_.v_cb2_[12];
+    u_xlat0_.x = (_e628.x + -(_e633.w));
+    let _e640 = _v_buffer2_.v_cb2_[12];
+    u_xlat5_ = (_e640.y * 1.01f);
+    let _e645 = u_xlat5_;
+    let _e646 = u_xlat0_;
+    u_xlat0_.x = max(_e645, _e646.x);
+    let _e652 = _v_buffer2_.v_cb2_[12];
+    u_xlat5_ = ((_e652.z * 2f) + 1f);
+    let _e658 = u_xlat0_;
+    let _e660 = u_xlat5_;
+    let _e665 = _v_buffer2_.v_cb2_[12];
+    vs_TEXCOORD1_ = ((_e658.x * _e660) + -(_e665.z));
+    return;
+}
+
+@vertex 
+fn main(@location(0) in_POSITION0_: vec4<f32>, @location(4) in_TEXCOORD0_: vec2<f32>, @location(3) in_COLOR0_: vec4<f32>, @location(1) in_NORMAL0_: vec3<f32>) -> VertexOutput {
+    in_POSITION0_1 = in_POSITION0_;
+    in_TEXCOORD0_1 = in_TEXCOORD0_;
+    in_COLOR0_1 = in_COLOR0_;
+    in_NORMAL0_1 = in_NORMAL0_;
+    main_1();
+    let _e34 = vs_TEXCOORD0_;
+    let _e36 = vs_COLOR1_;
+    let _e38 = vs_COLOR0_;
+    let _e40 = vs_TEXCOORD1_;
+    let _e42 = gl_Position;
+    return VertexOutput(_e34, _e36, _e38, _e40, _e42);
+}

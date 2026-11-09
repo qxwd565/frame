@@ -1,0 +1,5 @@
+dist/
+.build/
+node_modules/
+tools/node_modules/
+tools/translate-vulkan.exe

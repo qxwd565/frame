@@ -1,0 +1,602 @@
+struct HScardSamplerBias {
+    values: array<vec4<f32>, 16>,
+}
+
+struct f_buffer0_ {
+    f_cb0_: array<vec4<f32>, 5>,
+}
+
+struct f_buffer1_ {
+    f_cb1_: array<vec4<f32>, 34>,
+}
+
+struct FragmentOutput {
+    @location(0) SV_Target0_: vec4<f32>,
+}
+
+@group(1) @binding(31) 
+var<uniform> hscard_bias: HScardSamplerBias;
+@group(1) @binding(0) 
+var<uniform> _f_buffer0_: f_buffer0_;
+@group(1) @binding(1) 
+var<uniform> _f_buffer1_: f_buffer1_;
+@group(3) @binding(1) 
+var samplerf_s0_: sampler;
+@group(3) @binding(3) 
+var samplerf_s1_: sampler;
+@group(3) @binding(5) 
+var samplerf_s2_: sampler;
+@group(3) @binding(7) 
+var samplerf_s3_: sampler;
+@group(3) @binding(9) 
+var samplerf_s4_: sampler;
+@group(3) @binding(11) 
+var samplerf_s5_: sampler;
+@group(3) @binding(13) 
+var samplerf_s6_: sampler;
+@group(3) @binding(0) 
+var f_t0_: texture_2d<f32>;
+@group(3) @binding(2) 
+var f_t1_: texture_2d<f32>;
+@group(3) @binding(4) 
+var f_t2_: texture_2d<f32>;
+@group(3) @binding(6) 
+var f_t3_: texture_2d<f32>;
+@group(3) @binding(8) 
+var f_t4_: texture_2d<f32>;
+@group(3) @binding(10) 
+var f_t5_: texture_2d<f32>;
+@group(3) @binding(12) 
+var f_t6_: texture_2d<f32>;
+var<private> vs_TEXCOORD0_1: vec4<f32>;
+var<private> vs_TEXCOORD1_1: vec4<f32>;
+var<private> vs_COLOR0_1: vec4<f32>;
+var<private> SV_Target0_: vec4<f32>;
+
+fn main_1() {
+    var u_xlat0_: vec4<f32> = vec4(0f);
+    var u_xlat1_: vec4<f32> = vec4(0f);
+    var u_xlatb1_: vec3<bool> = vec3(false);
+    var u_xlat2_: f32 = 0f;
+    var u_xlat3_: vec4<f32> = vec4(0f);
+    var u_xlat4_: vec4<f32> = vec4(0f);
+    var u_xlat5_: vec4<f32> = vec4(0f);
+    var u_xlat6_: vec4<f32> = vec4(0f);
+    var u_xlat7_: vec4<f32> = vec4(0f);
+    var u_xlat8_: vec4<f32> = vec4(0f);
+    var u_xlat10_: f32 = 0f;
+    var u_xlat11_: vec2<f32> = vec2(0f);
+    var u_xlatb11_: vec2<bool> = vec2(false);
+    var u_xlat18_: vec2<f32> = vec2(0f);
+    var u_xlat19_: vec2<f32> = vec2(0f);
+    var u_xlatb19_: vec2<bool> = vec2(false);
+    var u_xlat29_: f32 = 0f;
+    var local: vec4<f32>;
+    var local_1: vec4<f32>;
+    var local_2: vec4<f32>;
+    var local_3: vec4<f32>;
+    var local_4: vec4<f32>;
+    var local_5: vec4<f32>;
+
+    let _e92 = u_xlat0_;
+    let _e97 = _f_buffer1_.f_cb1_[11];
+    let _e102 = _f_buffer1_.f_cb1_[11];
+    let _e104 = (_e97.zw + _e102.xy);
+    u_xlat0_.x = _e104.x;
+    u_xlat0_.y = _e104.y;
+    let _e109 = u_xlat18_;
+    let _e114 = _f_buffer1_.f_cb1_[24];
+    let _e119 = _f_buffer1_.f_cb1_[24];
+    let _e121 = (_e114.zw + _e119.xy);
+    u_xlat18_.x = _e121.x;
+    u_xlat18_.y = _e121.y;
+    let _e126 = vs_TEXCOORD0_1;
+    let _e131 = _f_buffer0_.f_cb0_[4];
+    let _e136 = hscard_bias.values[1];
+    let _e139 = textureSampleBias(f_t1_, samplerf_s1_, _e126.xy, (_e131.x + _e136.x));
+    u_xlat1_ = _e139;
+    let _e140 = u_xlat1_;
+    let _e144 = _f_buffer1_.f_cb1_[27];
+    u_xlat2_ = dot(_e140, _e144);
+    let _e146 = u_xlat2_;
+    u_xlat2_ = min(_e146, 1f);
+    let _e149 = vs_TEXCOORD1_1;
+    let _e154 = _f_buffer0_.f_cb0_[4];
+    let _e159 = hscard_bias.values[6];
+    let _e162 = textureSampleBias(f_t6_, samplerf_s6_, _e149.zw, (_e154.x + _e159.x));
+    u_xlat3_ = _e162;
+    let _e163 = u_xlat2_;
+    let _e164 = u_xlat3_;
+    u_xlat2_ = (_e163 * _e164.w);
+    let _e167 = u_xlat2_;
+    let _e169 = u_xlat3_;
+    u_xlat4_ = (vec4(_e167) * _e169.xyxy);
+    let _e172 = u_xlat4_;
+    let _e176 = _f_buffer1_.f_cb1_[33];
+    u_xlat4_ = (_e172 * _e176.zwxy);
+    let _e179 = u_xlat11_;
+    let _e181 = u_xlat2_;
+    let _e183 = u_xlat4_;
+    let _e185 = (vec2(_e181) * _e183.xy);
+    u_xlat11_.x = _e185.x;
+    u_xlat11_.y = _e185.y;
+    let _e190 = u_xlat4_;
+    let _e192 = u_xlat11_;
+    let _e198 = vs_TEXCOORD1_1;
+    let _e200 = ((_e192.xy * vec2<f32>(0.001f, 0.001f)) + _e198.xy);
+    u_xlat4_.x = _e200.x;
+    u_xlat4_.y = _e200.y;
+    let _e205 = u_xlat4_;
+    let _e210 = _f_buffer0_.f_cb0_[4];
+    let _e215 = hscard_bias.values[5];
+    let _e218 = textureSampleBias(f_t5_, samplerf_s5_, _e205.xy, (_e210.x + _e215.x));
+    u_xlat5_ = _e218;
+    let _e219 = u_xlat4_;
+    let _e224 = _f_buffer1_.f_cb1_[24];
+    let _e230 = _f_buffer1_.f_cb1_[25];
+    let _e232 = (-(_e224.xy) + _e230.zw);
+    u_xlat4_.x = _e232.x;
+    u_xlat4_.y = _e232.y;
+    let _e237 = u_xlat5_;
+    let _e239 = u_xlat4_;
+    let _e242 = u_xlat5_;
+    let _e244 = (-(_e239.xy) + _e242.xy);
+    u_xlat5_.x = _e244.x;
+    u_xlat5_.y = _e244.y;
+    let _e249 = u_xlat4_;
+    let _e251 = u_xlat5_;
+    let _e256 = _f_buffer1_.f_cb1_[25];
+    let _e259 = u_xlat4_;
+    let _e261 = ((_e251.xy * _e256.xy) + _e259.xy);
+    u_xlat4_.x = _e261.x;
+    u_xlat4_.y = _e261.y;
+    let _e266 = u_xlat18_;
+    let _e268 = u_xlat18_;
+    let _e270 = u_xlat4_;
+    let _e272 = (_e268.xy + _e270.xy);
+    u_xlat18_.x = _e272.x;
+    u_xlat18_.y = _e272.y;
+    let _e277 = u_xlat18_;
+    let _e282 = _f_buffer0_.f_cb0_[4];
+    let _e287 = hscard_bias.values[4];
+    let _e290 = textureSampleBias(f_t4_, samplerf_s4_, _e277.xy, (_e282.x + _e287.x));
+    u_xlat6_ = _e290;
+    let _e291 = u_xlat18_;
+    let _e293 = u_xlat6_;
+    let _e298 = _f_buffer1_.f_cb1_[20];
+    let _e300 = (_e293.xy * _e298.zw);
+    u_xlat18_.x = _e300.x;
+    u_xlat18_.y = _e300.y;
+    let _e305 = u_xlat1_;
+    let _e309 = _f_buffer1_.f_cb1_[14];
+    u_xlat29_ = dot(_e305, _e309);
+    let _e312 = u_xlat1_;
+    let _e316 = _f_buffer1_.f_cb1_[2];
+    u_xlat1_.x = dot(_e312, _e316);
+    let _e319 = u_xlat1_;
+    u_xlat1_.x = min(_e319.x, 1f);
+    let _e323 = u_xlat29_;
+    u_xlat10_ = min(_e323, 1f);
+    let _e327 = u_xlat5_;
+    let _e329 = u_xlat6_;
+    u_xlat6_.w = (_e327.z * _e329.w);
+    let _e332 = u_xlat10_;
+    let _e333 = u_xlat6_;
+    u_xlat10_ = (_e332 * _e333.w);
+    let _e336 = u_xlat18_;
+    let _e338 = u_xlat18_;
+    let _e340 = u_xlat10_;
+    let _e343 = u_xlat11_;
+    let _e345 = ((_e338.xy * vec2(_e340)) + _e343.xy);
+    u_xlat18_.x = _e345.x;
+    u_xlat18_.y = _e345.y;
+    let _e350 = u_xlat18_;
+    let _e352 = u_xlat18_;
+    let _e358 = vs_TEXCOORD0_1;
+    let _e360 = ((_e352.xy * vec2<f32>(0.001f, 0.001f)) + _e358.zw);
+    u_xlat18_.x = _e360.x;
+    u_xlat18_.y = _e360.y;
+    let _e365 = u_xlat18_;
+    let _e370 = _f_buffer0_.f_cb0_[4];
+    let _e375 = hscard_bias.values[3];
+    let _e378 = textureSampleBias(f_t3_, samplerf_s3_, _e365.xy, (_e370.x + _e375.x));
+    u_xlat5_ = _e378;
+    let _e379 = u_xlat18_;
+    let _e384 = _f_buffer1_.f_cb1_[11];
+    let _e390 = _f_buffer1_.f_cb1_[12];
+    let _e392 = (-(_e384.xy) + _e390.zw);
+    u_xlat18_.x = _e392.x;
+    u_xlat18_.y = _e392.y;
+    let _e397 = u_xlat19_;
+    let _e399 = u_xlat18_;
+    let _e402 = u_xlat5_;
+    let _e404 = (-(_e399.xy) + _e402.xy);
+    u_xlat19_.x = _e404.x;
+    u_xlat19_.y = _e404.y;
+    let _e409 = u_xlat18_;
+    let _e411 = u_xlat19_;
+    let _e416 = _f_buffer1_.f_cb1_[12];
+    let _e419 = u_xlat18_;
+    let _e421 = ((_e411.xy * _e416.xy) + _e419.xy);
+    u_xlat18_.x = _e421.x;
+    u_xlat18_.y = _e421.y;
+    let _e426 = u_xlat0_;
+    let _e428 = u_xlat0_;
+    let _e430 = u_xlat18_;
+    let _e432 = (_e428.xy + _e430.xy);
+    u_xlat0_.x = _e432.x;
+    u_xlat0_.y = _e432.y;
+    let _e437 = u_xlat0_;
+    let _e442 = _f_buffer0_.f_cb0_[4];
+    let _e447 = hscard_bias.values[2];
+    let _e450 = textureSampleBias(f_t2_, samplerf_s2_, _e437.xy, (_e442.x + _e447.x));
+    u_xlat0_ = _e450;
+    let _e451 = u_xlat19_;
+    let _e453 = u_xlat0_;
+    let _e458 = _f_buffer1_.f_cb1_[8];
+    let _e460 = (_e453.xy * _e458.xy);
+    u_xlat19_.x = _e460.x;
+    u_xlat19_.y = _e460.y;
+    let _e466 = u_xlat5_;
+    let _e468 = u_xlat0_;
+    u_xlat0_.w = (_e466.z * _e468.w);
+    let _e472 = u_xlat1_;
+    let _e474 = u_xlat0_;
+    u_xlat1_.x = (_e472.x * _e474.w);
+    let _e477 = u_xlat11_;
+    let _e479 = u_xlat10_;
+    let _e481 = u_xlat6_;
+    let _e483 = (vec2(_e479) * _e481.xy);
+    u_xlat11_.x = _e483.x;
+    u_xlat11_.y = _e483.y;
+    let _e488 = u_xlat11_;
+    let _e490 = u_xlat11_;
+    let _e495 = _f_buffer1_.f_cb1_[20];
+    let _e497 = (_e490.xy * _e495.xy);
+    u_xlat11_.x = _e497.x;
+    u_xlat11_.y = _e497.y;
+    let _e502 = u_xlat11_;
+    let _e504 = u_xlat10_;
+    let _e506 = u_xlat11_;
+    let _e508 = (vec2(_e504) * _e506.xy);
+    u_xlat11_.x = _e508.x;
+    u_xlat11_.y = _e508.y;
+    let _e513 = u_xlat19_;
+    let _e515 = u_xlat19_;
+    let _e517 = u_xlat1_;
+    let _e520 = u_xlat11_;
+    let _e522 = ((_e515.xy * _e517.xx) + _e520.xy);
+    u_xlat19_.x = _e522.x;
+    u_xlat19_.y = _e522.y;
+    let _e527 = u_xlat19_;
+    let _e529 = u_xlat4_;
+    let _e531 = u_xlat2_;
+    let _e534 = u_xlat19_;
+    let _e536 = ((_e529.zw * vec2(_e531)) + _e534.xy);
+    u_xlat19_.x = _e536.x;
+    u_xlat19_.y = _e536.y;
+    let _e541 = u_xlat19_;
+    let _e543 = u_xlat19_;
+    let _e549 = vs_TEXCOORD0_1;
+    let _e551 = ((_e543.xy * vec2<f32>(0.001f, 0.001f)) + _e549.xy);
+    u_xlat19_.x = _e551.x;
+    u_xlat19_.y = _e551.y;
+    let _e556 = u_xlat19_;
+    let _e561 = _f_buffer0_.f_cb0_[4];
+    let _e566 = hscard_bias.values[0];
+    let _e569 = textureSampleBias(f_t0_, samplerf_s0_, _e556.xy, (_e561.x + _e566.x));
+    u_xlat4_ = _e569;
+    let _e573 = _f_buffer1_.f_cb1_[3];
+    let _e578 = _f_buffer1_.f_cb1_[3];
+    u_xlat5_ = (_e573.wwww * _e578);
+    let _e580 = u_xlat0_;
+    let _e581 = u_xlat5_;
+    let _e583 = u_xlat4_;
+    u_xlat7_ = ((_e580 * _e581) + -(_e583));
+    let _e586 = u_xlat0_;
+    let _e587 = u_xlat5_;
+    u_xlat8_ = (_e586 * _e587);
+    let _e589 = u_xlat0_;
+    let _e591 = u_xlat5_;
+    u_xlat0_ = ((-(_e589) * _e591) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e600 = u_xlat8_;
+    let _e605 = _f_buffer1_.f_cb1_[7];
+    u_xlat19_.x = (_e600.w * _e605.w);
+    let _e609 = u_xlat19_;
+    u_xlat19_.x = clamp(_e609.x, 0f, 1f);
+    let _e614 = u_xlat19_;
+    let _e616 = u_xlat7_;
+    let _e618 = u_xlat4_;
+    u_xlat5_ = ((_e614.xxxx * _e616) + _e618);
+    let _e620 = u_xlatb19_;
+    let _e630 = _f_buffer1_.f_cb1_[7];
+    let _e633 = (vec4<f32>(0f, 0f, 0f, 0f) < _e630.wzwz).xy;
+    u_xlatb19_.x = _e633.x;
+    u_xlatb19_.y = _e633.y;
+    let _e638 = u_xlatb19_;
+    if _e638.x {
+        let _e640 = u_xlat5_;
+        local = _e640;
+    } else {
+        let _e641 = u_xlat4_;
+        local = _e641;
+    }
+    let _e643 = local;
+    u_xlat5_ = _e643;
+    let _e644 = u_xlat8_;
+    let _e645 = u_xlat5_;
+    u_xlat7_ = (_e644 * _e645);
+    let _e647 = u_xlat7_;
+    let _e651 = _f_buffer1_.f_cb1_[7];
+    let _e654 = u_xlat5_;
+    u_xlat5_ = ((_e647 * _e651.yyyy) + _e654);
+    let _e656 = u_xlat8_;
+    let _e660 = _f_buffer1_.f_cb1_[7];
+    let _e663 = u_xlat5_;
+    u_xlat5_ = ((_e656 * _e660.xxxx) + _e663);
+    let _e665 = u_xlat5_;
+    u_xlat7_ = (-(_e665) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e673 = u_xlat7_;
+    let _e674 = u_xlat7_;
+    u_xlat7_ = (_e673 + _e674);
+    let _e676 = u_xlat7_;
+    let _e678 = u_xlat0_;
+    u_xlat0_ = ((-(_e676) * _e678) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e686 = u_xlat5_;
+    let _e687 = u_xlat5_;
+    u_xlat7_ = (_e686 + _e687);
+    let _e689 = u_xlat7_;
+    let _e691 = u_xlat8_;
+    let _e693 = u_xlat0_;
+    u_xlat0_ = ((-(_e689) * _e691) + _e693);
+    let _e695 = u_xlat8_;
+    let _e696 = u_xlat7_;
+    u_xlat8_ = (_e695 * _e696);
+    let _e698 = u_xlat7_;
+    u_xlat7_ = floor(_e698);
+    let _e700 = u_xlat7_;
+    u_xlat7_ = min(_e700, vec4<f32>(1f, 1f, 1f, 1f));
+    let _e707 = u_xlat7_;
+    let _e708 = u_xlat0_;
+    let _e710 = u_xlat8_;
+    u_xlat0_ = ((_e707 * _e708) + _e710);
+    let _e712 = u_xlat4_;
+    let _e714 = u_xlat0_;
+    u_xlat0_ = (-(_e712) + _e714);
+    let _e719 = _f_buffer1_.f_cb1_[7];
+    let _e721 = u_xlat0_;
+    let _e723 = u_xlat4_;
+    u_xlat0_ = ((_e719.zzzz * _e721) + _e723);
+    let _e725 = u_xlatb19_;
+    if _e725.y {
+        let _e727 = u_xlat0_;
+        local_1 = _e727;
+    } else {
+        let _e728 = u_xlat5_;
+        local_1 = _e728;
+    }
+    let _e730 = local_1;
+    u_xlat0_ = _e730;
+    let _e731 = u_xlat4_;
+    let _e733 = u_xlat0_;
+    u_xlat0_ = (-(_e731) + _e733);
+    let _e735 = u_xlat1_;
+    let _e737 = u_xlat0_;
+    let _e739 = u_xlat4_;
+    u_xlat0_ = ((_e735.xxxx * _e737) + _e739);
+    let _e744 = _f_buffer1_.f_cb1_[15];
+    let _e749 = _f_buffer1_.f_cb1_[15];
+    u_xlat4_ = (_e744.wwww * _e749);
+    let _e751 = u_xlat6_;
+    let _e752 = u_xlat4_;
+    let _e754 = u_xlat0_;
+    u_xlat5_ = ((_e751 * _e752) + -(_e754));
+    let _e757 = u_xlat4_;
+    let _e758 = u_xlat6_;
+    u_xlat7_ = (_e757 * _e758);
+    let _e760 = u_xlat6_;
+    let _e762 = u_xlat4_;
+    u_xlat4_ = ((-(_e760) * _e762) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e771 = u_xlat7_;
+    let _e776 = _f_buffer1_.f_cb1_[19];
+    u_xlat1_.x = (_e771.w * _e776.w);
+    let _e780 = u_xlat1_;
+    u_xlat1_.x = clamp(_e780.x, 0f, 1f);
+    let _e785 = u_xlat1_;
+    let _e787 = u_xlat5_;
+    let _e789 = u_xlat0_;
+    u_xlat5_ = ((_e785.xxxx * _e787) + _e789);
+    let _e791 = u_xlatb1_;
+    let _e801 = _f_buffer1_.f_cb1_[19];
+    let _e804 = (vec4<f32>(0f, 0f, 0f, 0f) < _e801.wwzw).xz;
+    u_xlatb1_.x = _e804.x;
+    u_xlatb1_.z = _e804.y;
+    let _e809 = u_xlatb1_;
+    if _e809.x {
+        let _e811 = u_xlat5_;
+        local_2 = _e811;
+    } else {
+        let _e812 = u_xlat0_;
+        local_2 = _e812;
+    }
+    let _e814 = local_2;
+    u_xlat5_ = _e814;
+    let _e815 = u_xlat7_;
+    let _e816 = u_xlat5_;
+    u_xlat6_ = (_e815 * _e816);
+    let _e818 = u_xlat6_;
+    let _e822 = _f_buffer1_.f_cb1_[19];
+    let _e825 = u_xlat5_;
+    u_xlat5_ = ((_e818 * _e822.yyyy) + _e825);
+    let _e827 = u_xlat7_;
+    let _e831 = _f_buffer1_.f_cb1_[19];
+    let _e834 = u_xlat5_;
+    u_xlat5_ = ((_e827 * _e831.xxxx) + _e834);
+    let _e836 = u_xlat5_;
+    u_xlat6_ = (-(_e836) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e844 = u_xlat6_;
+    let _e845 = u_xlat6_;
+    u_xlat6_ = (_e844 + _e845);
+    let _e847 = u_xlat6_;
+    let _e849 = u_xlat4_;
+    u_xlat4_ = ((-(_e847) * _e849) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e857 = u_xlat5_;
+    let _e858 = u_xlat5_;
+    u_xlat6_ = (_e857 + _e858);
+    let _e860 = u_xlat6_;
+    let _e862 = u_xlat7_;
+    let _e864 = u_xlat4_;
+    u_xlat4_ = ((-(_e860) * _e862) + _e864);
+    let _e866 = u_xlat7_;
+    let _e867 = u_xlat6_;
+    u_xlat7_ = (_e866 * _e867);
+    let _e869 = u_xlat6_;
+    u_xlat6_ = floor(_e869);
+    let _e871 = u_xlat6_;
+    u_xlat6_ = min(_e871, vec4<f32>(1f, 1f, 1f, 1f));
+    let _e878 = u_xlat6_;
+    let _e879 = u_xlat4_;
+    let _e881 = u_xlat7_;
+    u_xlat4_ = ((_e878 * _e879) + _e881);
+    let _e883 = u_xlat0_;
+    let _e885 = u_xlat4_;
+    u_xlat4_ = (-(_e883) + _e885);
+    let _e890 = _f_buffer1_.f_cb1_[19];
+    let _e892 = u_xlat4_;
+    let _e894 = u_xlat0_;
+    u_xlat4_ = ((_e890.zzzz * _e892) + _e894);
+    let _e896 = u_xlatb1_;
+    if _e896.z {
+        let _e898 = u_xlat4_;
+        local_3 = _e898;
+    } else {
+        let _e899 = u_xlat5_;
+        local_3 = _e899;
+    }
+    let _e901 = local_3;
+    u_xlat4_ = _e901;
+    let _e902 = u_xlat0_;
+    let _e904 = u_xlat4_;
+    u_xlat4_ = (-(_e902) + _e904);
+    let _e906 = u_xlat10_;
+    let _e908 = u_xlat4_;
+    let _e910 = u_xlat0_;
+    u_xlat0_ = ((vec4(_e906) * _e908) + _e910);
+    let _e915 = _f_buffer1_.f_cb1_[28];
+    let _e920 = _f_buffer1_.f_cb1_[28];
+    u_xlat1_ = (_e915.wwww * _e920);
+    let _e922 = u_xlat3_;
+    let _e923 = u_xlat1_;
+    let _e925 = u_xlat0_;
+    u_xlat4_ = ((_e922 * _e923) + -(_e925));
+    let _e928 = u_xlat1_;
+    let _e929 = u_xlat3_;
+    u_xlat5_ = (_e928 * _e929);
+    let _e931 = u_xlat3_;
+    let _e933 = u_xlat1_;
+    u_xlat1_ = ((-(_e931) * _e933) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e942 = u_xlat5_;
+    let _e947 = _f_buffer1_.f_cb1_[32];
+    u_xlat11_.x = (_e942.w * _e947.w);
+    let _e951 = u_xlat11_;
+    u_xlat11_.x = clamp(_e951.x, 0f, 1f);
+    let _e956 = u_xlat11_;
+    let _e958 = u_xlat4_;
+    let _e960 = u_xlat0_;
+    u_xlat3_ = ((_e956.xxxx * _e958) + _e960);
+    let _e962 = u_xlatb11_;
+    let _e972 = _f_buffer1_.f_cb1_[32];
+    let _e975 = (vec4<f32>(0f, 0f, 0f, 0f) < _e972.wzww).xy;
+    u_xlatb11_.x = _e975.x;
+    u_xlatb11_.y = _e975.y;
+    let _e980 = u_xlatb11_;
+    if _e980.x {
+        let _e982 = u_xlat3_;
+        local_4 = _e982;
+    } else {
+        let _e983 = u_xlat0_;
+        local_4 = _e983;
+    }
+    let _e985 = local_4;
+    u_xlat3_ = _e985;
+    let _e986 = u_xlat5_;
+    let _e987 = u_xlat3_;
+    u_xlat4_ = (_e986 * _e987);
+    let _e989 = u_xlat4_;
+    let _e993 = _f_buffer1_.f_cb1_[32];
+    let _e996 = u_xlat3_;
+    u_xlat3_ = ((_e989 * _e993.yyyy) + _e996);
+    let _e998 = u_xlat5_;
+    let _e1002 = _f_buffer1_.f_cb1_[32];
+    let _e1005 = u_xlat3_;
+    u_xlat3_ = ((_e998 * _e1002.xxxx) + _e1005);
+    let _e1007 = u_xlat3_;
+    u_xlat4_ = (-(_e1007) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e1015 = u_xlat4_;
+    let _e1016 = u_xlat4_;
+    u_xlat4_ = (_e1015 + _e1016);
+    let _e1018 = u_xlat4_;
+    let _e1020 = u_xlat1_;
+    u_xlat1_ = ((-(_e1018) * _e1020) + vec4<f32>(1f, 1f, 1f, 1f));
+    let _e1028 = u_xlat3_;
+    let _e1029 = u_xlat3_;
+    u_xlat4_ = (_e1028 + _e1029);
+    let _e1031 = u_xlat4_;
+    let _e1033 = u_xlat5_;
+    let _e1035 = u_xlat1_;
+    u_xlat1_ = ((-(_e1031) * _e1033) + _e1035);
+    let _e1037 = u_xlat5_;
+    let _e1038 = u_xlat4_;
+    u_xlat5_ = (_e1037 * _e1038);
+    let _e1040 = u_xlat4_;
+    u_xlat4_ = floor(_e1040);
+    let _e1042 = u_xlat4_;
+    u_xlat4_ = min(_e1042, vec4<f32>(1f, 1f, 1f, 1f));
+    let _e1049 = u_xlat4_;
+    let _e1050 = u_xlat1_;
+    let _e1052 = u_xlat5_;
+    u_xlat1_ = ((_e1049 * _e1050) + _e1052);
+    let _e1054 = u_xlat0_;
+    let _e1056 = u_xlat1_;
+    u_xlat1_ = (-(_e1054) + _e1056);
+    let _e1061 = _f_buffer1_.f_cb1_[32];
+    let _e1063 = u_xlat1_;
+    let _e1065 = u_xlat0_;
+    u_xlat1_ = ((_e1061.zzzz * _e1063) + _e1065);
+    let _e1067 = u_xlatb11_;
+    if _e1067.y {
+        let _e1069 = u_xlat1_;
+        local_5 = _e1069;
+    } else {
+        let _e1070 = u_xlat3_;
+        local_5 = _e1070;
+    }
+    let _e1072 = local_5;
+    u_xlat1_ = _e1072;
+    let _e1073 = u_xlat0_;
+    let _e1075 = u_xlat1_;
+    u_xlat1_ = (-(_e1073) + _e1075);
+    let _e1077 = u_xlat2_;
+    let _e1079 = u_xlat1_;
+    let _e1081 = u_xlat0_;
+    u_xlat0_ = ((vec4(_e1077) * _e1079) + _e1081);
+    let _e1083 = u_xlat0_;
+    u_xlat0_ = clamp(_e1083, vec4(0f), vec4(1f));
+    let _e1089 = u_xlat0_;
+    let _e1090 = vs_COLOR0_1;
+    u_xlat1_ = (_e1089 * _e1090);
+    let _e1092 = u_xlat0_;
+    let _e1093 = u_xlat1_;
+    SV_Target0_ = min(_e1092, _e1093);
+    return;
+}
+
+@fragment 
+fn main(@location(0) vs_TEXCOORD0_: vec4<f32>, @location(1) vs_TEXCOORD1_: vec4<f32>, @location(10) vs_COLOR0_: vec4<f32>) -> FragmentOutput {
+    vs_TEXCOORD0_1 = vs_TEXCOORD0_;
+    vs_TEXCOORD1_1 = vs_TEXCOORD1_;
+    vs_COLOR0_1 = vs_COLOR0_;
+    main_1();
+    let _e52 = SV_Target0_;
+    return FragmentOutput(_e52);
+}
