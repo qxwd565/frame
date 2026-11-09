@@ -2,7 +2,8 @@
 
 This branch contains HScard's WebGPU preview and its immutable frame resources.
 WordPress/PHP and browser renderer code live in `plugin/hscard/`; the WordPress
-ZIP contains only that directory's runtime files and static loading previews.
+ZIP contains only that directory's runtime files and a loading-preview index.
+Loading images live with the native resources on the CDN, keeping installation small.
 Tests and documentation stay in the development repository. The former
 `qxwd565/HSdeck-plugin` URL redirects to this repository, so code and resources
 are kept in separate directories here as requested.
@@ -45,5 +46,12 @@ subject to their original owners' rights; licenses for bundled libraries are in
 the versioned assets directory.
 
 Plugin checks and browser fixtures are documented in `plugin/hscard/tests/README.md`.
+To rebuild first-paint previews, start `node tests/serve.mjs` in `plugin/hscard`,
+then run `node tools/build-frame-previews.mjs` from the repository root. This
+uses the actual WebGPU loading-card renderer, original frame meshes/materials
+and the shared historical date selector. It never exports raw texture atlases.
+Date/class/rarity/race variants share identical content-hashed CDN images;
+the original extracted textures and meshes remain unchanged. The WordPress
+HTML selects its preview without waiting for JavaScript or a card API call.
 Full plugin implementation and validation notes are in
 `plugin/hscard/docs/WEBGPU-STAGING-STATUS.md`.

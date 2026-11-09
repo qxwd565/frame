@@ -133,3 +133,34 @@ Reinstallation and any full-page cache purge on the live server remain pending.
 
 PHP and JavaScript syntax checks passed. Dates-v1 Backstab snapshots were checked
 at 2013-08-17, 2013-10-03 and back to 2013-08-17 without state contamination.
+
+## Four-column layout and native loading previews, 2026-11-09
+
+The old 60 local preview images contained raw frame texture atlases, including
+unassembled dragon/name-plate pieces. Replaced them with transparent snapshots
+from the actual WebGPU loading-card renderer: 540 type/class/rarity/plate keys,
+1,430 render jobs and 1,065 distinct content-addressed images. Native meshes,
+textures, UVs, materials and shader calculations are unchanged. Historical
+intervals come from the existing renderer selector, including 3664 and 3890;
+20 unsupported pre-class historical combinations retain the current placeholder.
+The initial image is still provisional when a dated card's metadata differs
+from the imported WordPress record; the dated API remains authoritative.
+
+Images are served with the existing native resources, not installed in the ZIP.
+Only a 144 KB preview index is added to WordPress. No card API, JavaScript or
+font initialization is needed to choose/display the first server-rendered image.
+The preview is a 256x400 WebP snapshot; original texture resolution is unchanged.
+
+PHP checked all 2,185 date/key markup cases, hashes and image dimensions.
+Chrome checked 375/820 px mobile and 821/1024/1440/1920 px desktop: four desktop
+columns, no horizontal overflow, no overlapping card rectangles even with old
+five-column edge rules present. Mobile plugin rules are unchanged. A controlled
+browser override of the actual rogue page's local JS and concatenated CSS
+rendered the first deck's 16 cards in four columns, then 16 golden cards, with
+no card failures or console exceptions. This did not update WordPress itself.
+
+The 10-card entry check retained normal/golden toggles, hover, offscreen pause
+and device recovery: zero old GPU resources and no errors. Native stat speeds
+and shader clocks are unchanged. PHP syntax, JS syntax and content-based
+dependency/CSS invalidation checks passed. Not compared to a new native-game
+capture or an actual WordPress ZIP installation in this change.

@@ -64,16 +64,19 @@
   }
 }
 
-/* 7.12.06: Five cards per article row; each GPU card occupies exactly one cell.
+/* Four cards per desktop article row; each GPU card occupies exactly one cell.
    Fit to the theme's existing post width instead of creating horizontal scroll.
-   The entire WebGL quantity ribbon remains a native part of the card texture. */
+   The entire WebGPU quantity ribbon remains a native part of the card texture. */
 @media (min-width: 821px) {
   .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-body {
     width: 100%; max-width: 100%; min-width: 0; padding: 0; box-sizing: border-box;
+    /* Edge alignment moves transparent frame padding outside the grid.
+       Clip that padding so wider four-column cards cannot create page scroll. */
+    overflow: clip;
   }
   .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-cards.hscard-deck-column {
     display: grid !important;
-    grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
     grid-auto-flow: row;
     column-gap: clamp(4px, 1.2%, 16px);
     row-gap: clamp(12px, 2.5vw, 32px);
@@ -156,8 +159,9 @@
   .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="MINION"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: 6.55%; }
   .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-display-golden="true"][data-hscard-frame-kind="MINION"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: 1.5%; }
   .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="SPELL"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: .35%; }
-  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(5n + 1) > .hscard-card-surface { transform: translateX(calc(0% - var(--hscard-ink-start))); }
-  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(5n) > .hscard-card-surface { transform: translateX(var(--hscard-ink-end)); }
+  .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-cards > .hscard-deck-card > .hscard-card-surface { transform: none; }
+  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(4n + 1) > .hscard-card-surface { transform: translateX(calc(0% - var(--hscard-ink-start))); }
+  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(4n) > .hscard-card-surface { transform: translateX(var(--hscard-ink-end)); }
 }
 
 @media (min-width:821px){

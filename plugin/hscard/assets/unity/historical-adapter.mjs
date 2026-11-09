@@ -1,7 +1,7 @@
-import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-d5544104773f6694';
-import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-d5544104773f6694';
-import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-d5544104773f6694';
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-d5544104773f6694';
+import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-eafb3539c3e52e3f';
+import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-eafb3539c3e52e3f';
+import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-eafb3539c3e52e3f';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-eafb3539c3e52e3f';
 const f=Math.fround,identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function trs(t){const [x,y,z,w]=t.rotation,[sx,sy,sz]=t.scale,[px,py,pz]=t.position;return [f((1-2*(y*y+z*z))*sx),f(2*(x*y+z*w)*sx),f(2*(x*z-y*w)*sx),0,f(2*(x*y-z*w)*sy),f((1-2*(x*x+z*z))*sy),f(2*(y*z+x*w)*sy),0,f(2*(x*z+y*w)*sz),f(2*(y*z-x*w)*sz),f((1-2*(x*x+y*y))*sz),0,px,py,pz,1];}
 function oldPose(n){if(!n.chain)return trs(n);return n.chain.reduce((m,t)=>multiply(m,trs(t)),identity());}

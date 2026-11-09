@@ -4,6 +4,11 @@ These files are development-only and are excluded from the WordPress ZIP.
 Run `node tests/asset-revisions.mjs` to check unchanged builds and dependency/CSS
 cache invalidation, including the module import graph, without changing sources.
 Run `php tests/enqueue-revision.php` for PHP's matching script/style cache key.
+Run `php tests/frame-previews.php` to verify every generated preview hash,
+dimension and PHP date/class/rarity/plate selection. `preview-layout.html` shows
+mixed original loading frames without any card API, engine or font request.
+At widths 821 and above it must show four columns without horizontal overflow;
+the plugin's mobile preview rules remain unchanged below that breakpoint.
 Run `node tests/shader-time.mjs` to verify normal/golden stat-effect time vectors
 at 0, 1, 10 and 60 seconds and unchanged native X/Y speed values.
 Use a compatible Chrome/Edge WebGPU adapter; the browser must report its actual

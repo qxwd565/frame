@@ -5,7 +5,7 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class Native_Cards {
  const WEBGPU_RESOURCE_BASE = 'https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity/';
- /** Asset URL ends with /assets/unity/. WordPress code and previews stay local. */
+ /** Asset URL ends with /assets/unity/. WordPress code and preview index stay local. */
  public static function resource_base() {
   $url = defined( 'HSCARD_RESOURCE_BASE_URL' ) ? (string) HSCARD_RESOURCE_BASE_URL : (string) get_option( 'hscard_resource_base_url', '' );
   $url = trim( $url );
@@ -80,14 +80,37 @@ final class Native_Cards {
   // The static preview is intentionally independent of JS, WebGPU and card APIs.
   // Browser paints it as soon as the server sends HTML. Full native geometry
   // takes over after its first successful GPU present.
-  $preview_file = 'assets/unity/frame-previews/' . strtolower( $kind ) . '-' . strtolower( $class ) . '.webp';
-  $preview_url = plugins_url( $preview_file, HSCARD_PATH . 'hscard.php' );
+  $variant = 'MINION' === $kind ? (int) $race : ( 'SPELL' === $kind ? (int) ! empty( $card['spell_school'] ) : ( 'HERO' === $kind ? (int) ! empty( $card['armor'] ) : 0 ) );
+  $preview_url = self::preview_url( $kind, $class, $rarity, $variant, $frame_profile, $details['date'] );
   ob_start(); ?>
   <figure data-hscard-card="<?php echo esc_attr( $card_data ); ?>" class="hscard-card-surface<?php echo ! empty( $card['is_sideboard'] ) ? ' is-sideboard' : ''; ?>" data-hscard-frame-kind="<?php echo esc_attr( $kind ); ?>" data-hscard-frame-rarity="<?php echo esc_attr( $rarity ); ?>" data-hscard-frame-class="<?php echo esc_attr( $class ); ?>" data-hscard-frame-race="<?php echo esc_attr( $race ); ?>" data-hscard-frame-school="<?php echo empty( $card['spell_school'] ) ? '0' : '1'; ?>" data-hscard-frame-attack="<?php echo empty( $card['attack'] ) ? '0' : '1'; ?>" data-hscard-frame-armor="<?php echo empty( $card['armor'] ) ? '0' : '1'; ?>" data-hscard-golden-scene="1">
    <div class="hscard-card-placeholder" style="aspect-ratio:436/<?php echo absint( $height ); ?>" role="img" aria-label="<?php echo esc_attr( $label ); ?>" aria-busy="true">
+     <?php if ( '' !== $preview_url ) : ?>
      <img class="hscard-frame-preview" src="<?php echo esc_url( $preview_url ); ?>" width="256" height="400" alt="" loading="<?php echo $eager ? 'eager' : 'lazy'; ?>" <?php if ( $eager ) : ?>fetchpriority="high"<?php endif; ?> decoding="async" draggable="false">
+     <?php endif; ?>
    </div>
   </figure>
   <?php return (string) ob_get_clean();
+ }
+ /** Build-generated native loading scenes. Content-addressed filenames avoid
+  * stale CDN atlas previews after a same-version ZIP replacement. */
+ private static function preview_url( $kind, $class, $rarity, $variant, $profile, $date ) {
+  static $manifest = null;
+  if ( null === $manifest ) {
+   $path = HSCARD_PATH . 'assets/unity/frame-previews/index.json';
+   $manifest = is_readable( $path ) ? json_decode( file_get_contents( $path ), true ) : array();
+  }
+  $key = implode( ':', array( $kind, $class, $rarity, $variant ) );
+  $row = $manifest['entries'][ $key ] ?? null;
+  if ( ! is_array( $row ) ) { return ''; }
+  $file = $row['current'];
+  if ( 'historical' === $profile && preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ) {
+   foreach ( $row['history'] as $period ) {
+    if ( $period['from'] > $date ) { break; }
+    $file = $period['file'];
+   }
+  }
+  $base = self::resource_base();
+  return '' !== $base && preg_match( '/^[a-f0-9]{24}\.webp$/', $file ) ? $base . 'frame-previews/' . $file : '';
  }
 }
