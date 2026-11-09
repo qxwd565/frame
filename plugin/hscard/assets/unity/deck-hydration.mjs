@@ -1,6 +1,6 @@
 /** Synchronize mobile deck tiles and GPU placeholders with ONE dates-v1 reducer. */
-import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-2430ac4d7d5f7d48';
-import {readDatedCard} from './card-data.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-f8cd8e700c0d6ef0';
+import {readDatedCard} from './card-data.mjs?ver=hscard-f8cd8e700c0d6ef0';
 
 const activeDecks = new WeakMap();
 const raritySet = new Set(['LEGENDARY','EPIC','RARE','COMMON','FREE']);
@@ -20,6 +20,7 @@ function refreshCard(element, dated) {
  li.dataset.hscardCost = String(card.cost??0);li.dataset.hscardName = card.name;
  li.dataset.hscardRarity = card.rarity;
  const title = li.querySelector('.hscard-deck-tile-name-text');if (title) title.textContent = card.name;
+ const link = li.querySelector('.hscard-card-link');if (link) link.setAttribute('aria-label',card.name);
  const cost = li.querySelector('.hscard-deck-tile-cost');if (cost) cost.textContent = String(card.cost??0);
  const count = li.querySelector('.hscard-deck-tile-count .hscard-deck-tile-compact-count');
  const tile = li.querySelector('.hscard-deck-tile');

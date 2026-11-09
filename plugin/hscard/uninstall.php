@@ -20,6 +20,9 @@ foreach (
 		'hscard_imported_sets',
 		'hscard_json_sources',
 		'hscard_json_source_order',
+		'hscard_card_post_queue',
+		'hscard_card_post_errors',
+		'hscard_card_posts_version',
 		'hscard_home_covers',
 		'hscard_home_cover_schema_version',
 		'hscard_rewrite_version',
@@ -30,6 +33,13 @@ foreach (
 	) as $hscard_option
 ) {
 	delete_option( $hscard_option );
+}
+
+wp_clear_scheduled_hook( 'hscard_sync_card_posts' );
+// Preserve authored content. Only automatically owned posts are withdrawn when
+// their renderer/database is uninstalled; never delete unrelated posts/pages.
+foreach ( get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'numberposts' => -1, 'meta_key' => '_hscard_card_code', 'fields' => 'ids' ) ) as $hscard_post_id ) {
+ wp_update_post( array( 'ID' => $hscard_post_id, 'post_status' => 'draft' ) );
 }
 
 // Private local JSON revisions live in individual non-autoloaded options.

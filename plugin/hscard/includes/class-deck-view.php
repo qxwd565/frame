@@ -46,8 +46,9 @@ final class Deck_View {
 	 * @param bool   $is_custom         Whether this is a `+` custom companion deck.
 	 * @return string Rendered deck HTML.
 	 */
-	public function render( array $counts, array $cards, $code, $alignment = 'left', array $sideboard_owners = array(), array $art_overrides = array(), $deck_title = '', $deck_class = '', $shared_title_group = '', $is_custom = false, $effective_date = '', $frame_profile = 'current' ) {
+	public function render( array $counts, array $cards, $code, $alignment = 'left', array $sideboard_owners = array(), array $art_overrides = array(), $deck_title = '', $deck_class = '', $shared_title_group = '', $is_custom = false, $effective_date = '', $frame_profile = 'current', $single_card = false ) {
 		$rows = array();
+		$card_urls = ! $single_card && class_exists( 'HScard\\Card_Posts', false ) ? Card_Posts::urls( $cards ) : array();
 		foreach ( $counts as $id => $count ) {
 			$id = absint( $id );
 			if ( ! isset( $cards[ $id ] ) ) {
@@ -90,6 +91,7 @@ final class Deck_View {
 		$deck_class         = isset( self::DECK_CLASSES[ $deck_class ] ) ? $deck_class : '';
 		$shared_title_group = sanitize_key( (string) $shared_title_group );
 		$section_class      = 'hscard-deck-list is-align-' . $alignment . ( '' !== $deck_class ? ' is-class-' . $deck_class : '' ) . ( $is_custom ? ' is-custom-deck' : '' );
+		if ( $single_card ) { $section_class .= ' hscard-single-card'; }
 		/**
 		 * Filters the expansion icon displayed before a rendered deck subtitle.
 		 *
@@ -106,6 +108,7 @@ final class Deck_View {
 		$aria_label         = '' !== $deck_title
 			? sprintf( /* translators: %s: deck title. */ __( '%s 덱 목록', 'hscard' ), $deck_title )
 			: __( '덱 목록', 'hscard' );
+		if ( $single_card ) { $aria_label = $deck_title; }
 		$surfaces = array();
 		$has_golden = false;
 		foreach ( $rows as $row_index => $row ) {
@@ -140,15 +143,16 @@ final class Deck_View {
 					<ol class="hscard-deck-cards hscard-deck-column">
 						<?php foreach ( array_values( $rows ) as $row_index => $row ) : ?>
 							<?php $surface = $surfaces[ $row_index ]; ?>
-							<li data-hscard-dbf-id="<?php echo absint( $row['id'] ); ?>" data-hscard-owner-dbf="<?php echo isset( $row['sideboard_owner'] ) ? absint( $row['sideboard_owner'] ) : 0; ?>" class="hscard-deck-card is-snapshot-pending<?php echo '' !== $surface ? ' has-card-surface' : ''; ?>"><?php echo $this->tile( $row ) . $surface; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></li>
+							<li data-hscard-dbf-id="<?php echo absint( $row['id'] ); ?>" data-hscard-owner-dbf="<?php echo isset( $row['sideboard_owner'] ) ? absint( $row['sideboard_owner'] ) : 0; ?>" class="hscard-deck-card is-snapshot-pending<?php echo '' !== $surface ? ' has-card-surface' : ''; ?>"><?php echo $this->tile( $row ) . $surface; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?>
+							<?php if ( isset( $card_urls[ $row['id'] ] ) ) : ?><div class="hscard-card-navigation"><a class="hscard-card-link" href="<?php echo esc_url( $card_urls[ $row['id'] ] ); ?>" aria-label="<?php echo esc_attr( $row['display_name'] ); ?>"></a></div><?php endif; ?></li>
 						<?php endforeach; ?>
 					</ol>
 				</div>
-				<footer class="hscard-deck-summary">
+				<?php if ( ! $single_card ) : ?><footer class="hscard-deck-summary">
 					<button type="button" class="hscard-deck-copy-area" data-hscard-save-code aria-label="<?php esc_attr_e( '덱 코드 복사', 'hscard' ); ?>">
 						<span class="hscard-deck-copy-label"><?php esc_html_e( '복사', 'hscard' ); ?></span>
 					</button>
-				</footer>
+				</footer><?php endif; ?>
 			</div>
 			<span class="hscard-deck-copy-status" role="status" aria-live="polite"></span>
 		</section>

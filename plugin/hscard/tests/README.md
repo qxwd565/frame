@@ -67,3 +67,18 @@ The 30-scene pixel comparison additionally used the prior WebGL renderer in an
 isolated local reference directory. Its old engine/shader files are deliberately
 not republished here. See `docs/WEBGPU-STAGING-STATUS.md` for measured differences
 and checks still requiring a native game or WordPress environment.
+# Card-post WordPress integration
+
+`card-posts-wordpress.php` requires an isolated local WordPress installation at
+`.build/wp-card-pages/wordpress` and `http://127.0.0.1:19460`. Set `HSCARD_TEST_WP`
+to that directory and `HSCARD_TEST_CATALOG` to a legacy `cards.json` containing
+EX1_350, CS2_072 and EX1_165a. The test resets only its generated local fixtures.
+It runs production imports and real WordPress post/meta/permalink/shortcode APIs;
+SQLite can be used, with the test's serial advisory-lock seam documented inline.
+Enable the local HSdeck theme to cover its category/date permalink filters.
+
+With that site served locally, `node tests/card-posts-browser.mjs` exercises the
+actual WebGPU renderer, desktop click and mobile tap. `CHROME_PATH` optionally
+specifies Chrome. It uses a private `.build/card-posts-chrome` profile, closes its
+own browser and writes one detail screenshot under `.build`. These tools and
+fixtures are excluded from the plugin ZIP. They do not access production admin.

@@ -672,6 +672,7 @@ final class Admin_Page {
   }
   Json_Sources::save( $sources );
   $msg = empty( $item['cards'] ) && ! empty( $item['count'] ) ? '세트 기록만 삭제했습니다. 예전 카드 DB는 ID 추적 정보가 없어 보존했습니다.' : sprintf( '세트 기록과 추적 카드 %d장을 정리했습니다.', $result );
+  do_action( 'hscard_cards_changed', array_keys( $refs ) );
   $msg .= ' 해당 JSON 소스의 렌더러 사용도 중지했습니다.';
   $this->finish( false, $msg, 'sets' );
  }
@@ -822,6 +823,7 @@ final class Admin_Page {
    $source['updated_at'] = time();
    $sources[ $id ] = $source;
    Json_Sources::save( $sources );
+   do_action( 'hscard_cards_changed', array_unique( array_merge( $ids, array_keys( $removed ) ) ) );
    return array( 'set' => $set, 'count' => $result, 'pruned' => count( $removed ) );
   } );
  }

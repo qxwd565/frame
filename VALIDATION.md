@@ -241,3 +241,33 @@ server-derived form IDs, dot/100-character repository names and detachment.
 Chrome passed automatic ID selection/manual fallback alongside source ordering,
 repository completion and mobile controls. PHP/JS syntax checks passed. No live
 WordPress database was changed during these tests.
+# Automatic card posts
+
+JSON imports now queue real WordPress `post` records for collectible minions,
+spells, weapons, heroes and locations. Tokens, choices and hero powers do not
+receive posts. Existing tracked imports are backfilled once from admin startup.
+Posts retain their identity on reimport, preserve authored body additions, and
+use the exact card code in root URLs when pretty permalinks are enabled. Plain
+permalink installations retain WordPress's functional query URLs. Unrelated
+slug owners are never overwritten; manually trashed/private/draft posts remain
+under the user's control. Removed/noncollectible cards withdraw owned posts.
+
+The queue has short advisory locks, revision-aware acknowledgements, bounded
+batches and bounded retries with an admin error notice. WordPress Cron must run
+for asynchronous generation. No card creation/writes run in deck rendering.
+Deck links use published-post lookup in one batch and retain the existing native
+frame anchors, golden toggle, hover and mobile tiles. Single-card articles reuse
+the renderer and, with HSdeck installed, its existing tile stylesheet. No theme
+files or native meshes/textures/shaders were changed.
+
+Validated in a disposable local WordPress 7.1.4 installation with SQLite and the
+existing HSdeck theme: production JSON import, post creation, repeat import,
+title/body preservation, backfill, removals/restoration, noncollectible changes,
+manual trash, unrelated slug collision, failed writes, queue revision changes,
+root routing, WordPress paragraph formatting, deck links and shortcode rendering.
+Chrome rendered real API cards through WebGPU; desktop click and mobile tap
+reached the correct single-card post, with no duplicate tile, horizontal overflow
+or browser exceptions. PHP/JS syntax, 900 skeleton markup cases, source/import
+regressions, 2,047 resource routes and dependency revision checks passed.
+SQLite tests substitute serial success for MySQL advisory-lock SQL; live MySQL
+contention and production WordPress installation/Cron execution are not claimed.

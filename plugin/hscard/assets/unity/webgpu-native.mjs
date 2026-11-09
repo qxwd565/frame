@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-f8cd8e700c0d6ef0';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];

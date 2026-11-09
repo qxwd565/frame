@@ -29,6 +29,7 @@ function sanitize_key($s){return preg_replace('/[^a-z0-9_-]/','',strtolower($s))
 function wp_parse_url($s,$part=-1){return parse_url($s,$part);}
 function absint($n){return abs((int)$n);}
 function get_current_user_id(){return 1;}
+function do_action(...$args){}
 function set_transient($k,$v,$ttl){$GLOBALS['notice']=$v;}
 function wp_safe_redirect($url){throw new Test_Redirect($url);}
 function wp_generate_password($length,$special=false,$extra=false){return substr(bin2hex(random_bytes(20)),0,$length);}

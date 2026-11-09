@@ -81,7 +81,7 @@ final class Card_Store {
 		}
 		if ( $missing ) {
 			$placeholders = implode( ',', array_fill( 0, count( $missing ), '%d' ) );
-			$sql          = "SELECT card_id,card_code,card_class,name,mana_cost,rarity_id,image_url,crop_image_url,art_url,card_type,card_text,attack,health,durability,armor,tribe,spell_school,native_meta FROM %i WHERE card_id IN ({$placeholders})";
+			$sql          = "SELECT card_id,card_code,card_class,name,mana_cost,rarity_id,collectible,image_url,crop_image_url,art_url,card_type,card_text,attack,health,durability,armor,tribe,spell_school,native_meta FROM %i WHERE card_id IN ({$placeholders})";
 			$arguments    = array_merge( array( self::table_name() ), array_values( $missing ) );
 			$records      = $wpdb->get_results( $wpdb->prepare( $sql, $arguments ), ARRAY_A ); // phpcs:ignore WordPress.DB.PreparedSQL.NotPrepared -- Identifier and ID values are prepared above; only placeholders are composed.
 			if ( is_array( $records ) && '' === (string) $wpdb->last_error ) {
@@ -98,6 +98,7 @@ final class Card_Store {
 						'name'         => (string) $record['name'],
 						'mana'         => max( 0, (int) $record['mana_cost'] ),
 						'rarity_id'    => absint( $record['rarity_id'] ),
+						'collectible'  => absint( $record['collectible'] ),
 						'image'        => (string) $record['image_url'],
 						'crop_image'   => (string) $record['crop_image_url'],
 						'art'          => (string) $record['art_url'],

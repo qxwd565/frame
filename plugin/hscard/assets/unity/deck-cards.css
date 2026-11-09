@@ -158,3 +158,15 @@
 .hscard-deck-card.is-snapshot-error .hscard-deck-tile{opacity:.55}
 .hscard-deck-card.is-snapshot-error .hscard-deck-tile::after{content:'날짜별 카드 데이터를 불러올 수 없습니다';font-size:11px;line-height:1.5}
 .hscard-deck-card.is-card-not-released{display:none!important}
+
+/* Real links keep native new-tab/keyboard navigation without wrapping or moving
+   the renderer's DOM anchors. Only collectible cards with published posts link. */
+.hscard-deck-list--v2 .hscard-deck-card{position:relative}
+.hscard-deck-list--v2 .hscard-card-navigation{position:absolute;inset:0;z-index:12;margin:0;padding:0}
+.hscard-deck-list--v2 .hscard-card-link{display:block;width:100%;height:100%;cursor:pointer;background:transparent;border:0;text-decoration:none}
+.hscard-deck-list--v2 .hscard-card-link:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+.hscard-deck-list--v2.hscard-single-card{max-width:340px;margin-inline:auto}
+@media(min-width:821px){
+ .hscard-deck-list--v2.hscard-single-card .hscard-deck-layout--v2 .hscard-deck-cards.hscard-deck-column{grid-template-columns:minmax(0,1fr)!important}
+ .hscard-single-card .hscard-deck-tile{display:none!important}
+}
