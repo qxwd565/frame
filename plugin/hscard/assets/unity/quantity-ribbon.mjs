@@ -1,4 +1,4 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-eafb3539c3e52e3f';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
 /**
  * Quantity ribbon is part of the same Unity-compatible WebGL card scene.
  * A quantity of 1 has no ribbon; any positive quantity >= 2 is drawn on the
@@ -48,7 +48,7 @@ async function imageAssets() {
   if (!assetsPromise) {
     assetsPromise = (async () => {
       const load = async name => {
-        const response = await fetch(resourceURL(name.replace(/^\.\//, "")), {credentials:'same-origin'});
+        const response = await resourceFetch(resourceURL(name.replace(/^\.\//, "")), {credentials:'same-origin'});
         if (!response.ok) throw Error('Quantity ribbon asset ' + response.status);
         return createImageBitmap(await response.blob(), {premultiplyAlpha:'none'});
       };

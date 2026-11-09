@@ -1,5 +1,5 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-eafb3539c3e52e3f';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-eafb3539c3e52e3f';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-cbbc17dca2417691';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-eafb3539c3e52e3f';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-eafb3539c3e52e3f';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-eafb3539c3e52e3f';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-eafb3539c3e52e3f';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-eafb3539c3e52e3f';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-eafb3539c3e52e3f';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-eafb3539c3e52e3f';
-import {resolveCard} from './card-data.mjs?ver=hscard-eafb3539c3e52e3f';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-eafb3539c3e52e3f';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-eafb3539c3e52e3f';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-eafb3539c3e52e3f';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-cbbc17dca2417691';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-cbbc17dca2417691';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-cbbc17dca2417691';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-cbbc17dca2417691';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-cbbc17dca2417691';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-cbbc17dca2417691';
+import {resolveCard} from './card-data.mjs?ver=hscard-cbbc17dca2417691';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-cbbc17dca2417691';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-cbbc17dca2417691';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-cbbc17dca2417691';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;
@@ -26,7 +26,7 @@ async function bytes(name){
  // The old frame manifest shared this pathname; do not let a stale 31 MB
  // browser/CDN cache hide the new on-demand texture layout on upgrade.
  if(name==='frames-constructed.json.gz')url.searchParams.set('rev','7.12.07');
- const r=await fetch(url,{credentials:'same-origin'});
+ const r=await resourceFetch(url,{credentials:'same-origin'});
  if(!r.ok)throw Error('Card resource HTTP '+r.status+': '+url.href);
  return new Uint8Array(await r.arrayBuffer());
 }

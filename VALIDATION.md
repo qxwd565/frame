@@ -1,5 +1,32 @@
 # WebGPU preview validation — 2026-11-09 KST
 
+## Expansion API resource migration — 2026-11-09 KST
+
+Published 3,112 original resource files (192,456,842 bytes) to `frame/` in 19
+expansion API repositories. Each remote commit changes only that directory.
+Read every file back from its pinned public GitHub URL: all 3,112 matched the
+local original byte-for-byte and passed size/SHA-256 checks (142.5 seconds).
+The resource source directory is no longer tracked in this development branch;
+the existing local extraction is retained for rebuilds. No new asset copy or
+checkout was created. The old CDN build now mirrors verified API bytes when
+needed by an older installed plugin.
+
+JavaScript and PHP checked all 3,112 routes, including shared historical
+dependencies, path rejection, corrupted responses and retained custom mirrors.
+The actual Chrome/WebGPU renderer produced pixel-identical local/API outputs
+for 16 normal/golden cases: beta 2013-08-17 and 2013-10-03, the old race plate,
+Hunter and Demon Hunter spells, both DK ornaments, and current minions.
+The API run issued 233 requests and no old-CDN or local-resource requests.
+The 2,185 PHP preview cases, all 1,065 preview hashes/sizes, enqueue revision,
+and native shader-time checks also passed. The API index participates in the
+module content revision, so route changes invalidate imported modules.
+
+This migration preserves the renderer's existing pixels. It does **not**
+establish parity of the current-shader substitutions with original beta game
+shaders, nor extend the existing historical frame coverage. Those limitations
+below still apply. Installing the new ZIP on the user's WordPress site was not
+performed in this change.
+
 This is a preview, not a completed visual-parity or production acceptance claim.
 Original production `main` and `hsdeck-frame.pages.dev` are unchanged.
 

@@ -4,14 +4,14 @@ namespace HScard;
 if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class Native_Cards {
- const WEBGPU_RESOURCE_BASE = 'https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity/';
- /** Asset URL ends with /assets/unity/. WordPress code and preview index stay local. */
+ const WEBGPU_RESOURCE_BASE = 'https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';
+ /** Logical root; resource_url resolves files to pinned expansion API commits. */
  public static function resource_base() {
   $url = defined( 'HSCARD_RESOURCE_BASE_URL' ) ? (string) HSCARD_RESOURCE_BASE_URL : (string) get_option( 'hscard_resource_base_url', '' );
   $url = trim( $url );
   // Known previous releases cannot supply WGSL. Preserve custom endpoints and
   // explicit wp-config overrides; migrate only the official old defaults.
-  if ( ! defined( 'HSCARD_RESOURCE_BASE_URL' ) && in_array( rtrim( $url, '/' ), array( '', 'https://hsdeck-frame.pages.dev/v7.12.14/assets/unity', 'https://hsdeck-3d-assets.pages.dev/v7.12.14/assets/unity' ), true ) ) {
+  if ( ! defined( 'HSCARD_RESOURCE_BASE_URL' ) && in_array( rtrim( $url, '/' ), array( '', 'https://hsdeck-frame.pages.dev/v7.12.14/assets/unity', 'https://hsdeck-3d-assets.pages.dev/v7.12.14/assets/unity', 'https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity' ), true ) ) {
    $url = self::WEBGPU_RESOURCE_BASE;
   }
   if ( '' === $url ) { return ''; }
@@ -20,6 +20,23 @@ final class Native_Cards {
   if ( ! is_array( $parts ) || empty( $parts['host'] ) || ! in_array( $parts['scheme'] ?? '', array( 'http', 'https' ), true ) || isset( $parts['user'] ) || isset( $parts['pass'] ) || isset( $parts['query'] ) || isset( $parts['fragment'] ) ) { return ''; }
   if ( is_ssl() && ( $parts['scheme'] ?? '' ) !== 'https' ) { return ''; }
   return trailingslashit( esc_url_raw( $url ) );
+ }
+ public static function resource_url( $path ) {
+  if ( ! is_string( $path ) || '' === $path || preg_match( '~(^/|\\\\|\.\.|[?#%\x00-\x1f])~', $path ) ) { return ''; }
+  $base = self::resource_base();
+  if ( '' === $base ) { return ''; }
+  if ( self::WEBGPU_RESOURCE_BASE !== $base ) { return $base . $path; }
+  static $index = null;
+  if ( null === $index ) {
+   $file = HSCARD_PATH . 'assets/unity/frame-api-index.json';
+   $index = is_readable( $file ) ? json_decode( file_get_contents( $file ), true ) : array();
+  }
+  $row = $index['files'][ $path ] ?? null;
+  $repo = is_array( $row ) ? ( $index['repositories'][ $row['repository'] ] ?? null ) : null;
+  if ( ! is_array( $repo ) || ! preg_match( '/^[a-f0-9]{40}$/', $repo['commit'] ?? '' ) ) { return ''; }
+  $expected = 'https://raw.githubusercontent.com/' . $index['owner'] . '/' . $row['repository'] . '/' . $repo['commit'] . '/frame/';
+  if ( ( $repo['base'] ?? '' ) !== $expected ) { return ''; }
+  return $expected . implode( '/', array_map( 'rawurlencode', explode( '/', $path ) ) );
  }
  public static function enqueue() {
   // A same-version ZIP replacement must invalidate the site's long-lived JS
@@ -45,8 +62,9 @@ final class Native_Cards {
    printf( '<link rel="preconnect" href="%s" crossorigin>' . "\n", esc_url( $site ) );
   }
   foreach ( array( 'frames-constructed.json.gz' => '7.12.07', 'freetype-bridge.wasm' => '', 'original-fonts.json.gz' => '', 'webgpu/program-index.json.gz' => '' ) as $file => $rev ) {
-   $url = $origin . $file;
-   if ( '' !== $rev ) { $url = add_query_arg( 'rev', $rev, $url ); }
+   $url = self::resource_url( $file );
+   if ( '' === $url ) { continue; }
+   if ( '' !== $rev && self::WEBGPU_RESOURCE_BASE !== $origin ) { $url = add_query_arg( 'rev', $rev, $url ); }
    printf( '<link rel="preload" href="%s" as="fetch" crossorigin="anonymous">' . "\n", esc_url( $url ) );
   }
  }
@@ -110,7 +128,6 @@ final class Native_Cards {
     $file = $period['file'];
    }
   }
-  $base = self::resource_base();
-  return '' !== $base && preg_match( '/^[a-f0-9]{24}\.webp$/', $file ) ? $base . 'frame-previews/' . $file : '';
+  return preg_match( '/^[a-f0-9]{24}\.webp$/', $file ) ? self::resource_url( 'frame-previews/' . $file ) : '';
  }
 }

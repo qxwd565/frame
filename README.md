@@ -1,22 +1,38 @@
-# HSdeck WebGPU resources
+# HSdeck WebGPU renderer
 
-This branch contains HScard's WebGPU preview and its immutable frame resources.
+This branch contains HScard's WebGPU preview and its expansion API resource index.
 WordPress/PHP and browser renderer code live in `plugin/hscard/`; the WordPress
 ZIP contains only that directory's runtime files and a loading-preview index.
-Loading images live with the native resources on the CDN, keeping installation small.
+Loading images live with the native resources in expansion API `frame/` directories,
+keeping installation small.
 Tests and documentation stay in the development repository. The former
 `qxwd565/HSdeck-plugin` URL redirects to this repository, so code and resources
 are kept in separate directories here as requested.
 
-`v7.14.4-webgpu-20261109/assets/unity/` contains the original meshes, textures,
-font programs, historical component records and current-game WGSL. It contains
-no WebGL renderer, GLSL program archive or old-engine shader archive.
+Original meshes, textures, font programs, historical component records and
+current-game WGSL are published under `qxwd565/<expansion>/frame/`. Beta and
+original snapshots live in `qxwd565/legacy/frame/`. The plugin's
+`assets/unity/frame-api-index.json` records every file's owner, immutable commit,
+byte size and SHA-256. Relative historical dependencies resolve through the
+same index, including files shared across expansions. No card JSON is changed.
+The legacy source extraction stays in its existing local directory, ignored
+by Git; no new resource copy or checkout is created during publication.
 
 The current Unity source build is `6000.3.11.3145967`. Main frame atlases remain
 1024×1024; smaller source masks are preserved at their original sizes.
 
-Run `node tools/build-cdn.mjs` to create the static `dist` directory. Deploy this
-branch to an isolated preview project; the existing production CDN is unchanged.
+`python -B tools/publish-frame-apis.py` checks the existing extraction and prints
+its expansion allocation. `--publish` updates only `frame/` on each target API's
+main branch and updates the plugin index. It preserves all other remote files,
+uses non-force pushes, and does not create a worktree or temporary index.
+`tools/frame-api-layout.json` owns the source-version allocation data; it does
+not claim that a source version introduced a visual change. Mixed catalogs
+live in legacy and current renderer support lives with the 36.6 snapshot in
+Cataclysm. Original provenance and any unknown patch dates stay intact.
+
+`node tools/build-cdn.mjs` can rebuild the old static CDN as a compatibility
+mirror by downloading the pinned API files and checking every SHA-256. The
+new plugin reads the expansion APIs directly and does not require that mirror.
 
 ## Package the WordPress plugin
 

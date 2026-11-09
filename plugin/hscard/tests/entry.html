@@ -1,6 +1,6 @@
 <!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity/"><link rel="stylesheet" href="/plugin/assets/unity/deck-cards.css"><style>body{margin:16px;background:white}.hscard-deck-list{max-width:1100px;margin:auto}</style><section class="hscard-deck-list hscard-deck-list--v2" data-hscard-date="2026-11-09" data-hscard-frame-profile="current"><div class="hscard-deck-layout--v2"><header class="hscard-deck-name"><button data-hscard-golden-toggle aria-pressed="false">황금 카드</button></header><div class="hscard-deck-body"><ol class="hscard-deck-cards hscard-deck-column"></ol></div></div></section><script type="module">
-import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs?ver=hscard-eafb3539c3e52e3f';
-import {WebGPUMultiCardSurface} from '/plugin/assets/unity/webgpu-multi-card-surface.mjs?ver=hscard-eafb3539c3e52e3f';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs?ver=hscard-cbbc17dca2417691';
+import {WebGPUMultiCardSurface} from '/plugin/assets/unity/webgpu-multi-card-surface.mjs?ver=hscard-cbbc17dca2417691';
 let updates=0;const update=WebGPUMultiCardSurface.prototype.update,prepare=WebGPUMultiCardSurface.prototype.prepare,timing=[];
 let delayed=false;
 WebGPUMultiCardSurface.prototype.prepare=async function(...args){if(!delayed){delayed=true;await new Promise(resolve=>setTimeout(resolve,350));}return prepare.apply(this,args);};

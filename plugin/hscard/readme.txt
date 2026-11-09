@@ -35,10 +35,12 @@ Source, data format, test fixtures and measured limitations:
 https://github.com/qxwd565/frame/tree/webgpu-native-resources-20261109/plugin/hscard
 
 
-== WebGPU 3D assets (7.14.4 split deployment) ==
-The mesh/texture/shader/font/historical frame files are supplied as a separate static asset package.
-The default preview resource base is:
-https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity/
+== WebGPU 3D assets (expansion APIs) ==
+Mesh/texture/shader/font/historical frame files live in each expansion API's frame/ directory.
+Beta and original snapshots live at https://github.com/qxwd565/legacy/tree/main/frame
+assets/unity/frame-api-index.json pins every file to its repository commit and SHA-256.
+The browser and PHP loading previews use the same index, including shared dependencies.
+The official previous CDN defaults migrate automatically; explicit custom hosts are retained.
 Custom resource hosts remain configurable in Settings > HScard 3D resources.
 The plugin stores no GitHub tokens. A private GitHub repository is not publicly readable.
 Animated WebGPU cards will not render without the remote asset host.

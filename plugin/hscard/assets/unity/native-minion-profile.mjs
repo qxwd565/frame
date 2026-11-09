@@ -1,9 +1,10 @@
+import {resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
 async function json(base,descriptor){
  const name=typeof descriptor==='string'?descriptor:descriptor.file;
- const response=await fetch(new URL(name,base),{credentials:'same-origin'});
+ const response=await resourceFetch(new URL(name,base),{credentials:'same-origin'});
  if(!response.ok)throw Error('Native minion profile HTTP '+response.status);
  const bytes=await response.arrayBuffer();
  if(typeof descriptor!=='string'){

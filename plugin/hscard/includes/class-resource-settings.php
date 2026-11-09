@@ -30,13 +30,13 @@ final class Resource_Settings {
   $current = Native_Cards::resource_base();
   echo '<div class="wrap"><h1>HScard 3D 리소스 주소</h1>';
   settings_errors( 'hscard_assets' );
-  echo '<p>공개 CDN/GitHub Pages에 올린 assets/unity/ 폴더의 HTTPS 주소를 입력하세요. WebGPU 코드와 프레임 미리보기는 플러그인에 남습니다.</p>';
+  echo '<p>기본값은 확장팩 API의 frame/ 폴더입니다. 플러그인에 포함된 목록으로 시기별 원본과 연결 파일을 읽습니다. 별도 통합 미러를 운영할 때만 주소를 입력하세요.</p>';
   if ( defined( 'HSCARD_RESOURCE_BASE_URL' ) ) {
    echo '<p><strong>wp-config.php의 HSCARD_RESOURCE_BASE_URL 상수가 우선 적용됩니다.</strong></p>';
   }
   echo '<form action="options.php" method="post">';settings_fields( 'hscard_assets' );
   echo '<p><label for="hscard-resource-base">공개 리소스 기본 URL</label></p>';
-  printf( '<input id="hscard-resource-base" class="large-text code" name="hscard_resource_base_url" type="url" placeholder="https://example.com/v7.14.4/assets/unity/" value="%s" spellcheck="false">', esc_attr( (string) get_option( 'hscard_resource_base_url', '' ) ) );
+  printf( '<input id="hscard-resource-base" class="large-text code" name="hscard_resource_base_url" type="url" placeholder="https://example.com/frame/" value="%s" spellcheck="false">', esc_attr( (string) get_option( 'hscard_resource_base_url', '' ) ) );
   echo '<p>현재 적용 주소: <code>' . esc_html( $current ?: '미설정 — WebGPU 3D 리소스를 불러올 수 없습니다' ) . '</code></p>';
   submit_button( '설정 저장' );echo '</form></div>';
  }

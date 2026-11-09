@@ -3,3 +3,6 @@ dist/
 node_modules/
 tools/node_modules/
 tools/translate-vulkan.exe
+# Source bytes have moved to the expansion API repositories' frame/ folders.
+# Keep the existing local extraction for rebuilds without duplicating it in Git.
+v7.14.4-webgpu-20261109/

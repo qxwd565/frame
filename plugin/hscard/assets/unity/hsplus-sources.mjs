@@ -1,4 +1,4 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-eafb3539c3e52e3f';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
 // Reads the unmodified HS Plus resource snapshots. No card-specific scenes are used.
 const HAND_PREFABS = Object.freeze({
   MINION: 'Card_Hand_Ally', SPELL: 'Card_Hand_Ability',
@@ -338,7 +338,7 @@ export class HSPlusSources {
     if (!/^frame-textures\/[a-f0-9]{32}\.bin$/.test(item.textureFile || '')) {
       throw Error('Missing HS Plus frame texture ' + item.key);
     }
-    const response = await fetch(resourceURL(item.textureFile), {credentials:'same-origin'});
+    const response = await resourceFetch(resourceURL(item.textureFile), {credentials:'same-origin'});
     if (!response.ok) throw Error('HS Plus frame texture HTTP ' + response.status);
     const stream = response.body || new Blob([await response.arrayBuffer()]).stream();
     const bytes = await new Response(stream.pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();

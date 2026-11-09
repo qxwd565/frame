@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "owner": "qxwd565",
+  "sourceDirectory": "v7.14.4-webgpu-20261109/assets/unity",
+  "sharedRepository": "legacy",
+  "currentRepository": "Cataclysm",
+  "currentSourceVersion": "36.6.3.253932",
+  "currentScope": "Shared renderer support and current snapshots; not evidence of a frame-change patch.",
+  "versionRepositories": [
+    {"from": "1.0", "repository": "legacy"},
+    {"from": "1.1", "repository": "Curse-of-Naxxramas"},
+    {"from": "2.0", "repository": "Goblins-Vs-Gnomes"},
+    {"from": "2.2", "repository": "Blackrock-Mountain"},
+    {"from": "3.0", "repository": "The-Grand-Tournament"},
+    {"from": "4.0", "repository": "League-Of-Explorers"},
+    {"from": "5.0", "repository": "Whispers-Of-The-Old-Gods"},
+    {"from": "6.0", "repository": "One-Night-In-Karazhan"},
+    {"from": "7.0", "repository": "Mean-Streets-Of-Gadgetzan"},
+    {"from": "15.0", "repository": "Saviors-Of-Uldum"},
+    {"from": "16.0", "repository": "Descent-Of-Dragons"},
+    {"from": "17.0", "repository": "Ashes-Of-Outland"},
+    {"from": "18.0", "repository": "Scholomance-Academy"},
+    {"from": "19.0", "repository": "Madness-At-The-Darkmoon-Faire"},
+    {"from": "20.0", "repository": "Forged-In-The-Barrens"},
+    {"from": "21.0", "repository": "United-In-Stormwind"},
+    {"from": "25.0", "repository": "March-Of-The-Lich-King"},
+    {"from": "26.0", "repository": "Festival-Of-Legends"},
+    {"from": "27.0", "repository": "Titans"},
+    {"from": "28.0", "repository": "Showdown-In-The-Badlands"},
+    {"from": "36.0", "repository": "Cataclysm"}
+  ]
+}

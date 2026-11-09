@@ -1,4 +1,4 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-eafb3539c3e52e3f';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
 // Lazy reader for the bundled native historical resources. This does not
 // select a frame for a date or alter the current card renderer.
 const limit = 128 * 1024 * 1024;
@@ -6,7 +6,7 @@ const decoder = new TextDecoder('utf-8', {fatal:true});
 const hash = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), x => x.toString(16).padStart(2, '0')).join('');
 
 async function get(url) {
-  const response = await fetch(url, {credentials:'same-origin'});
+  const response = await resourceFetch(url, {credentials:'same-origin'});
   if (!response.ok) throw Error('Historical resource HTTP ' + response.status);
   const data = await response.arrayBuffer();
   if (data.byteLength > limit) throw Error('Historical resource exceeds budget');

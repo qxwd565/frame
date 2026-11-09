@@ -1,6 +1,14 @@
 # Browser verification
 
 These files are development-only and are excluded from the WordPress ZIP.
+Run `node tests/frame-api-routing.mjs` and `php tests/frame-api-routing.php`
+to verify all expansion routes, unchanged local bytes, cross-expansion
+historical dependencies, corruption rejection and custom mirror compatibility.
+`python -B tools/verify-frame-api-publication.py` from the repository root reads
+every published file back into RAM and compares it byte-for-byte to the source.
+With the local test server running, `node tools/verify-frame-api-render.mjs`
+compares 16 normal/golden GPU outputs between local files and the real APIs.
+It verifies exact pixel hashes and rejects any old-CDN request.
 Run `node tests/asset-revisions.mjs` to check unchanged builds and dependency/CSS
 cache invalidation, including the module import graph, without changing sources.
 Run `php tests/enqueue-revision.php` for PHP's matching script/style cache key.
