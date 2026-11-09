@@ -1,0 +1,8 @@
+{
+  "bundle": "hsdeck-3d-assets",
+  "version": "7.12.14",
+  "source": "qxwd565/HSdeck-plugin",
+  "sourceCommit": "78ce6fdc4e70f689880a70d6f22aa77a6c75e337",
+  "scope": "static 3D resources only",
+  "note": "Cloudflare Pages uses assets/unity static 3D files. WordPress PHP and JS modules are excluded from deployment."
+}
