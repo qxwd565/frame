@@ -1,0 +1,27 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><canvas id="card"></canvas>
+<script type="module">
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+window.result={running:true};window.errors=[];
+try {
+ const read=async name=>{const r=await fetch('/resources/'+name);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();};
+ const [programs,library]=await Promise.all([read('webgpu/program-index.json.gz').then(x=>x.programs),read('shader-library.json.gz')]);
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),{});
+ renderer.device.addEventListener('uncapturederror',e=>window.errors.push(e.error.message));
+ const state={source:5,destination:10,sourceAlpha:1,destinationAlpha:10,blendOperation:0,alphaOperation:0,colorMask:15,depthTest:4,depthWrite:true,depthClip:true,cull:0,depthBias:0,slopeBias:0,stencilCompare:8,stencilPass:0,stencilFail:0,stencilDepthFail:0,stencilRead:255,stencilWrite:255,stencilReference:0};
+ let total=0,passed=0,failures=[],pairs=new Set();const start=performance.now();
+ for(const shader of library.shaders)for(const sub of shader.subshaders)for(const pass of sub.passes){
+  const vk=new Set(pass.vertex.variants.flatMap(v=>v.keywords)),fk=new Set(pass.fragment.variants.flatMap(v=>v.keywords)),common=[...vk].filter(k=>fk.has(k));
+  for(const vertex of pass.vertex.variants)for(const fragment of pass.fragment.variants){
+   if(common.some(k=>vertex.keywords.includes(k)!==fragment.keywords.includes(k)))continue;
+   const key=vertex.sha256+fragment.sha256;if(pairs.has(key))continue;pairs.add(key);total++;
+   window.result={running:true,passed,total,failed:failures.length,current:{shader:shader.name,vertex:vertex.sha256,fragment:fragment.sha256}};
+   renderer.device.pushErrorScope('validation');
+   try{await renderer.pipeline({vertexProgram:vertex.sha256,fragmentProgram:fragment.sha256,state:programs[fragment.sha256].outputs[0]?.components===1?{...state,source:1,destination:0,sourceAlpha:1,destinationAlpha:0}:state,shader:shader.name,pass:pass.index},programs[fragment.sha256].outputs[0]?.components===1?'r8unorm':'rgba8unorm');const error=await renderer.device.popErrorScope();if(error)throw error;passed++;}
+   catch(e){await renderer.device.popErrorScope().catch(()=>{});failures.push({shader:shader.name,vertex:vertex.sha256,fragment:fragment.sha256,error:e.message});}
+   window.result={running:true,passed,total,failed:failures.length};
+  }
+ }
+ window.result={running:false,passed,total,failures,elapsedMs:performance.now()-start,uncaptured:window.errors};renderer.dispose();renderer.device.destroy();
+}catch(e){window.result={running:false,error:e.stack};}
+</script>

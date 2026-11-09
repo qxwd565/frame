@@ -1,0 +1,38 @@
+{
+  "schema": 3,
+  "validatedOnKst": "2026-11-09",
+  "basedOn": "User-replaced HScard 7.14.4-webgpu-dates-v1-preview",
+  "sourceUnityBuild": "6000.3.11.3145967",
+  "shaderCompiler": "Unity HLSLcc 3ea1fcd6bd0ac445bc078de0bf32f0950188577b + Naga 30.0.1",
+  "programs": 1052,
+  "actualWebgpuCompiled": 1052,
+  "compatiblePairs": 1406,
+  "actualWebgpuPipelines": 1406,
+  "cdnRenderCases": 30,
+  "sourceAssets": {
+    "meshesMatched": 107,
+    "texturesMatched": 260,
+    "mainFrameAtlasSize": [
+      1024,
+      1024
+    ]
+  },
+  "pageIntegration": {
+    "cards": 10,
+    "normalGoldenRoundTrips": 2,
+    "deviceLossRecovery": true,
+    "remainingCanvases": 1,
+    "uncapturedErrors": 0
+  },
+  "pixelComparison": {
+    "currentAndLaterFrameMaxMeanAbsoluteRgbaError": 0.002,
+    "betaMeanAbsoluteRgbaErrorRange": [
+      0.129,
+      0.424
+    ],
+    "exactBetaParity": false
+  },
+  "liveWordPressInstall": "NOT_TESTED",
+  "directInGameCaptureComparison": "NOT_TESTED",
+  "report": "WEBGPU-STAGING-STATUS.md"
+}

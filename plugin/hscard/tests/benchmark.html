@@ -1,0 +1,41 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><style>body{background:#fff}canvas{width:224px}</style><canvas id="gpu"></canvas>
+<script type="module">
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {WebGPUMultiCardSurface} from '/plugin/assets/unity/webgpu-multi-card-surface.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {loadGoldenPortrait} from '/plugin/assets/unity/golden-art.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+window.result={running:true,step:'resources'};window.errors=[];
+addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
+try{
+ const bytes=async n=>new Uint8Array(await(await fetch('/resources/'+n)).arrayBuffer()),json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const [frames,settings,portraits,fits,watermarks,library,names,fontArchive,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fontArchive,sources.text.fonts);
+ const nativeTextures=new Map();const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;const key=t.key||t.embedded;if(!nativeTextures.has(key))nativeTextures.set(key,(async()=>{if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};})());return nativeTextures.get(key);});
+ window.result={running:true,step:'device'};
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('#gpu'),await loadShaderIndex(),sources);
+ const cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ const example={kind:'MINION',cardClass:'NEUTRAL',golden:false,name:'시린빛 점쟁이',text:'<b>전투의 함성:</b> 각 플레이어가\n카드를 2장 뽑습니다.',race:'멀록',cost:3,attack:2,health:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,frameProfile:'current',renderDate:'2026-11-09',tags:{}};
+ example.artPixels={width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]};
+ const art=await createImageBitmap(await(await fetch('https://raw.githubusercontent.com/qxwd565/legacy/main/art/EX1_350.png')).blob());const ac=new OffscreenCanvas(art.width,art.height),ctx=ac.getContext('2d');ctx.drawImage(art,0,0);const originalPixels={width:art.width,height:art.height,format:28,levels:[new Uint8Array(ctx.getImageData(0,0,art.width,art.height).data)]};art.close();
+ const goldenPortrait=await loadGoldenPortrait({id:'EX1_350',dbfId:9,sourceURL:'https://raw.githubusercontent.com/qxwd565/legacy/main/cards.json'},'EX1_350',9);if(!goldenPortrait)throw Error('Actual golden download failed');
+ const goldenCard={...example,artPixels:originalPixels,golden:true,goldenPortrait,rarity:'LEGENDARY',name:'예언자 벨렌',cardClass:'PRIEST'};
+
+ const surface=await WebGPUMultiCardSurface.create(renderer,cards),start=performance.now(),samples=[];let first;
+ const positions=Array.from({length:30},(_,i)=>({key:String(i),x:(i%5)*210,y:Math.floor(i/5)*320,width:210,height:320}));
+ for(let i=0;i<30;i++){await surface.prepare(String(i),{...goldenCard,name:'예언자 벨렌',golden:i%2===1,goldenPortrait:i%2===1?goldenPortrait:null});await surface.update(String(i),0);surface.present(1050,1920,positions.slice(0,i+1));if(i===0)first=performance.now()-start;window.result={running:true,prepared:i+1};}
+ await renderer.device.queue.onSubmittedWorkDone();const preparedMs=performance.now()-start,counts=()=>({meshes:renderer.meshResources.size,textures:renderer.textureEntries.size,textureBytes:renderer.textureBytes,targets:renderer.targets.size});const baseline=counts();
+ for(let i=0;i<8;i++){const begin=performance.now();for(let k=0;k<30;k++)if(k%2===1)await surface.update(String(k),i/30);surface.present(1050,1920,positions);await renderer.device.queue.onSubmittedWorkDone();samples.push(performance.now()-begin);}
+ const scroll=[];for(let i=0;i<30;i++){const begin=performance.now();surface.present(1050,1920,positions.map(p=>({...p,y:p.y-i*10})));await renderer.device.queue.onSubmittedWorkDone();scroll.push(performance.now()-begin);}
+ surface.dispose();const afterFirst=counts();
+ for(let round=0;round<3;round++){for(let i=0;i<5;i++){await surface.prepare(String(i),goldenCard);await surface.update(String(i),round);}surface.dispose();}
+ const afterRepeats=counts();renderer.dispose();const afterDispose=counts();
+ const median=a=>[...a].sort((x,y)=>x-y)[Math.floor(a.length/2)];window.result={running:false,firstCardMs:first,all30Ms:preparedMs,animated15Of30FrameMedianMs:median(samples),animatedFPS:1000/median(samples),scrollMedianMs:median(scroll),baseline,afterFirst,afterRepeats,afterDispose,errors};
+
+}catch(e){window.result={running:false,error:e.stack,errors};}
+</script>

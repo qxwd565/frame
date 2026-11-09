@@ -1,7 +1,11 @@
 # HSdeck WebGPU resources
 
-This branch contains immutable frame resources for HScard's WebGPU preview.
-WordPress/PHP and browser renderer code live in `qxwd565/HSdeck-plugin`.
+This branch contains HScard's WebGPU preview and its immutable frame resources.
+WordPress/PHP and browser renderer code live in `plugin/hscard/`; the WordPress
+ZIP contains only that directory's runtime files and static loading previews.
+Tests and documentation stay in the development repository. The former
+`qxwd565/HSdeck-plugin` URL redirects to this repository, so code and resources
+are kept in separate directories here as requested.
 
 `v7.14.4-webgpu-20261109/assets/unity/` contains the original meshes, textures,
 font programs, historical component records and current-game WGSL. It contains
@@ -28,3 +32,7 @@ branch to an isolated preview project; the existing production CDN is unchanged.
 See `VALIDATION.md` for measured results and remaining limitations. Assets remain
 subject to their original owners' rights; licenses for bundled libraries are in
 the versioned assets directory.
+
+Plugin checks and browser fixtures are documented in `plugin/hscard/tests/README.md`.
+Full plugin implementation and validation notes are in
+`plugin/hscard/docs/WEBGPU-STAGING-STATUS.md`.

@@ -1,0 +1,25 @@
+<!doctype html><meta charset="utf-8"><title>Native WebGPU verification</title>
+<meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><canvas id="card"></canvas><script type="module">
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+window.result={running:true};window.errors=[];
+try{
+ const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});
+ if(!adapter)throw Error('No WebGPU adapter');
+ const device=await adapter.requestDevice();
+ device.addEventListener('uncapturederror',e=>window.errors.push(e.error.message));
+ const load=await loadShaderIndex();
+ const response=await fetch('/resources/webgpu/program-index.json.gz');
+ const {programs}=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json();
+ let passed=0,failures=[];const start=performance.now();
+ for(const [id,p] of Object.entries(programs)){
+  device.pushErrorScope('validation');
+  const module=device.createShaderModule({label:id,code:(await load(id)).wgsl});
+  const messages=(await module.getCompilationInfo()).messages.filter(m=>m.type==='error');
+  const error=await device.popErrorScope();
+  if(messages.length||error)failures.push({id,stage:p.stage,messages:messages.map(m=>({line:m.lineNum,message:m.message})),error:error?.message});else passed++;
+  window.result={running:true,passed,failed:failures.length};
+ }
+ window.result={running:false,adapter:adapter.info,passed,total:Object.keys(programs).length,failures,elapsedMs:performance.now()-start,uncaptured:window.errors};
+ device.destroy();
+}catch(e){window.result={running:false,error:e.stack};}
+</script>
