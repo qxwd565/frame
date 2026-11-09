@@ -47,6 +47,25 @@ struct Placement { rect:vec4f, surface:vec2f };
   this.items.set(key,{prepared,target});for(const pixels of prepared.goldenPixels||[])this.goldenRefs.set(pixels,(this.goldenRefs.get(pixels)||0)+1);
  }
  adopt(from,to){if(from===to)return;const item=this.items.get(from);if(!item)throw Error('Missing prepared WebGPU card');this.remove(to);this.items.delete(from);this.items.set(to,item);}
+ async fill(key,card,{time=0,isCurrent=()=>true}={}){
+  const item=this.items.get(key);if(!item)return false;
+  const current=()=>this.items.get(key)===item&&isCurrent(),previous=item.prepared;
+  const next=await this.cards.prepare(card,previous);
+  let committed=false;
+  try{
+   if(!current())return false;
+   if(await this.cards.renderPrepared(next,{transparent:true,time,destination:item.target,isCurrent:current})===false||!current())return false;
+   // Retain the frame, its nodes and the GPU target. Commit only artwork and
+   // dynamic text after all asynchronous work has passed the request guard.
+   const frame=previous.frame;
+   for(let i=0;i<frame.parts.length;i++)if(frame.parts[i].blank){frame.parts[i].material=next.frame.parts[i].material;frame.parts[i].queue=next.frame.parts[i].queue;}
+   for(const pixels of next.goldenPixels||[])this.goldenRefs.set(pixels,(this.goldenRefs.get(pixels)||0)+1);
+   for(const pixels of previous.goldenPixels||[]){const count=(this.goldenRefs.get(pixels)||1)-1;if(count)this.goldenRefs.set(pixels,count);else{this.goldenRefs.delete(pixels);this.renderer.releaseTexture(pixels);}}
+   this.cards.releasePrepared(previous);
+   Object.assign(previous,next,{frame,artwork:frame.parts.find(p=>p.blank&&p.material.animation)});
+   committed=true;return true;
+  }finally{if(!committed){this.cards.releasePrepared(next);for(const pixels of next.goldenPixels||[])if(!this.goldenRefs.has(pixels))this.renderer.releaseTexture(pixels);}}
+ }
  async update(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);await this.cards.renderPrepared(item.prepared,{transparent:true,time,destination:item.target});}
  async updatePreview(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);if(!item.previewTarget)item.previewTarget=this.createTarget(item.target.width,item.target.height);
   await this.cards.renderPrepared({...item.prepared,quantityDraws:[]},{transparent:true,time,destination:item.previewTarget});}

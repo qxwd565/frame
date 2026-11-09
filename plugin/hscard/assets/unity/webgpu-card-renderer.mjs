@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-cbbc17dca2417691';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-cbbc17dca2417691';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-cbbc17dca2417691';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-cbbc17dca2417691';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-cbbc17dca2417691';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-cbbc17dca2417691';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-cbbc17dca2417691';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-2430ac4d7d5f7d48';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -23,8 +23,8 @@ function glyphMaterial(q,settings,atlas){
   for(const [name,value] of [['_BoldOffset',bold],['_OutlineOffset',outlined?f(outline+(q.material?f(bold*.75):0)):outline],['_TexelSize',1]]){values[name+'X']=[f(value/atlas.width)];values[name+'Y']=[f(value/atlas.height)];}
   return{shader:outlined?(q.material?'Hidden/TextBoldOutline_Unlit':'Hidden/TextOutline_Unlit'):(q.material?'Hidden/Text_Bold':'Hero/Text_Unlit'),keywords:[],values,textures:{_MainTex:{pixels:atlas,sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]}}};
 }
-// Frame-affecting native metadata may be missing in older local DB records.
-// Reuse the loading frame only when those inputs match the final card.
+// Loading and completed content come from one resolved dated specification.
+// A changed frame signature requires a new user selection, never a content fill.
 function frameStructureSignature(card){
  const tags=card.tags||{},ids=[482,483,484,1720,2196,2197,2198,2785,3457,3458,3469,4354];
  return JSON.stringify([card.kind,originalClasses(card),card.golden,card.rarity,card.frameProfile,card.renderDate,card.race,card.school,card.attack>0,card.armor>0,...ids.map(id=>Number(tags[id]||0))]);
@@ -35,16 +35,17 @@ export class WebGPUCardRenderer {
   async prepare(card,basePrepared=null){
     const textTargets=[],transientMeshes=[],transientTextures=[];
     try{
-    const prior=basePrepared?.frameStructureSignature===frameStructureSignature(card)?basePrepared:null;
-    if(prior?.frameSignature!==frameSignature(card))basePrepared=null;
+    if(basePrepared && basePrepared.frameSignature!==frameSignature(card))throw Error('Cannot fill a different native frame');
     if(card.frameProfile && !['current','historical'].includes(card.frameProfile))throw Error('Missing original frame resources for '+card.frameProfile);
     const selection=card.frameProfile==='historical'?historicalSelection(card):null;
     const renderCard=selection?.hideSchool?{...card,school:''}:card;
-    const replaceArtwork=(base,next)=>({...base,parts:base.parts.map(part=>{
+    const fillArtwork=base=>({...base,parts:base.parts.map(part=>{
       if(!part.blank)return part;
-      const source=next.parts.find(p=>p.blank&&p.path===part.path&&p.slot===part.slot);
-      if(!source)throw Error('The loading frame artwork does not match the card');
-      return {...part,material:source.material,queue:source.queue};
+      const portrait=card.golden&&card.goldenPortrait;
+      const material=portrait?{...portrait,values:{...portrait.values},textures:{...portrait.textures}}:
+        {...part.material,textures:Object.fromEntries(Object.entries(part.material.textures).map(([name,texture])=>
+          [name,texture.pixels===basePrepared.portraitPixels?{...texture,pixels:card.artPixels}:texture]))};
+      return {...part,material,queue:portrait&&!nativeProfile?this.composer.queue(null,material.shader):part.queue};
     })});
     let historical=null,nativeProfile=null;
     if(selection){
@@ -52,8 +53,9 @@ export class WebGPUCardRenderer {
       historical=await this.historicalPromise;
       if(selection.nativeProfile)nativeProfile=await historical.nativeProfile(this.builder,this.renderer,selection.nativeProfile);
     }
-    let frame=nativeProfile?await nativeProfile.compose(renderCard,this.composer):this.composer.compose(renderCard);
-    if(basePrepared)frame=replaceArtwork(basePrepared.frame,frame);
+    // A fill never composes a second frame. Geometry, UVs, class texture,
+    // rarity and historical parts remain those already on screen.
+    let frame=basePrepared?fillArtwork(basePrepared.frame):nativeProfile?await nativeProfile.compose(renderCard,this.composer):this.composer.compose(renderCard);
     if(card.goldenPortrait){
       try{for(const part of frame.parts.filter(p=>p.blank)){
         const trial={...part,material:{...part.material,values:new ArtworkAnimation(part.material).sample(0)}};
@@ -69,12 +71,6 @@ export class WebGPUCardRenderer {
     if(selection){
       if(selection.catalog&&!basePrepared)await historical.apply(renderCard,frame,selection.catalog,selection.raceLayout);
       if(selection.component&&!basePrepared){const component=await historical.component('frames',selection.component);if(!component)throw Error('Missing historical component '+selection.component);await historical.apply(renderCard,frame,component.catalog);}
-    }
-    // When later metadata adds a watermark, preserve the already displayed
-    // frame nodes; only the description material and artwork need updating.
-    if(prior&&!basePrepared){
-      const previous=new Map(prior.frame.parts.filter(p=>!p.blank&&!p.watermark).map(p=>[p.path+':'+p.slot,p]));
-      frame={...frame,fit:prior.frame.fit,parts:frame.parts.map(part=>part.blank||part.watermark?part:(previous.get(part.path+':'+part.slot)||part))};
     }
     const artwork=frame.parts.find(p=>p.blank&&p.material.animation);
     const animation=artwork?new ArtworkAnimation(artwork.material):null;
@@ -107,15 +103,15 @@ export class WebGPUCardRenderer {
     }
     // Native quantity decoration is a GPU draw in the shared WebGPU device as the class
     // banner, faction ribbon, rarity gem and text meshes.
-    const quantityDraws=!card.loading&&card.quantity>=2
+    const quantityDraws=card.quantity>=2
       ? await this.builder.draw(await quantityRibbonPart(context,card.quantity),context)
       : [];
     for(const draw of quantityDraws)if(draw.mesh.attributes)transientMeshes.push(draw.mesh);
-    return{frame,context,textDraws,quantityDraws,animation,artwork,goldenPixels,textTargets,transientMeshes,transientTextures,frameSignature:frameSignature(card),frameStructureSignature:frameStructureSignature(card)};
+    return{frame,context,textDraws,quantityDraws,animation,artwork,goldenPixels,textTargets,transientMeshes,transientTextures,portraitPixels:card.artPixels,frameSignature:frameSignature(card)};
     }catch(error){this.releasePrepared({textTargets,transientMeshes,transientTextures});throw error;}
   }
   releasePrepared(prepared){for(const target of prepared?.textTargets||[])this.renderer.releaseTextTarget(target);for(const mesh of prepared?.transientMeshes||[])this.renderer.releaseMesh(mesh);for(const texture of prepared?.transientTextures||[])this.renderer.releaseTexture(texture);}
-  async renderPrepared(prepared,{background=[1,1,1,1],transparent=false,time=1,destination=null}={}){
+  async renderPrepared(prepared,{background=[1,1,1,1],transparent=false,time=1,destination=null,isCurrent=()=>true}={}){
     const {frame,textDraws,quantityDraws}=prepared,context={...prepared.context,time};
     // Assembling draw commands does not submit GPU commands. Fetch/decode each
     // independent native frame component concurrently, then draw in the exact
@@ -128,7 +124,8 @@ export class WebGPUCardRenderer {
     // Native mana/stat effects animate on normal frames too. Classify the
     // selected shader programs, rather than assuming only golden cards move.
     prepared.animated=!!prepared.animation||draws.some(draw=>draw.animated);
-    if(transparent)await this.renderer.transparent(context.width,context.height,draws,destination);else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
+    if(!isCurrent())return false;
+    if(transparent){if(await this.renderer.transparent(context.width,context.height,draws,destination,isCurrent)===false)return false;}else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
     return{width:context.width,height:context.height,frameParts:frame.parts.length,textDraws:textDraws.length};
   }
   async render(card,background=[1,1,1,1],transparent=false){

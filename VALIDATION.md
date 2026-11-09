@@ -161,33 +161,45 @@ Reinstallation and any full-page cache purge on the live server remain pending.
 PHP and JavaScript syntax checks passed. Dates-v1 Backstab snapshots were checked
 at 2013-08-17, 2013-10-03 and back to 2013-08-17 without state contamination.
 
-## Four-column layout and native loading previews, 2026-11-09
+## Persistent native loading frames and fixed ribbon anchors, 2026-11-09
 
-The old 60 local preview images contained raw frame texture atlases, including
-unassembled dragon/name-plate pieces. Replaced them with transparent snapshots
-from the actual WebGPU loading-card renderer: 540 type/class/rarity/plate keys,
-1,430 render jobs and 1,065 distinct content-addressed images. Native meshes,
-textures, UVs, materials and shader calculations are unchanged. Historical
-intervals come from the existing renderer selector, including 3664 and 3890;
-20 unsupported pre-class historical combinations retain the current placeholder.
-The initial image is still provisional when a dated card's metadata differs
-from the imported WordPress record; the dated API remains authoritative.
+The live rogue page still requested removed `frame-previews/spell-rogue.webp`
+files (origin HTTP 404, proxied by WordPress). Removed PHP preview image markup,
+hydration URL rewriting, the preview index and generator, and 1,065 unused
+preview entries from the resource router. Old cached markup is hidden by the
+compatibility stylesheet and removed at scan. Original native resource bytes
+and expansion API commits are unchanged; retired local preview files are in
+the task's trash folder, not the active source/package.
 
-Images are served with the existing native resources, not installed in the ZIP.
-Only a 144 KB preview index is added to WordPress. No card API, JavaScript or
-font initialization is needed to choose/display the first server-rendered image.
-The preview is a 256x400 WebP snapshot; original texture resolution is unchanged.
+Dated metadata now starts the native frame independently of artwork/fonts.
+Filling retains the prepared frame, every node/mesh and GPU target; only portrait
+material and text change. Stale fills are checked after asynchronous shader work
+and before GPU submission. A finish toggle retains the previous completed card
+until the new native finish is ready. Animation clocks/speeds remain unchanged.
 
-PHP checked all 2,185 date/key markup cases, hashes and image dimensions.
-Chrome checked 375/820 px mobile and 821/1024/1440/1920 px desktop: four desktop
-columns, no horizontal overflow, no overlapping card rectangles even with old
-five-column edge rules present. Mobile plugin rules are unchanged. A controlled
-browser override of the actual rogue page's local JS and concatenated CSS
-rendered the first deck's 16 cards in four columns, then 16 golden cards, with
-no card failures or console exceptions. This did not update WordPress itself.
+All types/finishes/rarities share one 436x682 projection and fixed quantity ribbon
+center/bottom. Removed whole-scene type/column CSS translations. Quantity-one
+cards reserve the same space without a ribbon; hover omits quantity decoration.
 
-The 10-card entry check retained normal/golden toggles, hover, offscreen pause
-and device recovery: zero old GPU resources and no errors. Native stat speeds
-and shader clocks are unchanged. PHP syntax, JS syntax and content-based
-dependency/CSS invalidation checks passed. Not compared to a new native-game
-capture or an actual WordPress ZIP installation in this change.
+Checks performed on Windows in Chrome WebGPU:
+- 36 current/historical normal/golden rare/legendary type cases retained frame,
+  node, mesh and target identities. All ribbon-only GPU readbacks had the same
+  pixel hash. Filled artwork/text changed output; cancelled fills did not.
+- Ten-card entry with deliberately delayed art/fonts: 20 persistent fills across
+  initial loading and forced device recovery; two normal/golden round trips,
+  hover/scroll, no offscreen updates, zero old tracked GPU objects after recovery.
+  Normal/golden animation rate stayed within 0.1% of wall time in this run.
+- Ten simulated artwork 404s retained ten native frames and no preview images.
+- Six widths (375, 820, 821, 1024, 1440, 1920): four desktop columns, exact row/
+  column anchors, no horizontal overflow or old five-column offsets. Mobile
+  layout unchanged. PHP checked 900 markup combinations with zero image tags.
+- Candidate JS/CSS in the actual public rogue-page DOM: 16 normal and 16 golden
+  cards, one canvas, zero failed cards or console exceptions. Browser-only
+  overrides did not install the plugin or change the WordPress server.
+- All PHP/JS syntax, resource routing/hash checks for 2,047 files across 19 APIs,
+  cache revision checks and native shader timing checks passed.
+
+No new in-game pixel-parity claim, full WordPress activation test or other-GPU
+acceptance is made. Full-page caches containing old HTML/scripts must be refreshed
+when installing the replacement ZIP. Native loading still requires dated metadata
+and the original frame resources; it does not use an immediate substitute bitmap.

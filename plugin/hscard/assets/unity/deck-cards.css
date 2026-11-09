@@ -70,8 +70,7 @@
 @media (min-width: 821px) {
   .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-body {
     width: 100%; max-width: 100%; min-width: 0; padding: 0; box-sizing: border-box;
-    /* Edge alignment moves transparent frame padding outside the grid.
-       Clip that padding so wider four-column cards cannot create page scroll. */
+    /* Keep the shared scene inside its grid cell during theme resizing. */
     overflow: clip;
   }
   .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-cards.hscard-deck-column {
@@ -143,54 +142,16 @@
   }
 }
 
-/* The original transparent canvas includes type-specific edge insets.
-   Move only the first and last card in each row; keep the grid and card sizes
-   unchanged, and leave space for legendary dragons in both finishes. */
-@media (min-width: 821px) {
-  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card.has-card-surface { overflow: visible; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface) { --hscard-ink-start: 0%; --hscard-ink-end: 0%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="MINION"]) { --hscard-ink-start: 5%; --hscard-ink-end: 8.15%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="SPELL"]) { --hscard-ink-start: 7.5%; --hscard-ink-end: 10.4%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="WEAPON"]) { --hscard-ink-start: 7.2%; --hscard-ink-end: 7.45%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="HERO"]) { --hscard-ink-start: 6.75%; --hscard-ink-end: 10.4%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="LOCATION"]) { --hscard-ink-start: 4.5%; --hscard-ink-end: 3.1%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-display-golden="true"][data-hscard-frame-kind="SPELL"]) { --hscard-ink-end: 5.15%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="HERO"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: 7.45%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="MINION"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: 6.55%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-display-golden="true"][data-hscard-frame-kind="MINION"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: 1.5%; }
-  .hscard-deck-list--v2 :where(.hscard-card-surface[data-hscard-frame-kind="SPELL"][data-hscard-frame-rarity="LEGENDARY"]) { --hscard-ink-end: .35%; }
-  .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-cards > .hscard-deck-card > .hscard-card-surface { transform: none; }
-  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(4n + 1) > .hscard-card-surface { transform: translateX(calc(0% - var(--hscard-ink-start))); }
-  .hscard-deck-list--v2 .hscard-deck-cards > .hscard-deck-card:nth-child(4n) > .hscard-card-surface { transform: translateX(var(--hscard-ink-end)); }
+/* Every cell shares the same quantity-ribbon anchor. Never translate a whole
+   scene by card type, finish, rarity or column position. This also overrides
+   edge transforms in an older WordPress combined stylesheet. */
+@media (min-width:821px) {
+ .hscard-deck-list--v2 .hscard-deck-layout--v2 .hscard-deck-cards > .hscard-deck-card > .hscard-card-surface { transform:none!important; }
+ .hscard-card-placeholder { position:relative; }
 }
-
-@media (min-width:821px){
- .hscard-card-surface.is-native-ready.is-loading-frame{position:relative;z-index:11}
- .hscard-card-surface.is-native-ready .hscard-card-placeholder[aria-busy="true"]{position:relative;z-index:11}
- .hscard-card-surface.is-native-ready .hscard-card-placeholder[aria-busy="true"]::before{content:"불러오는 중...";position:absolute;left:15%;right:15%;top:49%;text-align:center;color:white;font:700 clamp(7px,0.75vw,11px)/1.15 sans-serif;text-shadow:-1px -1px 2px #000,1px 1px 2px #000;pointer-events:none}
-}
-
-/* First-paint frame: ordinary browser image, never gated by JS/API/WebGL.
-   Keep the image during native initialization; reveal the completed native
-   frame only after the shared GPU canvas successfully presents it. */
-@media (min-width: 821px) {
-  .hscard-card-placeholder { position: relative; }
-  .hscard-card-placeholder .hscard-frame-preview {
-    display: block;
-    position: absolute;
-    inset: 0;
-    width: 100%;
-    height: 100%;
-    margin: 0;
-    padding: 0;
-    object-fit: contain;
-    pointer-events: none;
-    user-select: none;
-  }
-  .hscard-card-surface.is-native-ready .hscard-frame-preview { visibility: hidden; }
-}
-@media (max-width: 820px) { .hscard-frame-preview { display: none; } }
-
+/* Old cached HTML may still contain the removed image. Prevent an initial
+   broken-image icon until the entry removes that obsolete node. */
+.hscard-frame-preview { display:none!important; }
 /* Strict dates-v1: never expose imported present-day costs/name as historical. */
 .hscard-deck-card.is-snapshot-pending :is(.hscard-deck-tile-name-text,.hscard-deck-tile-cost){visibility:hidden}
 .hscard-deck-card.is-snapshot-error :is(.hscard-deck-tile-name-text,.hscard-deck-tile-cost){visibility:hidden}

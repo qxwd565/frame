@@ -39,7 +39,8 @@ https://github.com/qxwd565/frame/tree/webgpu-native-resources-20261109/plugin/hs
 Mesh/texture/shader/font/historical frame files live in each expansion API's frame/ directory.
 Beta and original snapshots live at https://github.com/qxwd565/legacy/tree/main/frame
 assets/unity/frame-api-index.json pins every file to its repository commit and SHA-256.
-The browser and PHP loading previews use the same index, including shared dependencies.
+The browser and PHP resource preloads use the same index, including shared dependencies.
+Loading displays the native frame itself; its target and geometry remain while artwork and text fill in.
 The official previous CDN defaults migrate automatically; explicit custom hosts are retained.
 Custom resource hosts remain configurable in Settings > HScard 3D resources.
 The plugin stores no GitHub tokens. A private GitHub repository is not publicly readable.

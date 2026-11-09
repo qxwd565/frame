@@ -12,11 +12,10 @@ It verifies exact pixel hashes and rejects any old-CDN request.
 Run `node tests/asset-revisions.mjs` to check unchanged builds and dependency/CSS
 cache invalidation, including the module import graph, without changing sources.
 Run `php tests/enqueue-revision.php` for PHP's matching script/style cache key.
-Run `php tests/frame-previews.php` to verify every generated preview hash,
-dimension and PHP date/class/rarity/plate selection. `preview-layout.html` shows
-mixed original loading frames without any card API, engine or font request.
-At widths 821 and above it must show four columns without horizontal overflow;
-the plugin's mobile preview rules remain unchanged below that breakpoint.
+Run `php tests/native-frame-markup.php` for 900 type/class/rarity/date cases:
+no preview image request and a shared 436x682 scene anchor. `ribbon-grid.html`
+checks 375/820/821/1024/1440/1920 px, four desktop columns, shared ribbon anchors,
+no old five-column offsets, no horizontal overflow, and unchanged mobile layout.
 Run `node tests/shader-time.mjs` to verify normal/golden stat-effect time vectors
 at 0, 1, 10 and 60 seconds and unchanged native X/Y speed values.
 Use a compatible Chrome/Edge WebGPU adapter; the browser must report its actual
@@ -30,12 +29,18 @@ adapter. No software renderer is silently substituted.
    - `http://127.0.0.1:19420/work/benchmark.html`: 30 cards, animated subset,
      presentation-only scrolling and resource disposal. Initial resource/API
      loading is outside its timing interval. This is not whole-page performance.
-   - `http://127.0.0.1:19420/work/entry.html`: real page entry module, live API/CDN,
+   - `http://127.0.0.1:19420/work/entry.html`: real page entry module, live card API/local native files,
      normal/golden toggles, hover, scrolling and deliberate device loss/recovery.
      Use a viewport at least 821 px wide. The 10-card fixture repeats EX1_350.
      It also checks ongoing normal-frame animation and zero offscreen updates.
+     Delayed artwork/fonts verify frame/node/mesh/target retention during fill.
      A deliberately delayed first preparation checks startup clock jumps; normal
      and golden playback must advance at wall-clock speed within 5% tolerance.
+   - `http://127.0.0.1:19420/work/native-frame-fill.html`: 36 current/historical
+     type/finish/rarity cases, retained native frame identities, exact quantity
+     ribbon pixel hashes, no recomposition, stale fill blocked before GPU submit.
+   - `http://127.0.0.1:19420/work/native-frame-failure.html`: ten failed artwork
+     requests preserve ten native frames with no broken preview images.
    - `http://127.0.0.1:19420/work/frame-animation.html`: GPU readback at two times;
      normal minion mana/attack/health regions must change in current, 3664 and
      3890 frames. Historical spells/weapons must retain their mana effects.

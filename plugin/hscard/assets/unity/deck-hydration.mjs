@@ -1,6 +1,6 @@
 /** Synchronize mobile deck tiles and GPU placeholders with ONE dates-v1 reducer. */
-import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-cbbc17dca2417691';
-import {readDatedCard} from './card-data.mjs?ver=hscard-cbbc17dca2417691';
+import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {readDatedCard} from './card-data.mjs?ver=hscard-2430ac4d7d5f7d48';
 
 const activeDecks = new WeakMap();
 const raritySet = new Set(['LEGENDARY','EPIC','RARE','COMMON','FREE']);
@@ -44,12 +44,6 @@ function refreshCard(element, dated) {
  element.dataset.hscardFrameAttack=(card.attack??0)>0?'1':'0';
  element.dataset.hscardFrameArmor=(card.armor??0)>0?'1':'0';
  element.classList.toggle('is-frame-unavailable',!frameKinds.has(card.type));
- const preview=element.querySelector('.hscard-frame-preview');
- if(preview&&frameKinds.has(card.type)){
-  const stem=card.type.toLowerCase()+'-'+element.dataset.hscardFrameClass.toLowerCase()+'.webp';
-  const href=preview.src.replace(/\/frame-previews\/[^/]+\.webp(?:\?.*)?$/, '/frame-previews/'+stem);
-  if(href!==preview.src)preview.src=href;
- }
  const placeholder=element.querySelector('.hscard-card-placeholder');
  if(placeholder)placeholder.setAttribute('aria-label',card.name+', 마나 '+String(card.cost??0)+', '+String(identity.quantity??1)+'장');
  element.dataset.hscardReady='true';

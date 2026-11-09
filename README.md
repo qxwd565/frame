@@ -2,9 +2,9 @@
 
 This branch contains HScard's WebGPU preview and its expansion API resource index.
 WordPress/PHP and browser renderer code live in `plugin/hscard/`; the WordPress
-ZIP contains only that directory's runtime files and a loading-preview index.
-Loading images live with the native resources in expansion API `frame/` directories,
-keeping installation small.
+ZIP contains only runtime files and the pinned expansion resource index.
+There are no separate skeleton images. The renderer displays the native frame
+first, then fills its portrait and text without replacing its geometry or target.
 Tests and documentation stay in the development repository. The former
 `qxwd565/HSdeck-plugin` URL redirects to this repository, so code and resources
 are kept in separate directories here as requested.
@@ -62,12 +62,12 @@ subject to their original owners' rights; licenses for bundled libraries are in
 the versioned assets directory.
 
 Plugin checks and browser fixtures are documented in `plugin/hscard/tests/README.md`.
-To rebuild first-paint previews, start `node tests/serve.mjs` in `plugin/hscard`,
-then run `node tools/build-frame-previews.mjs` from the repository root. This
-uses the actual WebGPU loading-card renderer, original frame meshes/materials
-and the shared historical date selector. It never exports raw texture atlases.
-Date/class/rarity/race variants share identical content-hashed CDN images;
-the original extracted textures and meshes remain unchanged. The WordPress
-HTML selects its preview without waiting for JavaScript or a card API call.
+`native-frame-fill.html` checks retained frame/node/mesh/target identities and
+pixel-identical quantity ribbons across 36 current/historical variants. The
+shared 436x682 scene fixes the ribbon center/bottom for every type, finish and
+rarity; quantity-one cards reserve the same space without drawing a ribbon.
+PHP emits no preview `<img>` or preview URL. Compatibility CSS and the entry
+remove obsolete cached image markup, while dated metadata chooses the actual
+native frame. Artwork and font requests run independently of its first draw.
 Full plugin implementation and validation notes are in
 `plugin/hscard/docs/WEBGPU-STAGING-STATUS.md`.

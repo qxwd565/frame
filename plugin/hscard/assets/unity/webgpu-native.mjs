@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-cbbc17dca2417691';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-2430ac4d7d5f7d48';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -296,7 +296,7 @@ struct V { @builtin(position) pos:vec4f }; @vertex fn vs_main(@builtin(vertex_in
   this.compositor=this.device.createRenderPipelineAsync({layout:'auto',vertex:{module,entryPoint:'vs_main'},fragment:{module,entryPoint:'fs_main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}}).catch(e=>{this.compositor=null;throw e;});
   return this.compositor;
  }
- async transparent(width,height,draws,destination){
+ async transparent(width,height,draws,destination,isCurrent=()=>true){
   if(!destination)throw Error('WebGPU native transparent pass requires an explicit render target');
   if(this.lostReason)throw Error('WebGPU device lost: '+this.lostReason);
   // Resolve textures, geometry, uniforms and pipelines once; encode the entire
@@ -304,6 +304,7 @@ struct V { @builtin(position) pos:vec4f }; @vertex fn vs_main(@builtin(vertex_in
   // This is particularly important for 30 continuously animated golden cards.
   const alphaPipeline=await this._alphaPipeline();
   this.arena.reset();const prepared=await this._draws(draws);
+  if(!isCurrent())return false;
   const {black,white}=this._alphaTargets(width,height);
   const encoder=this.device.createCommandEncoder();
   this._encodeScene(encoder,black,prepared,[0,0,0,0]);
@@ -312,7 +313,7 @@ struct V { @builtin(position) pos:vec4f }; @vertex fn vs_main(@builtin(vertex_in
   const pass=encoder.beginRenderPass({colorAttachments:[{view:destination.view,loadOp:'clear',storeOp:'store',clearValue:{r:0,g:0,b:0,a:0}}]});
   pass.setPipeline(alphaPipeline);pass.setBindGroup(0,bindGroup);pass.draw(3);pass.end();
   this.arena.flush();
-  this.device.queue.submit([encoder.finish()]);this.trimTextures();
+  this.device.queue.submit([encoder.finish()]);this.trimTextures();return true;
  }
  releaseMesh(mesh){const entry=this.gpuMeshes.get(mesh);if(!entry)return;entry.index.destroy();for(const buffer of entry.attributes.values())buffer.destroy();this.meshResources.delete(entry);this.gpuMeshes.delete(mesh);}
  dispose(){for(const texture of [...this.textureList])this.dropTexture(texture);for(const item of this.targets.values())this.releaseTarget(item);this.targets.clear();

@@ -1,0 +1,22 @@
+<!doctype html><meta charset="utf-8"><script type="module">
+window.result={running:true};const results=[];
+try{
+ for(const width of [375,820,821,1024,1440,1920]){
+  const iframe=document.createElement('iframe');iframe.style.cssText=`border:0;width:${width}px;height:750px;display:block`;
+  const ready=new Promise(resolve=>iframe.onload=resolve);
+  iframe.srcdoc=`<!doctype html><style>body{margin:8px}.hscard-deck-cards{padding:0;margin:0;list-style:none}figure{margin:0}@media(min-width:821px){.hscard-deck-cards{display:grid;grid-template-columns:repeat(5,1fr)}.hscard-deck-card:nth-child(5n+1)>figure{transform:translateX(-10%)}.hscard-deck-card:nth-child(5n)>figure{transform:translateX(12%)}}</style><link rel="stylesheet" href="/plugin/assets/unity/deck-cards.css"><section class="hscard-deck-list--v2"><div class="hscard-deck-layout--v2"><div class="hscard-deck-body"><ol class="hscard-deck-cards hscard-deck-column">${Array.from({length:20},(_,i)=>`<li class="hscard-deck-card has-card-surface"><figure class="hscard-card-surface" data-hscard-frame-kind="${['MINION','SPELL','WEAPON','HERO','LOCATION'][i%5]}" data-hscard-display-golden="${!!(i%2)}"><div class="hscard-card-placeholder" style="aspect-ratio:436/682"></div></figure></li>`).join('')}</ol></div></div></section>`;
+  document.body.append(iframe);await ready;const doc=iframe.contentDocument,view=iframe.contentWindow,list=doc.querySelector('ol'),boxes=[...doc.querySelectorAll('.hscard-card-placeholder')].map(el=>el.getBoundingClientRect());
+  if(width>=821){
+   if(view.getComputedStyle(list).gridTemplateColumns.split(' ').length!==4)throw Error('Not four columns at '+width);
+   for(let i=0;i<boxes.length;i++){
+    const box=boxes[i],first=boxes[i-i%4],above=boxes[i%4];
+    if(Math.abs(box.bottom-first.bottom)>.05||Math.abs(box.left-above.left)>.05)throw Error('Ribbon anchor shifted at '+width);
+    if(view.getComputedStyle(doc.querySelectorAll('figure')[i]).transform!=='none')throw Error('Old type/column offset retained');
+   }
+  }else if(view.getComputedStyle(list).display==='grid')throw Error('Mobile layout changed');
+  if(doc.documentElement.scrollWidth>width)throw Error('Horizontal overflow at '+width);
+  results.push({width,columns:width>=821?4:1,aligned:true});
+ }
+ window.result={running:false,results};
+}catch(error){window.result={running:false,error:error.stack,results};}
+</script>

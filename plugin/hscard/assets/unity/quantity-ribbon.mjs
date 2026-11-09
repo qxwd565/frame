@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-2430ac4d7d5f7d48';
 /**
  * Quantity ribbon is part of the same Unity-compatible WebGL card scene.
  * A quantity of 1 has no ribbon; any positive quantity >= 2 is drawn on the
@@ -13,6 +13,10 @@ export const RIBBON_EXTENT = 72;
 // Maximum native frame height across all supported normal/golden fits.
 // Every card reserves the same ribbon area, including single-copy cards.
 export const CARD_BODY_EXTENT = 610;
+export const CARD_SCENE_WIDTH = 436;
+export const CARD_SCENE_HEIGHT = CARD_BODY_EXTENT + RIBBON_EXTENT;
+export const RIBBON_CENTER_X = CARD_SCENE_WIDTH / 2;
+export const RIBBON_BOTTOM = 4;
 const PLATE_WIDTH = 512;
 const PLATE_HEIGHT = 348;
 const DIGIT_CELL_WIDTH = 240;
@@ -25,19 +29,19 @@ const textureCache = new Map();
 let assetsPromise;
 
 export function cardSceneContext(fit, quantity) {
-  const height = CARD_BODY_EXTENT + RIBBON_EXTENT;
-  const top = CARD_BODY_EXTENT - fit.height;
-  if (top < 0) throw Error('Card frame exceeds common scene height');
+  const width = CARD_SCENE_WIDTH, height = CARD_SCENE_HEIGHT;
   const projection = fit.sourceProjection.slice();
-  // Preserve native card scale. Transparent top padding aligns each frame's
-  // lower edge; the shared bottom area aligns actual WebGL quantity ribbons.
-  const factor = fit.height / height;
-  projection[5] *= factor;
-  projection[13] = projection[13] * factor + (RIBBON_EXTENT - top) / height;
+  // Native frames share a world origin and scale. Per-type/finish crop offsets
+  // previously moved that origin relative to the fixed quantity ribbon.
+  // Keep the same camera origin for every type, rarity and finish instead.
+  projection[0] *= fit.width / width;
+  projection[5] = projection[0] * width / height;
+  projection[12] = 0;
+  projection[13] = 0;
   return {
     view: fit.sourceView,
     projection,
-    width: fit.width,
+    width,
     height,
     time: 1,
     linear: false
@@ -117,10 +121,10 @@ export async function quantityRibbonPart(context,quantity) {
   }
   const spriteWidth=width*RIBBON_WIDTH_FRACTION;
   const spriteHeight=spriteWidth*PLATE_HEIGHT/PLATE_WIDTH;
-  const center=width*.518;
+  const center=RIBBON_CENTER_X;
   const left=center-spriteWidth/2;
   const right=center+spriteWidth/2;
-  const bottom=4;
+  const bottom=RIBBON_BOTTOM;
   const top=bottom+spriteHeight;
   const toX=x=>(2*x/width-1-projection[12])/projection[0];
   const toZ=y=>(2*y/height-1-projection[13])/projection[5];

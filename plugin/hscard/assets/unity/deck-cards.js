@@ -1,5 +1,5 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-cbbc17dca2417691';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-cbbc17dca2417691';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-2430ac4d7d5f7d48';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-cbbc17dca2417691';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-cbbc17dca2417691';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-cbbc17dca2417691';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-cbbc17dca2417691';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-cbbc17dca2417691';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-cbbc17dca2417691';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-cbbc17dca2417691';
-import {resolveCard} from './card-data.mjs?ver=hscard-cbbc17dca2417691';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-cbbc17dca2417691';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-cbbc17dca2417691';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-cbbc17dca2417691';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {resolveCard} from './card-data.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-2430ac4d7d5f7d48';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-2430ac4d7d5f7d48';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;
@@ -75,7 +75,9 @@ async function engine(){
    epoch++;deviceRecovery=()=>{surface.dispose();renderer.dispose();textReady.then(()=>cards.raster?.dispose());canvas.remove();};
    if(!running)recoverDevice();
   });
-  ready={canvas,renderer,surface,textReady};return ready;
+  const result={canvas,renderer,surface,textReady,textResult:null};
+  textReady.then(value=>{result.textResult=value;if(ready===result)schedule();});
+  ready=result;return ready;
  })().catch(error=>{canvas?.remove();runtime=null;ready=null;throw error;});return runtime;
 }
 function recoverDevice(){
@@ -129,9 +131,11 @@ function requestCard(item){
  if(item.element.classList.contains('is-frame-unavailable'))return null;
  if(item.request?.version===item.version)return item.request;
  const version=item.version;
- const request={version,status:'pending',card:null,error:null};item.request=request;
+ const request={version,status:'pending',metadata:null,card:null,error:null};item.request=request;
  const isCurrent=()=>item.version===version&&item.element.isConnected&&desktop.matches;
- Promise.resolve().then(()=>resolveCard(item.element,item.golden,{isCurrent})).then(card=>{
+ Promise.resolve().then(()=>resolveCard(item.element,item.golden,{isCurrent,onMetadata:card=>{
+  if(item.request===request&&isCurrent()){request.metadata=card;schedule();}
+ }})).then(card=>{
   if(item.request!==request||!isCurrent())return;
   request.card=card;request.status='ready';schedule();
  },error=>{
@@ -143,7 +147,12 @@ function requestCard(item){
 function needsFrame(item){
  if(!item.visible||item.failed||!item.element.isConnected||item.element.classList.contains('is-frame-unavailable'))return false;
  const stale=item.preparedVersion!==item.version||item.loadingFrame;
- if(stale)return item.request?.version===item.version&&item.request.status!=='pending';
+ if(stale){
+  const request=item.request;
+  if(request?.version!==item.version)return false;
+  if(request.error||item.preparedVersion<0&&request.metadata||request.status==='ready'&&ready?.textResult)return true;
+  return item.preparedVersion>=0&&!!(item.animated&&item.onScreen&&!reduced.matches);
+ }
  return !!item.dirty||!!(item.animated&&item.onScreen&&!reduced.matches);
 }
 function cardClip(element){let r={x:-OVERSCAN,y:-OVERSCAN,width:innerWidth+2*OVERSCAN,height:innerHeight+2*OVERSCAN};for(let p=element.parentElement;p;p=p.parentElement){const s=getComputedStyle(p);if(!/(hidden|clip|scroll|auto)/.test(s.overflowX+' '+s.overflowY))continue;const b=p.getBoundingClientRect(),x=Math.max(r.x,b.left),y=Math.max(r.y,b.top),right=Math.min(r.x+r.width,b.right),bottom=Math.min(r.y+r.height,b.bottom);r={x,y,width:Math.max(0,right-x),height:Math.max(0,bottom-y)};}return r;}
@@ -206,23 +215,43 @@ async function tick(){
    let newlyPrepared=false,candidateKey=null,candidateVersion=null;
    try{if(item.preparedVersion!==item.version||item.loadingFrame){
      const result=item.request;
-     if(!result||result.version!==item.version||result.status==='pending')continue;
-     const itemVersion=result.version;candidateVersion=itemVersion;if(result.error)throw result.error;
-     const font=await r.textReady;if(font.error)throw font.error;
-     if(version!==epoch||item.version!==itemVersion||!item.visible||!item.element.isConnected||!desktop.matches)continue;
-     candidateKey=item.preparedVersion<0?item.key:item.key+'::pending::'+itemVersion;
-     const loadingFrame=item.loadingFrame&&item.preparedVersion===itemVersion?r.surface.items.get(item.key)?.prepared:null;
-     await r.surface.prepare(candidateKey,result.card,loadingFrame);
-     if(version!==epoch||item.version!==itemVersion||!item.visible||!item.element.isConnected){r.surface.remove(candidateKey);candidateKey=null;continue;}
-     const initialTime=reduced.matches?1:0;
-     await r.surface.update(candidateKey,initialTime);
-     if(version!==epoch||item.version!==itemVersion||!item.visible||!item.element.isConnected){r.surface.remove(candidateKey);candidateKey=null;continue;}
-     r.surface.adopt(candidateKey,item.key);candidateKey=null;
-     item.preparedVersion=itemVersion;item.loadingFrame=false;item.element.dataset.hscardDisplayGolden=String(result.card.golden);newlyPrepared=true;item.animationTime=0;item.animationClock=null;item.element.classList.remove('is-frame-unavailable');
-     const placeholder=item.element.querySelector('.hscard-card-placeholder'),prepared=r.surface.items.get(item.key)?.prepared;
-     item.animated=!!prepared?.animated;
-     if(placeholder&&prepared)placeholder.style.aspectRatio=prepared.context.width+'/'+prepared.context.height;
-     item.dirty=false;layoutDirty=true;
+     if(!result||result.version!==item.version)continue;
+     const itemVersion=result.version;candidateVersion=itemVersion;
+     const isCurrent=()=>version===epoch&&item.version===itemVersion&&item.visible&&item.element.isConnected&&desktop.matches;
+     if(!isCurrent())continue;
+     // Display the actual frame without waiting for artwork or FreeType.
+     // An already completed normal/golden card stays visible during a toggle.
+     if(item.preparedVersion<0&&result.metadata){
+      candidateKey=item.key;
+      await r.surface.prepare(candidateKey,result.metadata);
+      if(!isCurrent()){r.surface.remove(candidateKey);candidateKey=null;continue;}
+      await r.surface.update(candidateKey,reduced.matches?1:0);
+      if(!isCurrent()){r.surface.remove(candidateKey);candidateKey=null;continue;}
+      candidateKey=null;item.preparedVersion=itemVersion;item.loadingFrame=true;
+      item.animationTime=0;item.animationClock=null;item.dirty=false;newlyPrepared=true;
+      item.element.dataset.hscardDisplayGolden=String(result.metadata.golden);
+      item.animated=!!r.surface.items.get(item.key)?.prepared.animated;
+      presentCards(r);
+     }
+     if(result.error)throw result.error;
+     if(result.status==='ready'&&r.textResult){
+      if(r.textResult.error)throw r.textResult.error;
+      if(item.loadingFrame&&item.preparedVersion===itemVersion){
+       if(!await r.surface.fill(item.key,result.card,{time:reduced.matches?1:item.animationTime,isCurrent}))continue;
+      }else{
+       candidateKey=item.key+'::pending::'+itemVersion;
+       await r.surface.prepare(candidateKey,result.card);
+       if(!isCurrent()){r.surface.remove(candidateKey);candidateKey=null;continue;}
+       await r.surface.update(candidateKey,reduced.matches?1:0);
+       if(!isCurrent()){r.surface.remove(candidateKey);candidateKey=null;continue;}
+       r.surface.adopt(candidateKey,item.key);candidateKey=null;
+       item.animationTime=0;item.animationClock=null;
+      }
+      item.preparedVersion=itemVersion;item.loadingFrame=false;item.element.dataset.hscardDisplayGolden=String(result.card.golden);newlyPrepared=true;
+      item.animated=!!r.surface.items.get(item.key)?.prepared.animated;
+      item.dirty=false;layoutDirty=true;
+     }
+     if(item.preparedVersion<0)continue;
     }
     // Replay original time-dependent effects on both normal and golden cards.
     // Static programs and offscreen cards do not keep an animation loop alive.
@@ -249,7 +278,7 @@ async function tick(){
    }catch(error){
     if(candidateKey)r.surface.remove(candidateKey);
     if(version!==epoch||candidateVersion!==null&&candidateVersion!==item.version||!item.visible||!item.element.isConnected||!desktop.matches)continue;
-    if(item.preparedVersion>=0&&r.surface.items.has(item.key)){item.failed=true;item.dirty=false;item.element.dispatchEvent(new CustomEvent('hscard-render-error',{bubbles:true,detail:{id:item.key,message:String(error?.message||error)}}));}
+    if(item.preparedVersion>=0&&r.surface.items.has(item.key)){item.failed=true;item.dirty=false;item.loadingFrame=false;const box=item.element.querySelector('.hscard-card-placeholder');if(box){box.setAttribute('aria-busy','false');box.title=String(error?.message||error);}item.element.dispatchEvent(new CustomEvent('hscard-render-error',{bubbles:true,detail:{id:item.key,message:String(error?.message||error)}}));}
     else{r.surface.remove(item.key);fail(item,error);}
    }
   }
@@ -271,6 +300,9 @@ function queueScan(){
 }
 function scan(){
  if(!desktop.matches)return;
+ // Cached pre-upgrade HTML can still reference deleted preview files (404).
+ // New PHP emits no image; remove stale nodes instead of retrying those URLs.
+ for(const image of document.querySelectorAll('.hscard-frame-preview'))image.remove();
  for(const button of document.querySelectorAll('[data-hscard-golden-toggle]'))button.hidden=false;
  for(const element of document.querySelectorAll('[data-hscard-card]')){
   if(items.has(element))continue;

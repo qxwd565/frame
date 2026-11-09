@@ -1,0 +1,53 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><style>body{margin:0}#output{width:1100px;height:auto}canvas:not(#output){display:none}</style><canvas></canvas><canvas id="output" width="1308" height="1364"></canvas><script type="module">
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+import {WebGPUMultiCardSurface} from '/plugin/assets/unity/webgpu-multi-card-surface.mjs';
+window.result={running:true};const errors=[],cases=[];
+try {
+ const bytes=async n=>new Uint8Array(await(await fetch('/resources/'+n)).arrayBuffer()),json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts),textures=new Map();
+ const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;const key=t.key||t.embedded;if(!textures.has(key))textures.set(key,(async()=>{if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};})());return textures.get(key);});
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ async function read(target){const {width,height}=target,stride=Math.ceil(width*4/256)*256,buffer=renderer.device.createBuffer({size:stride*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});try{const encoder=renderer.device.createCommandEncoder();encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:stride},{width,height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);const padded=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(width*height*4);for(let y=0;y<height;y++)pixels.set(padded.subarray(y*stride,y*stride+width*4),y*width*4);return pixels;}finally{buffer.destroy();}}
+ const base={cardClass:'NEUTRAL',golden:false,name:'효과 확인',text:'일반 카드 효과',race:'',cost:3,attack:2,health:2,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
+ const surface=await WebGPUMultiCardSurface.create(renderer,cards),output=document.querySelector('#output').getContext('2d');
+ const assert=(condition,message)=>{if(!condition)throw Error(message);};
+ const hash=pixels=>{let v=2166136261;for(const byte of pixels)v=Math.imul(v^byte,16777619);return v>>>0;};
+ let ribbonHash=null,drawIndex=0,composeCalls=0;
+ const compose=composer.compose.bind(composer);composer.compose=(...args)=>{composeCalls++;return compose(...args);};
+ for(const [kind,frameProfile,renderDate] of [['MINION','current','2026-11-09'],['SPELL','current','2026-11-09'],['WEAPON','current','2026-11-09'],['HERO','current','2026-11-09'],['LOCATION','current','2026-11-09'],['MINION','historical','2013-08-17'],['MINION','historical','2013-10-03'],['SPELL','historical','2013-08-17'],['WEAPON','historical','2013-08-17']])for(const golden of [false,true])for(const rarity of ['RARE','LEGENDARY']){
+  window.result={running:true,case:[kind,renderDate,golden,rarity]};
+  const card={...base,kind,frameProfile,renderDate,golden,rarity,armor:kind==='HERO'?5:0,quantity:2};
+  const loading={...card,loading:true,name:'',text:'',artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([128,128,128,255])]}};
+  await surface.prepare('test',loading);await surface.update('test',.25);
+  const item=surface.items.get('test'),target=item.target,prepared=item.prepared,frame=prepared.frame,nodes=frame.parts.slice(),meshes=nodes.map(p=>p.mesh),before=await read(target),count=composeCalls;
+  assert(prepared.textDraws.length===0,'Loading card has text');assert(prepared.quantityDraws.length>0,'Loading ribbon missing');
+  assert(await surface.fill('test',card,{time:.25}),'Fill failed');
+  assert(item.target===target&&item.prepared===prepared&&prepared.frame===frame,'Frame/target replaced');
+  assert(frame.parts.every((p,i)=>p===nodes[i]&&p.mesh===meshes[i]),'Native node or mesh replaced');
+  assert(composeCalls===count,'Recomposed the frame');assert(prepared.textDraws.length>0,'Missing filled text');
+  const after=await read(target);assert(hash(before)!==hash(after),'Artwork/text did not fill');
+  const ribbon=renderer.createTarget(target.width,target.height);
+  await renderer.transparent(target.width,target.height,prepared.quantityDraws,ribbon);const pixels=await read(ribbon),rh=hash(pixels);
+  assert(ribbonHash===null||ribbonHash===rh,'Ribbon grid differs: '+[kind,golden,rarity,renderDate]);ribbonHash=rh;renderer.releaseTarget(ribbon);
+  if(rarity==='RARE'&&drawIndex<12){const temp=document.createElement('canvas');temp.width=target.width;temp.height=target.height;temp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(after),target.width,target.height),0,0);output.drawImage(temp,(drawIndex%6)*218,Math.floor(drawIndex/6)*682,218,341);temp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(before),target.width,target.height),0,0);output.drawImage(temp,(drawIndex%6)*218,Math.floor(drawIndex/6)*682+341,218,341);drawIndex++;}
+  cases.push({kind,golden,rarity,renderDate,width:target.width,height:target.height,ribbonHash:rh,retained:true});
+ }
+ // Cancel after shader/resource awaits but before GPU submission: old pixels survive.
+ const old=surface.items.get('test'),oldPixels=hash(await read(old.target));let current=true;
+ const draws=renderer._draws.bind(renderer);renderer._draws=async(...args)=>{const result=await draws(...args);current=false;return result;};
+ const latest={...base,kind:'WEAPON',frameProfile:'historical',renderDate:'2013-08-17',golden:true,rarity:'LEGENDARY',armor:0,quantity:2,text:'Superseded'};
+ assert(await surface.fill('test',latest,{isCurrent:()=>current})===false,'Stale fill accepted');renderer._draws=draws;
+ assert(hash(await read(old.target))===oldPixels,'Stale fill wrote GPU target');
+ const single=await cards.prepare({...base,kind:'MINION',quantity:1});assert(single.quantityDraws.length===0&&single.context.height===682,'Single quantity changed grid');cards.releasePrepared(single);
+ surface.dispose();
+ renderer.dispose();raster.dispose();window.result={running:false,cases,errors};
+}catch(error){window.result={running:false,error:error.stack,cases,errors};}
+</script>
