@@ -40,31 +40,51 @@ Original production `main` and `hsdeck-frame.pages.dev` are unchanged.
 - Main frame atlases remain 1024×1024. This is not a claim that every mask or
   every historical texture has that resolution.
 
-## Controlled local performance and lifetime check
+## CDN and page integration
 
-Chrome headless, Windows, NVIDIA Pascal WebGPU adapter; local HTTP resources,
-436×682 card targets. Resource initialization and API download happened before
-these timings; they are not cold-page loading measurements.
+The isolated HTTPS base is
+https://hsdeck-frame-webgpu.pages.dev/v7.14.4-webgpu-20261109/assets/unity/.
+Actual HTTP/CORS/SHA-256 checks passed for representative manifests, a WGSL
+program and native texture. The full 30-case rendering matrix also passed
+against this CDN without WebGPU errors.
 
-| Measurement | Result |
-| --- | ---: |
-| First prepared/rendered card | 326 ms |
-| 30 cards prepared/rendered | 1,767 ms |
-| 15 animated cards among 30, median frame | 97.7 ms / 10.2 FPS |
-| Present-only scrolling, median | 2.6 ms |
+The actual page entry module loaded 10 repeated EX1_350 cards from live APIs,
+toggled ordinary/golden twice, handled hover/scroll and recovered after a forced
+device loss. One canvas remained, and the old renderer's tracked targets,
+meshes and textures were all zero. This was a browser fixture, not WordPress.
 
-After removing all 30 cards and repeating preparation/removal three times,
-mesh/texture/target counts did not grow. Renderer disposal left all three
-tracked counts at zero. Texture accounting is conservative and is not a driver
-VRAM measurement. 60 FPS has NOT been achieved in the measured mixed deck.
+## Controlled performance and lifetime check
+
+Windows, Chrome headless, NVIDIA Pascal, local HTTP, 436×682 targets, 30 cards
+with 15 animated. Three alternating runs used the same texture-sharing behavior
+as the page. Median results before/after batched uniforms and format-aware GPU
+cache accounting:
+
+| Measurement | Before | After |
+| --- | ---: | ---: |
+| First card (after resource/API initialization) | 229.4 ms | 255.8 ms |
+| 30 cards prepared/rendered | 599.3 ms | 683.2 ms |
+| Animation frame | 15.3 ms | 14.5 ms |
+| Presentation-only scroll | 2.7 ms | 3.0 ms |
+
+These small/mixed changes do not establish an overall speed improvement.
+The earlier ~10 FPS harness omitted the page's shared texture resolver and is
+not a valid measurement of the actual page. Corrected after-change frame medians
+were 14.1–15.5 ms (65–71 FPS). This repeats one actual golden material and does
+not establish performance for 30 distinct cards or every device.
+A separate 10-card CDN entry test took 8.23 seconds from entry to full display.
+
+After 30-card removal and three further prepare/remove cycles, retained cache
+counts were stable. Renderer disposal left tracked mesh/texture/target counts
+at zero. Uploaded mip payload was about 50.1 MiB, not a driver VRAM measurement.
 
 ## Remaining acceptance work
 
 - Resolve the beta/current-shader visual differences against native captures.
-- Improve multi-card animation throughput and measure cold/warm whole-page
+- Measure varied multi-card animation, cold/warm whole-page
   loading, transferred bytes and the same WebGL workload on multiple devices.
 - Validate actual WordPress install/activation and live theme integration.
-- Exercise device loss/recovery and prolonged real-site scrolling/toggling.
+- Exercise prolonged real-site scrolling/toggling and additional GPU adapters.
 - Compare against direct in-game captures, not only the prior renderer.
 
 PHP and JavaScript syntax checks passed. Dates-v1 Backstab snapshots were checked
