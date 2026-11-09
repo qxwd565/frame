@@ -22,7 +22,14 @@ final class Native_Cards {
   return trailingslashit( esc_url_raw( $url ) );
  }
  public static function enqueue() {
-  $revision = HSCARD_VERSION;
+  // A same-version ZIP replacement must invalidate the site's long-lived JS
+  // cache too. The entry file contains the generated dependency-graph revision.
+  static $revision = null;
+  if ( null === $revision ) {
+   $entry = HSCARD_PATH . 'assets/unity/deck-cards.js';
+   $hash = is_readable( $entry ) ? hash_file( 'sha256', $entry ) : false;
+   $revision = HSCARD_VERSION . ( $hash ? '-' . substr( $hash, 0, 16 ) : '' );
+  }
   wp_enqueue_script_module( 'hscard-native-cards', plugins_url( 'assets/unity/deck-cards.js', HSCARD_PATH . 'hscard.php' ), array(), $revision );
   wp_enqueue_style( 'hscard-native-cards', plugins_url( 'assets/unity/deck-cards.css', HSCARD_PATH . 'hscard.php' ), array(), $revision );
  }

@@ -17,6 +17,17 @@ The current Unity source build is `6000.3.11.3145967`. Main frame atlases remain
 Run `node tools/build-cdn.mjs` to create the static `dist` directory. Deploy this
 branch to an isolated preview project; the existing production CDN is unchanged.
 
+## Package the WordPress plugin
+
+Run `powershell -NoProfile -ExecutionPolicy Bypass -File tools/build-plugin.ps1`
+on Windows (the policy option applies only to this build process). This overwrites the
+adjacent `hsdeck plugin.zip`; `-OutputZip <path>` chooses another destination.
+The packager first runs `tools/prepare-plugin-assets.mjs` to stamp all browser
+module imports with a shared content revision. PHP adds the entry's content hash
+to its script and stylesheet URLs. Always use this packager after editing browser
+code: changing the plugin version alone does not invalidate imported modules.
+Tests, documentation and native resources are excluded from the WordPress ZIP.
+
 ## Rebuild shaders on Windows
 
 - Node 24.12 or newer; `npm install --prefix tools` installs pinned naga-wasm 30.2.0.

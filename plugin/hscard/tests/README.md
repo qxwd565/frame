@@ -1,6 +1,9 @@
 # Browser verification
 
 These files are development-only and are excluded from the WordPress ZIP.
+Run `node tests/asset-revisions.mjs` to check unchanged builds and dependency/CSS
+cache invalidation, including the module import graph, without changing sources.
+Run `php tests/enqueue-revision.php` for PHP's matching script/style cache key.
 Use a compatible Chrome/Edge WebGPU adapter; the browser must report its actual
 adapter. No software renderer is silently substituted.
 

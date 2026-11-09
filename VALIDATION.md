@@ -80,6 +80,24 @@ at zero. Uploaded mip payload was about 50.1 MiB, not a driver VRAM measurement.
 
 ## Remaining acceptance work
 
+Live-page cache diagnosis, 2026-11-09: the installed entry matched this branch,
+but WordPress.com served Chrome a stale compressed response for the unchanged
+`?ver=7.14.4-webgpu-dates-v1-preview` URL. It requested the removed packed
+`webgpu/wgsl-programs.json.gz` (404), leaving static previews instead of WebGPU.
+Replacing only the entry/CSS query in the public rogue page's HTML, while still
+loading the installed site's scripts and live CDN/API, rendered all 50 cards:
+one canvas, no HTTP failures or console exceptions. A second run substituted
+this branch's local JS/CSS in that live DOM and also rendered 50/50 cards.
+These controlled browser overrides did not modify the WordPress server.
+
+The plugin now versions the root script/CSS by entry content, and the ZIP builder
+stamps the complete module graph by a shared content digest. The public plugin
+version is unchanged. Dependency-only and CSS-only edits both invalidate the
+entry; unchanged builds are idempotent; 36 relative module references agree.
+The 10-card fixture again passed normal/golden round trips, hover/scroll and
+forced device recovery with no errors and zero old tracked GPU resources.
+Reinstallation and any full-page cache purge on the live server remain pending.
+
 - Resolve the beta/current-shader visual differences against native captures.
 - Measure varied multi-card animation, cold/warm whole-page
   loading, transferred bytes and the same WebGL workload on multiple devices.

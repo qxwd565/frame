@@ -1,5 +1,5 @@
-import {resourceURL} from './resource-url.mjs?ver=hscard-7.14.4';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-7.14.4';
+import {resourceURL} from './resource-url.mjs?ver=hscard-2c8d95b9b73e896b';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-2c8d95b9b73e896b';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-7.14.4';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-7.14.4';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-7.14.4';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-7.14.4';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-7.14.4';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-7.14.4';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-7.14.4';
-import {resolveCard} from './card-data.mjs?ver=hscard-7.14.4';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-7.14.4';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-7.14.4';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-7.14.4';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-2c8d95b9b73e896b';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-2c8d95b9b73e896b';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-2c8d95b9b73e896b';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-2c8d95b9b73e896b';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-2c8d95b9b73e896b';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-2c8d95b9b73e896b';
+import {resolveCard} from './card-data.mjs?ver=hscard-2c8d95b9b73e896b';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-2c8d95b9b73e896b';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-2c8d95b9b73e896b';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-2c8d95b9b73e896b';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;
@@ -27,7 +27,7 @@ async function bytes(name){
  // browser/CDN cache hide the new on-demand texture layout on upgrade.
  if(name==='frames-constructed.json.gz')url.searchParams.set('rev','7.12.07');
  const r=await fetch(url,{credentials:'same-origin'});
- if(!r.ok)throw Error('Card data '+r.status);
+ if(!r.ok)throw Error('Card resource HTTP '+r.status+': '+url.href);
  return new Uint8Array(await r.arrayBuffer());
 }
 async function json(name){return new Response(new Blob([await bytes(name)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();}
@@ -90,6 +90,7 @@ const reportedErrors=new Set();
 function failureKind(error){
  const message=String(error?.message||error||'Unknown HScard error');
  if(/Card source not registered|Missing or invalid dates-v1 card URL|Invalid card URL or date/i.test(message))return ['CARD_SOURCE','카드 API 주소 없음'];
+ if(/Card resource HTTP|WGSL index HTTP|WGSL program HTTP/i.test(message))return ['RESOURCE_HTTP','카드 리소스 요청 실패'];
  if(/Card dates-v1 HTTP|Artwork.*HTTP|Failed to fetch|fetch failed|NetworkError|CORS/i.test(message))return ['CARD_HTTP','카드 파일 요청 실패'];
  if(/Unsupported legacy card JSON|date-keyed card records|First dated record|Invalid dated card/i.test(message))return ['CARD_SCHEMA','카드 JSON 형식 오류'];
  if(/not released/i.test(message))return ['CARD_NOT_RELEASED','출시 전 카드'];
