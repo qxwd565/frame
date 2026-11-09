@@ -19,6 +19,7 @@ foreach (
 		'hscard_schema_version',
 		'hscard_imported_sets',
 		'hscard_json_sources',
+		'hscard_json_source_order',
 		'hscard_home_covers',
 		'hscard_home_cover_schema_version',
 		'hscard_rewrite_version',

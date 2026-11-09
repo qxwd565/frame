@@ -5,7 +5,7 @@ import {fileURLToPath} from 'node:url';
 
 const project = fileURLToPath(new URL('../', import.meta.url));
 const resources = path.resolve(process.argv[2] || path.join(project, '../../v7.14.4-webgpu-20261109/assets/unity'));
-const roots = {'/plugin/': project, '/resources/': resources, '/work/': path.join(project, 'tests')};
+const roots = {'/plugin/': project, '/resources/': resources, '/work/': path.join(project, 'tests'), '/fixtures/': path.resolve(project, '../../.build')};
 http.createServer(async (req, res) => {
   try {
     const url = new URL(req.url, 'http://localhost');

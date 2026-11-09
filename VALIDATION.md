@@ -203,3 +203,24 @@ No new in-game pixel-parity claim, full WordPress activation test or other-GPU
 acceptance is made. Full-page caches containing old HTML/scripts must be refreshed
 when installing the replacement ZIP. Native loading still requires dated metadata
 and the original frame resources; it does not use an immediate substitute bitmap.
+
+## Admin source ordering and repository-name entry, 2026-11-09
+
+The JSON-source list has a WordPress jQuery UI drag handle, keyboard arrow moves
+and up/down actions in its existing menu. Ordering is saved separately from
+source content; filtered results reorder only their existing slots, new sources
+append and deleted sources cannot be resurrected by a stale order request.
+New remote sources accept a repository name and construct the qxwd565 main
+cards.json URL on the server, with a matching live URL preview. Existing custom
+URLs and local upload/text modes retain their behavior. Admin JS/CSS have
+content-based cache revisions without changing the plugin version.
+
+PHP handler tests passed full/filtered ordering, reload, add/delete, rejected
+duplicate/invalid IDs, write failure, capability/nonce/method checks, repository
+validation, actual source creation, duplicate URL rejection and existing URL
+editing. All 19 PHP files and changed JS files passed syntax checks. Chrome
+with the actual WordPress jQuery UI scripts passed a real mouse drag, keyboard
+focus restoration, failed-save rollback, mobile menu moves at 390 px, and
+repository preview/mode switching. Browser AJAX was simulated; handlers used
+in-memory WordPress option stubs. No live WordPress admin installation or DB
+mutation was performed. Existing WebGPU/native resource files are unchanged.

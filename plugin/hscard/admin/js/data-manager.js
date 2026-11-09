@@ -7,6 +7,20 @@
 
   const form = root.querySelector('[data-hscard-source-form]');
   const choices = form && form.querySelector('[data-hscard-methods]');
+  const repository = form && form.querySelector('[name="source_repository"]');
+  if (repository) {
+    const preview = form.querySelector('#hscard-repository-url');
+    const updateRepository = function () {
+      const name = repository.value.trim();
+      const valid = /^[A-Za-z0-9_.-]{1,100}$/.test(name) && name !== '.' && name !== '..';
+      repository.setCustomValidity(name && !valid ? 'URL 대신 저장소 이름만 입력하세요.' : '');
+      preview.textContent = valid ? repository.dataset.repositoryPrefix + name + repository.dataset.repositorySuffix : '';
+      preview.hidden = !valid;
+    };
+    repository.addEventListener('input', updateRepository);
+    repository.addEventListener('change', function () { repository.value = repository.value.trim(); updateRepository(); });
+    updateRepository();
+  }
   if (choices) {
     const radios = Array.from(choices.querySelectorAll('input[name="hscard_add_method"]'));
     const panels = Array.from(form.querySelectorAll('[data-hscard-mode-panel]'));
@@ -109,4 +123,75 @@
   root.addEventListener('keydown', function (event) {
     if (event.key === 'Escape') menus.forEach(function (menu) { menu.open = false; });
   });
+
+  const orderList = root.querySelector('[data-hscard-source-order]');
+  if (orderList) {
+    const rows = function () { return Array.from(orderList.querySelectorAll(':scope > tr[data-source-id]')); };
+    const status = root.querySelector('[data-hscard-order-status]');
+    const sortable = window.jQuery && window.jQuery.fn.sortable ? window.jQuery(orderList) : null;
+    let saved = rows(), saving = false, statusTimer;
+    function refreshControls() {
+      const list = rows();
+      list.forEach(function (row, index) {
+        row.querySelector('.hscard-sort-handle').disabled = saving;
+        row.querySelector('[data-hscard-move="up"]').disabled = saving || index === 0;
+        row.querySelector('[data-hscard-move="down"]').disabled = saving || index === list.length - 1;
+      });
+      if (sortable) sortable.sortable('option', 'disabled', saving || list.length < 2);
+    }
+    async function saveOrder() {
+      const next = rows();
+      if (saving || next.every(function (row, i) { return row === saved[i]; })) return;
+      const focus = orderList.contains(document.activeElement) ? document.activeElement : null;
+      saving = true; refreshControls(); clearTimeout(statusTimer);
+      status.textContent = '저장 중…'; status.classList.remove('is-error');
+      orderList.setAttribute('aria-busy', 'true');
+      const body = new URLSearchParams({action:'hscard_reorder_sources', nonce:orderList.dataset.orderNonce});
+      next.forEach(function (row) { body.append('order[]', row.dataset.sourceId); });
+      const controller = new AbortController(), timer = setTimeout(function () { controller.abort(); }, 15000);
+      try {
+        const response = await fetch(orderList.dataset.orderUrl, {method:'POST', credentials:'same-origin', body:body, signal:controller.signal});
+        const payload = await response.json().catch(function () { throw new Error('저장 응답을 확인할 수 없습니다. 새로고침 후 다시 시도하세요.'); });
+        if (!response.ok || !payload.success) throw new Error(payload.data && payload.data.message || '순서를 저장하지 못했습니다. 다시 시도하세요.');
+        saved = next;
+        status.textContent = '순서 저장됨';
+        statusTimer = setTimeout(function () { status.textContent = ''; }, 2000);
+      } catch (error) {
+        saved.forEach(function (row) { orderList.appendChild(row); });
+        status.textContent = error.name === 'AbortError' ? '저장 응답이 없습니다. 새로고침 후 순서를 확인하세요.' : error.message;
+        status.classList.add('is-error');
+      } finally {
+        clearTimeout(timer); saving = false; orderList.setAttribute('aria-busy', 'false'); refreshControls();
+        if (focus && document.activeElement === document.body) focus.focus({preventScroll:true});
+      }
+    }
+    function move(row, direction) {
+      if (saving || !row) return;
+      const list = rows(), index = list.indexOf(row), other = list[index + direction];
+      if (!other) return;
+      if (direction < 0) orderList.insertBefore(row, other); else orderList.insertBefore(other, row);
+      row.querySelector('.hscard-sort-handle').focus();
+      saveOrder();
+    }
+    if (sortable) sortable.sortable({
+      items:'> tr[data-source-id]', handle:'.hscard-sort-handle', axis:'y', tolerance:'pointer',
+      cancel:'a,input,textarea,select,option', placeholder:'hscard-sort-placeholder', forcePlaceholderSize:true,
+      helper:function (event, row) {
+        const clone = row.clone();
+        clone.children().each(function (index) { window.jQuery(this).width(row.children().eq(index).width()); });
+        return clone;
+      },
+      start:function () { menus.forEach(function (menu) { menu.open = false; }); },
+      update:saveOrder
+    });
+    orderList.addEventListener('click', function (event) {
+      const button = event.target.closest('[data-hscard-move]');
+      if (button) { button.closest('details').open = false; move(button.closest('[data-source-id]'), button.dataset.hscardMove === 'up' ? -1 : 1); }
+    });
+    orderList.addEventListener('keydown', function (event) {
+      if (!event.target.closest('.hscard-sort-handle') || !['ArrowUp','ArrowDown'].includes(event.key)) return;
+      event.preventDefault(); move(event.target.closest('[data-source-id]'), event.key === 'ArrowUp' ? -1 : 1);
+    });
+    refreshControls();
+  }
 }() );

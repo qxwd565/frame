@@ -32,6 +32,18 @@
 .hscard-table tbody tr:hover td{background:#fcfcfd}
 .hscard-table a:not(.button){text-underline-offset:2px}
 .hscard-item-name{display:block;font-size:14px;font-weight:650;line-height:1.45}
+.hscard-source-name{display:flex;align-items:center;gap:10px}
+.hscard-sort-handle{display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;width:26px;height:30px;padding:0;border:0;border-radius:4px;background:transparent;color:#787c82;cursor:grab}
+.hscard-sort-handle:active{cursor:grabbing}
+.hscard-sort-handle:hover{background:#f0f6fc;color:#2271b1}
+.hscard-sort-handle:focus-visible{outline:2px solid #2271b1;outline-offset:2px}
+.hscard-sort-handle:disabled{cursor:wait;opacity:.5}
+.hscard-sort-placeholder td{background:#f0f6fc!important;border:1px dashed #72aee6!important}
+.hscard-order-status{display:block;min-height:0;font-size:12px;color:#50575e}
+.hscard-order-status:not(:empty){margin:0 0 8px}
+.hscard-order-status.is-error{color:#b32d2e}
+.hscard-repository-url{display:block;overflow-wrap:anywhere}
+.hscard-repository-url[hidden]{display:none}
 .hscard-sub{color:#646970;font-size:12px;line-height:1.6;margin-top:4px;overflow-wrap:anywhere}
 .hscard-sub code{font-size:11px;padding:1px 3px;background:#f6f7f7}
 .hscard-meta-dot{margin:0 3px;color:#a7aaad}
@@ -51,8 +63,10 @@
 .hscard-row-more[open]>summary::after{transform:rotate(180deg)}
 .hscard-row-more>summary:hover,.hscard-row-more[open]>summary{background:#f0f6fc}
 .hscard-more-content{display:flex;flex-direction:column;gap:0;padding:6px;border:1px solid #dcdcde;border-radius:7px;background:#fff;margin-top:6px;min-width:156px;box-shadow:0 5px 12px rgba(31,35,40,.06)}
-.hscard-more-content a{display:block;color:#2271b1;text-decoration:none;padding:8px 9px;border-radius:4px;font-size:12px;white-space:nowrap}
-.hscard-more-content a:hover{background:#f6f7f7;text-decoration:none}
+.hscard-more-content a,.hscard-more-content .hscard-order-move{display:block;color:#2271b1;text-decoration:none;padding:8px 9px;border-radius:4px;font-size:12px;white-space:nowrap}
+.hscard-more-content .hscard-order-move{border:0;background:transparent;text-align:left;font-family:inherit;cursor:pointer}
+.hscard-more-content .hscard-order-move:disabled{opacity:.45;cursor:default}
+.hscard-more-content a:hover,.hscard-more-content .hscard-order-move:not(:disabled):hover{background:#f6f7f7;text-decoration:none}
 .hscard-more-divider{height:1px;background:#eceef0;margin:4px 0}
 .hscard-more-content .hscard-delete-link{color:#b32d2e}
 .hscard-empty{text-align:center;padding:36px 14px 38px;color:#50575e}

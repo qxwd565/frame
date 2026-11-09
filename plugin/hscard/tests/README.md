@@ -1,6 +1,16 @@
 # Browser verification
 
 These files are development-only and are excluded from the WordPress ZIP.
+Run `php tests/admin-sources.php` for source ordering, filtered slots, storage
+failures, authorization/nonce checks, repository URL construction and existing
+URL compatibility. `--fixture` emits the production source-list/new-source markup
+for browser testing. Serve generated fixtures from `.build/` via `/fixtures/`.
+Load WordPress's jQuery, jQuery UI core/mouse/sortable, then
+`admin-sources-browser.js`, the production `admin/js/data-manager.js`, and call
+`runAdminSourceChecks()`. Its `window.result.phase` asks a browser driver for a
+real mouse drag and a 390 px viewport; keyboard, failed-save rollback, mobile
+menu moves and repository completion run inside the fixture.
+
 Run `node tests/frame-api-routing.mjs` and `php tests/frame-api-routing.php`
 to verify all expansion routes, unchanged local bytes, cross-expansion
 historical dependencies, corruption rejection and custom mirror compatibility.

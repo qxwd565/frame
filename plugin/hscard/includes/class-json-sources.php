@@ -6,6 +6,9 @@ if ( ! defined( 'ABSPATH' ) ) { exit; }
 
 final class Json_Sources {
  const OPTION = 'hscard_json_sources';
+ const ORDER_OPTION = 'hscard_json_source_order';
+ const REPOSITORY_PREFIX = 'https://raw.githubusercontent.com/qxwd565/';
+ const REPOSITORY_SUFFIX = '/main/cards.json';
  const CONTENT_PREFIX = 'hscard_managed_json_';
  const MAX_SOURCES = 100;
  const MAX_JSON_BYTES = 16777216;
@@ -44,6 +47,44 @@ final class Json_Sources {
 
  public static function save( array $sources ) {
   return update_option( self::OPTION, $sources, false );
+ }
+
+ /** Display order is separate from source content and card-resolution priority. */
+ public static function ordered() {
+  $sources = self::all();
+  $order = get_option( self::ORDER_OPTION, array() );
+  $sorted = array();
+  foreach ( is_array( $order ) ? $order : array() as $id ) {
+   if ( is_string( $id ) && isset( $sources[ $id ] ) ) { $sorted[ $id ] = $sources[ $id ]; }
+  }
+  return $sorted + $sources;
+ }
+
+ public static function reorder( array $ids ) {
+  $sources = self::ordered();
+  if ( ! $ids || count( $ids ) > self::MAX_SOURCES ) { return new WP_Error( 'hscard_order', '순서 목록이 올바르지 않습니다.' ); }
+  $selected = array();
+  foreach ( $ids as $id ) {
+   if ( ! self::is_valid_id( $id ) || ! isset( $sources[ $id ] ) || isset( $selected[ $id ] ) ) {
+    return new WP_Error( 'hscard_order', '목록이 변경되었습니다. 새로고침 후 다시 정렬하세요.' );
+   }
+   $selected[ $id ] = true;
+  }
+  // Search results reorder only their existing slots. Hidden/new sources stay.
+  $order = array(); $next = 0;
+  foreach ( array_keys( $sources ) as $id ) { $order[] = isset( $selected[ $id ] ) ? $ids[ $next++ ] : $id; }
+  update_option( self::ORDER_OPTION, $order, false );
+  if ( get_option( self::ORDER_OPTION, array() ) !== $order ) { return new WP_Error( 'hscard_order', '순서를 저장하지 못했습니다. 다시 시도하세요.' ); }
+  return $order;
+ }
+
+ public static function repository_url( $repository ) {
+  if ( ! is_string( $repository ) ) { return new WP_Error( 'hscard_repository', '저장소 이름을 입력하세요.' ); }
+  $repository = trim( $repository );
+  if ( ! preg_match( '/\A[A-Za-z0-9_.-]{1,100}\z/D', $repository ) || in_array( $repository, array( '.', '..' ), true ) ) {
+   return new WP_Error( 'hscard_repository', '저장소 이름에는 영문, 숫자, 점, 밑줄, 하이픈만 사용할 수 있습니다.' );
+  }
+  return self::REPOSITORY_PREFIX . $repository . self::REPOSITORY_SUFFIX;
  }
 
  public static function new_id( array $sources ) {
