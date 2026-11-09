@@ -42,7 +42,9 @@ struct Placement { rect:vec4f, surface:vec2f };
   this.items.delete(key);this.cards.releasePrepared(item.prepared);
   for(const pixels of item.prepared.goldenPixels||[]){const count=(this.goldenRefs.get(pixels)||1)-1;if(count)this.goldenRefs.set(pixels,count);else{this.goldenRefs.delete(pixels);this.renderer.releaseTexture(pixels);}}
  }
- async prepare(key,card,basePrepared=null){this.remove(key);const prepared=await this.cards.prepare(card,basePrepared);
+ async prepare(key,card,basePrepared=null){this.remove(key);this.attach(key,await this.cards.prepare(card,basePrepared));}
+ attach(key,prepared){
+  this.remove(key);
   let target;try{target=this.createTarget(prepared.context.width,prepared.context.height);}catch(e){this.cards.releasePrepared(prepared);throw e;}
   this.items.set(key,{prepared,target});for(const pixels of prepared.goldenPixels||[])this.goldenRefs.set(pixels,(this.goldenRefs.get(pixels)||0)+1);
  }

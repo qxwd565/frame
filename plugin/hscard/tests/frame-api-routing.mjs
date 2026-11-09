@@ -24,7 +24,7 @@ try {
   globalThis.fetch = async (url, options) => {
     const name = reverse.get(url.href);
     assert.ok(name, 'All original relative dependencies must route to a published API: ' + url);
-    assert.equal(options.credentials, 'omit');
+    assert.equal(options.credentials, 'same-origin', 'Match anonymous preload; remote APIs still receive no credentials');
     requests.push(name);
     return new Response(await fs.readFile(new URL(name, source)));
   };

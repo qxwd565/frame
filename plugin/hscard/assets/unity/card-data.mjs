@@ -1,6 +1,6 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-f8cd8e700c0d6ef0';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-63a7df135aff1da6';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-63a7df135aff1da6';
 
 const artCache = new Map(), tasks = [];
 let active = 0, artBytes = 0;
@@ -21,7 +21,7 @@ function pump(){while(active<6&&tasks.length){active++;const t=tasks.shift();Pro
 async function artPixels(url){url=rawURL(url);if(!url)return null;
  if(artCache.has(url)){const hit=artCache.get(url);artCache.delete(url);artCache.set(url,hit);return hit;}
  const promise=limited(async()=>{
-  const response=await fetch(url,{mode:'cors',credentials:'omit'});
+  const response=await fetch(url,{mode:'cors',credentials:'omit',priority:'low'});
   if(!response.ok)throw Error('HTTP '+response.status);
   const blob=await response.blob();if(blob.size>8*1024*1024)throw Error('Artwork too large');
   const image=await createImageBitmap(blob);

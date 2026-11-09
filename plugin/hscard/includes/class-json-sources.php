@@ -256,6 +256,13 @@ final class Json_Sources {
  }
  public static function save_card_content( $source_id, $card_id, $content ) {
   if ( ! self::is_valid_id( $source_id ) || ! is_string( $card_id ) || ! preg_match( '/\A[A-Za-z0-9_]{1,96}\z/D', $card_id ) || ! is_string( $content ) || strlen( $content ) > 1048576 ) { return false; }
+  if ( ! self::valid_card_content( $content ) ) { return false; }
+  update_option( self::card_option_key( $source_id, $card_id ), $content, false );
+  return self::card_content( $source_id, $card_id ) === $content;
+ }
+ /** Validate transport only; the browser remains the sole dates-v1 reducer. */
+ public static function valid_card_content( $content ) {
+  if ( ! is_string( $content ) || strlen( $content ) > 1048576 ) { return false; }
   $doc = json_decode( $content );
   if ( ! is_object( $doc ) || property_exists( $doc, 'card' ) || property_exists( $doc, 'patches' ) || property_exists( $doc, 'history' ) ) { return false; }
   $valid_count = 0;
@@ -272,8 +279,7 @@ final class Json_Sources {
   sort( $dates, SORT_STRING );
   $first = $doc->{ $dates[0] };
   if ( ! isset( $first->name, $first->type ) || ! is_string( $first->name ) || ! is_string( $first->type ) ) { return false; }
-  update_option( self::card_option_key( $source_id, $card_id ), $content, false );
-  return self::card_content( $source_id, $card_id ) === $content;
+  return true;
  }
 
  public static function serve_card_json( $request ) {

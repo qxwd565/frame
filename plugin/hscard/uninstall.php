@@ -23,6 +23,8 @@ foreach (
 		'hscard_card_post_queue',
 		'hscard_card_post_errors',
 		'hscard_card_posts_version',
+		'hscard_document_queue',
+		'hscard_document_cache_version',
 		'hscard_home_covers',
 		'hscard_home_cover_schema_version',
 		'hscard_rewrite_version',
@@ -36,6 +38,7 @@ foreach (
 }
 
 wp_clear_scheduled_hook( 'hscard_sync_card_posts' );
+wp_clear_scheduled_hook( 'hscard_warm_documents' );
 // Preserve authored content. Only automatically owned posts are withdrawn when
 // their renderer/database is uninstalled; never delete unrelated posts/pages.
 foreach ( get_posts( array( 'post_type' => 'post', 'post_status' => 'publish', 'numberposts' => -1, 'meta_key' => '_hscard_card_code', 'fields' => 'ids' ) ) as $hscard_post_id ) {
@@ -77,7 +80,7 @@ foreach ( array( 'hscard_cards', 'hscard_cards_new', 'hscard_cards_old', 'hscard
 	$wpdb->query( $wpdb->prepare( 'DROP TABLE IF EXISTS %i', $wpdb->prefix . $hscard_table_suffix ) );
 }
 
-foreach ( array( 'hscard_notice_', 'hscard_v3_notice_', 'hscard_import_notice_' ) as $hscard_notice_prefix ) {
+foreach ( array( 'hscard_notice_', 'hscard_v3_notice_', 'hscard_import_notice_', 'hscard_document_' ) as $hscard_notice_prefix ) {
 	$hscard_notice_pattern  = $wpdb->esc_like( '_transient_' . $hscard_notice_prefix ) . '%';
 	$hscard_timeout_pattern = $wpdb->esc_like( '_transient_timeout_' . $hscard_notice_prefix ) . '%';
 	$wpdb->query( $wpdb->prepare( 'DELETE FROM %i WHERE option_name LIKE %s OR option_name LIKE %s', $wpdb->options, $hscard_notice_pattern, $hscard_timeout_pattern ) );

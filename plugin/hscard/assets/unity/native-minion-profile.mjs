@@ -1,4 +1,4 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-f8cd8e700c0d6ef0';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-63a7df135aff1da6';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -74,18 +74,20 @@ export class NativeMinionProfile {
  async compose(card,composer){
   const p=this.package(card),d=p.dynamic,cls=card.cardClass||'NEUTRAL',classTexture=this.data.classes[cls];
   if(!classTexture)throw Error('Native minion class unavailable');
-  const parts=[],rarity=card.rarity||'FREE',hasGem=['COMMON','RARE','EPIC','LEGENDARY'].includes(rarity);
+  const pending=[],rarity=card.rarity||'FREE',hasGem=['COMMON','RARE','EPIC','LEGENDARY'].includes(rarity);
   for(const node of p.nodes){
    if(node.legendary&&rarity!=='LEGENDARY'||node.path===d.m_racePlateObject&&!card.race)continue;
    if(!hasGem&&(node.path===d.m_rarityGemMesh||node.path===d.m_rarityFrameMesh))continue;
-   for(const slot of node.slots){
+   for(const slot of node.slots)pending.push((async()=>{
     const original=this.data.materials[slot.material],blank=node.path===d.m_portraitMesh&&slot.slot===p.actor.m_portraitMatIdx,watermark=node.path===d.m_descriptionMesh;
     let material={shader:original.shader,keywords:[...original.keywords],values:structuredClone(original.values),textures:{}};
     const classFront=!card.golden&&node.path===d.m_cardMesh&&slot.slot===p.actor.m_cardFrontMatIdx;
-    for(const [name,tx] of Object.entries(original.textures)){
-     if(blank&&name==='_MainTex')material.textures[name]={pixels:card.artPixels||blankPixels,sampler:{filter:1,wrapU:1,wrapV:1},st:tx.st.slice()};
-     else material.textures[name]={...await this.texture(classFront&&name==='_MainTex'?classTexture:tx.key),st:tx.st.slice()};
-    }
+    // Parts are independent. Start their shared texture requests together,
+    // then retain the authored part/property order regardless of completion.
+    material.textures=Object.fromEntries(await Promise.all(Object.entries(original.textures).map(async([name,tx])=>[
+     name,blank&&name==='_MainTex'?{pixels:card.artPixels||blankPixels,sampler:{filter:1,wrapU:1,wrapV:1},st:tx.st.slice()}:
+      {...await this.texture(classFront&&name==='_MainTex'?classTexture:tx.key),st:tx.st.slice()}
+    ])));
     if(blank&&card.golden&&card.goldenPortrait)material={...card.goldenPortrait,values:{...card.goldenPortrait.values},textures:{...card.goldenPortrait.textures}};
     if(card.golden&&node.path===d.m_cardMesh&&slot.slot===p.actor.m_premiumRibbon)material.values._Color=this.data.palette['CLASS_COLOR_'+(cls==='NEUTRAL'?'GENERIC':cls)];
     if(node.path===d.m_rarityGemMesh){
@@ -101,9 +103,10 @@ export class NativeMinionProfile {
     }
     const queue=original.queue;
     if(!Number.isFinite(queue)||queue<0)throw Error('Native frame queue unavailable '+original.shader);
-    parts.push({path:node.path,slot:slot.slot,mesh:this.adapter.meshGeometry(this.data.meshes[node.mesh],slot.slot),pose:node.pose,material,queue,blank,watermark});
-   }
+    return{path:node.path,slot:slot.slot,mesh:this.adapter.meshGeometry(this.data.meshes[node.mesh],slot.slot),pose:node.pose,material,queue,blank,watermark};
+   })());
   }
+  const parts=await Promise.all(pending);
   parts.sort((a,b)=>a.queue-b.queue||(a.queue<2500?b.pose[13]-a.pose[13]:a.pose[13]-b.pose[13]));
   const fit=composer.fits['MINION:'+(card.golden?'golden':'normal')+':'+(rarity==='LEGENDARY'?'legendary':'ordinary')];
   return{fit,parts,nativeVersion:this.data.version};

@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-f8cd8e700c0d6ef0';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-f8cd8e700c0d6ef0';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-63a7df135aff1da6';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-63a7df135aff1da6';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-63a7df135aff1da6';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-63a7df135aff1da6';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-63a7df135aff1da6';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-63a7df135aff1da6';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-63a7df135aff1da6';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -111,6 +111,21 @@ export class WebGPUCardRenderer {
     }catch(error){this.releasePrepared({textTargets,transientMeshes,transientTextures});throw error;}
   }
   releasePrepared(prepared){for(const target of prepared?.textTargets||[])this.renderer.releaseTextTarget(target);for(const mesh of prepared?.transientMeshes||[])this.renderer.releaseMesh(mesh);for(const texture of prepared?.transientTextures||[])this.renderer.releaseTexture(texture);}
+  async prepareFrame(card,isCurrent=()=>true){
+    if(!card.loading)throw Error('Frame preparation requires empty content');
+    const prepared=await this.prepare(card);let retained=false;
+    try{
+      if(!isCurrent())return null;
+      // Download/decode/compile independent frames concurrently. No uniforms,
+      // textures or draw commands are submitted to a card target here.
+      const groups=await Promise.all(prepared.frame.parts.map(part=>this.builder.draw(part,{...prepared.context,time:0})));
+      if(!isCurrent())return null;
+      const draws=[...groups.flat(),...prepared.quantityDraws];
+      await Promise.all(draws.flatMap(draw=>[this.renderer.geometry(draw.mesh),this.renderer.pipeline(draw)]));
+      if(!isCurrent())return null;
+      retained=true;return prepared;
+    }finally{if(!retained)this.releasePrepared(prepared);}
+  }
   async renderPrepared(prepared,{background=[1,1,1,1],transparent=false,time=1,destination=null,isCurrent=()=>true}={}){
     const {frame,textDraws,quantityDraws}=prepared,context={...prepared.context,time};
     // Assembling draw commands does not submit GPU commands. Fetch/decode each

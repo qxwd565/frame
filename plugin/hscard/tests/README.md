@@ -55,6 +55,13 @@ adapter. No software renderer is silently substituted.
      ribbon pixel hashes, no recomposition, stale fill blocked before GPU submit.
    - `http://127.0.0.1:19420/work/native-frame-failure.html`: ten failed artwork
      requests preserve ten native frames with no broken preview images.
+   - `http://127.0.0.1:19420/work/loading-order.html?names=2500`: four dated
+     frames with 100 ms added per fetch and a further 2500 ms name-mesh delay.
+     Checks first-frame/content times, frame-first ordering and deferred fonts.
+     `mixed` adds spell/weapon/minion frames; `date=2013-10-03` selects 3890;
+     `date=2026-11-09` uses current frames. No performance threshold is inferred
+     for production. The entry fixture also removes/replaces a card while its
+     frame is preparing and checks that the abandoned target is never attached.
    - `http://127.0.0.1:19420/work/frame-animation.html`: GPU readback at two times;
      normal minion mana/attack/health regions must change in current, 3664 and
      3890 frames. Historical spells/weapons must retain their mana effects.
@@ -82,3 +89,19 @@ actual WebGPU renderer, desktop click and mobile tap. `CHROME_PATH` optionally
 specifies Chrome. It uses a private `.build/card-posts-chrome` profile, closes its
 own browser and writes one detail screenshot under `.build`. These tools and
 fixtures are excluded from the plugin ZIP. They do not access production admin.
+
+`card-documents-wordpress.php` uses the same isolated WordPress installation.
+It checks that foreground HTML rendering performs no remote HTTP requests,
+background warming preserves original dated documents, late import results are
+discarded, failed refreshes retain valid data, and local documents are embedded
+and HTML-escaped. Its HTTP transport and SQLite advisory locks are explicit test
+seams; it does not test production MySQL contention or the site's cron runner.
+
+`node tests/inline-card-documents.mjs` checks zero initial card-API requests from
+embedded documents, exact historical rarity/race/text, unreleased cards, and
+normal API recovery for invalid or unregistered documents. Server caching only
+changes transport: the existing JavaScript date reducer remains authoritative.
+After warming the isolated site's original dated documents, set
+`HSCARD_TEST_INLINE=1` when running `card-posts-browser.mjs`. It blocks card JSON
+requests and requires desktop rendering, card-post navigation and mobile taps
+to work with zero attempted card-API requests.

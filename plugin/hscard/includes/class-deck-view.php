@@ -110,6 +110,8 @@ final class Deck_View {
 			: __( '덱 목록', 'hscard' );
 		if ( $single_card ) { $aria_label = $deck_title; }
 		$surfaces = array();
+		$document_urls = Json_Sources::card_urls_for_cards( $rows );
+		$documents = class_exists( 'HScard\\Card_Documents', false ) ? Card_Documents::for_cards( $rows, $document_urls ) : array();
 		$has_golden = false;
 		foreach ( $rows as $row_index => $row ) {
 			$surface = class_exists( 'HScard\\Native_Cards', false ) ? Native_Cards::surface( $row, $frame_profile, $row_index < 2 ) : '';
@@ -123,7 +125,8 @@ final class Deck_View {
 		<section class="<?php echo esc_attr( $section_class . ' hscard-deck-list--v2' ); ?>" aria-label="<?php echo esc_attr( $aria_label ); ?>" data-deck-code="<?php echo esc_attr( (string) $code ); ?>"
 			data-hscard-date="<?php echo esc_attr( (string) $effective_date ); ?>"
 			data-hscard-frame-profile="<?php echo esc_attr( (string) $frame_profile ); ?>"
-			data-hscard-card-urls="<?php echo esc_attr( wp_json_encode( Json_Sources::card_urls_for_cards( $rows ) ) ); ?>"
+			data-hscard-card-urls="<?php echo esc_attr( wp_json_encode( $document_urls ) ); ?>"
+			data-hscard-documents="<?php echo esc_attr( wp_json_encode( $documents, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) ); ?>"
 			data-hscard-sideboard-owners="<?php echo esc_attr( wp_json_encode( $sideboard_owners ) ); ?>"
 			<?php if ( '' !== $shared_title_group ) : ?>
 				data-hscard-shared-title-group="<?php echo esc_attr( $shared_title_group ); ?>"

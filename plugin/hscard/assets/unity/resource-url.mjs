@@ -1,5 +1,5 @@
 /** Resources live in the corresponding expansion API's frame/ directory. */
-import index from './frame-api-index.json?ver=hscard-f8cd8e700c0d6ef0' with {type:'json'};
+import index from './frame-api-index.json?ver=hscard-63a7df135aff1da6' with {type:'json'};
 const META = 'meta[name="hscard-resource-base"]';
 export const FRAME_API_BASE = 'https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';
 let cachedBase = null;
@@ -53,7 +53,9 @@ export async function resourceFetch(input, options = {}) {
   if (!path) throw Error('Resource outside configured frame APIs');
   const url = resourceURL(path);
   if (root.href !== FRAME_API_BASE) url.search = source.search;
-  const response = await fetch(url, {...options, credentials:'omit'});
+  // Match <link as="fetch" crossorigin="anonymous"> so its response is reused.
+  // Cross-origin frame APIs still receive no credentials.
+  const response = await fetch(url, {...options, credentials:'same-origin'});
   if (!response.ok) return response;
   const record = index.files[path];
   if (!record) return response; // Explicit custom resource roots may contain new resources.

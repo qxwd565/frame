@@ -8,6 +8,7 @@
 const rawCache = new Map();
 const snapshotCache = new Map();
 const deckSources = new WeakMap();
+const seededDecks = new WeakSet();
 const DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 const SAFE_ID = /^[A-Za-z0-9_]{1,96}$/;
 const MAX_BODY_BYTES = 1024 * 1024;
@@ -174,6 +175,22 @@ export function cardSourceURL(element, cardId) {
     deckSources.set(deck, parsed);
   }
   const base = deckSources.get(deck);
+  if (!seededDecks.has(deck)) {
+    seededDecks.add(deck);
+    // These are cached ORIGINAL documents, not a second server-side date
+    // reducer or current inventory fields masquerading as historical data.
+    try {
+      const raw = deck.dataset.hscardDocuments || '';
+      if (raw && new TextEncoder().encode(raw).byteLength <= MAX_BODY_BYTES) {
+        const documents = JSON.parse(raw), allowed = new Set(Object.values(base).map(safeURL));
+        if (object(documents)) for (const [url,document] of Object.entries(documents)) {
+          const key = safeURL(url);
+          if (!key || !allowed.has(key) || rawCache.has(key)) continue;
+          try {rawCache.set(key,Promise.resolve(prepareHistory(document)));bounded(rawCache);} catch {/* Invalid cache: use the authoritative API. */}
+        }
+      }
+    } catch {/* Invalid HTML cache cannot prevent normal API loading. */}
+  }
   const source = element.dataset.hscardCard ? (() => { try {return JSON.parse(element.dataset.hscardCard);} catch {return {};} })() : {};
   return safeURL(base[String(source.dbfId)] || '');
 }

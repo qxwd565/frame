@@ -61,11 +61,13 @@ final class Native_Cards {
    $site = $host['scheme'] . '://' . $host['host'] . ( isset( $host['port'] ) ? ':' . absint( $host['port'] ) : '' );
    printf( '<link rel="preconnect" href="%s" crossorigin>' . "\n", esc_url( $site ) );
   }
-  foreach ( array( 'frames-constructed.json.gz' => '7.12.07', 'freetype-bridge.wasm' => '', 'original-fonts.json.gz' => '', 'webgpu/program-index.json.gz' => '' ) as $file => $rev ) {
+  // Only frame-critical files compete at navigation time. Fonts/name meshes
+  // are requested by the renderer after it has published a native frame.
+  foreach ( array( 'frames-constructed.json.gz' => '7.12.07', 'text-settings.json.gz' => '', 'portrait-meshes.json.gz' => '', 'frame-fits.json.gz' => '', 'watermarks.json.gz' => '', 'shader-library.json.gz' => '', 'webgpu/program-index.json.gz' => '' ) as $file => $rev ) {
    $url = self::resource_url( $file );
    if ( '' === $url ) { continue; }
    if ( '' !== $rev && self::WEBGPU_RESOURCE_BASE !== $origin ) { $url = add_query_arg( 'rev', $rev, $url ); }
-   printf( '<link rel="preload" href="%s" as="fetch" crossorigin="anonymous">' . "\n", esc_url( $url ) );
+   printf( '<link rel="preload" href="%s" as="fetch" crossorigin="anonymous" media="(min-width:821px)" fetchpriority="high">' . "\n", esc_url( $url ) );
   }
  }
  public static function surface( array $card, $frame_profile = 'current', $eager = false ) {

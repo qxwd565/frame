@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-f8cd8e700c0d6ef0';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-63a7df135aff1da6';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -85,16 +85,24 @@ class UploadArena {
 export class WebGPUNativeRenderer {
  static async create(canvas,programs,sources){
   if(!navigator.gpu)throw Error('WebGPU is unavailable: secure HTTPS origin and compatible browser are required');
-  const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('WebGPU adapter unavailable');
-  const bc=adapter.features.has('texture-compression-bc');
-  const depthClipControl=adapter.features.has('depth-clip-control');
-  const device=await adapter.requestDevice({requiredFeatures:[...(bc?['texture-compression-bc']:[]),...(depthClipControl?['depth-clip-control']:[])]});
+  // Device startup is independent of the source manifests. Accept their
+  // promises so downloading/decompression does not serialize GPU discovery.
+  const gpu=(async()=>{
+   const adapter=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adapter)throw Error('WebGPU adapter unavailable');
+   const bc=adapter.features.has('texture-compression-bc'),depthClipControl=adapter.features.has('depth-clip-control');
+   const device=await adapter.requestDevice({requiredFeatures:[...(bc?['texture-compression-bc']:[]),...(depthClipControl?['depth-clip-control']:[])]});
+   return{device,bc,depthClipControl};
+  })();
+  try{
+  const [hardware,shaderPrograms,sourceData]=await Promise.all([gpu,programs,sources]);
+  const {device,bc,depthClipControl}=hardware;
   const context=canvas.getContext('webgpu');if(!context)throw Error('WebGPU context unavailable');
   const screenFormat=navigator.gpu.getPreferredCanvasFormat();context.configure({device,format:screenFormat,alphaMode:'premultiplied'});
   // Log uncaptured WebGPU validation failures instead of displaying the same
   // generic placeholder for every card without a useful browser error.
   device.addEventListener?.('uncapturederror',event=>console.error('[HScard WebGPU validation]',event.error?.message||event.error));
-  return new WebGPUNativeRenderer(canvas,device,context,screenFormat,programs,sources,bc,depthClipControl);
+  return new WebGPUNativeRenderer(canvas,device,context,screenFormat,shaderPrograms,sourceData,bc,depthClipControl);
+  }catch(error){gpu.then(({device})=>device.destroy(),()=>{});throw error;}
  }
  constructor(canvas,device,context,screenFormat,programs,sources,bc,depthClipControl){
   this.canvas=canvas;this.device=device;this.context=context;this.screenFormat=screenFormat;this.programs=programs;this.sources=sources;this.bc=bc;this.depthClipControl=depthClipControl;

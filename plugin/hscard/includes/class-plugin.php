@@ -14,6 +14,8 @@ if ( ! defined( 'ABSPATH' ) ) {
 final class Plugin {
 	public function boot() {
 		require_once HSCARD_PATH . 'includes/class-json-sources.php';
+		require_once HSCARD_PATH . 'includes/class-card-documents.php';
+		Card_Documents::register();
 		require_once HSCARD_PATH . 'includes/class-card-posts.php';
 		( new Card_Posts() )->register_hooks();
 		add_action( 'rest_api_init', array( 'HScard\\Json_Sources', 'register_routes' ) );

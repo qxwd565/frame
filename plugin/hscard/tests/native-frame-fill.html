@@ -38,7 +38,7 @@ try {
   await renderer.transparent(target.width,target.height,prepared.quantityDraws,ribbon);const pixels=await read(ribbon),rh=hash(pixels);
   assert(ribbonHash===null||ribbonHash===rh,'Ribbon grid differs: '+[kind,golden,rarity,renderDate]);ribbonHash=rh;renderer.releaseTarget(ribbon);
   if(rarity==='RARE'&&drawIndex<12){const temp=document.createElement('canvas');temp.width=target.width;temp.height=target.height;temp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(after),target.width,target.height),0,0);output.drawImage(temp,(drawIndex%6)*218,Math.floor(drawIndex/6)*682,218,341);temp.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(before),target.width,target.height),0,0);output.drawImage(temp,(drawIndex%6)*218,Math.floor(drawIndex/6)*682+341,218,341);drawIndex++;}
-  cases.push({kind,golden,rarity,renderDate,width:target.width,height:target.height,ribbonHash:rh,retained:true});
+  cases.push({kind,golden,rarity,renderDate,width:target.width,height:target.height,ribbonHash:rh,frameHash:hash(before),filledHash:hash(after),retained:true});
  }
  // Cancel after shader/resource awaits but before GPU submission: old pixels survive.
  const old=surface.items.get('test'),oldPixels=hash(await read(old.target));let current=true;
