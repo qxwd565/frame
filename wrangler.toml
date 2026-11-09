@@ -1,0 +1,7 @@
+# HSdeck HScard renderer CDN. Source PHP remains in the WordPress plugin.
+# Once hsdeck.com is active in Cloudflare, attach assets.hsdeck.com to this Worker.
+name = "hsdeck-assets"
+compatibility_date = "2026-11-09"
+
+[assets]
+directory = "./assets"

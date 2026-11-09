@@ -1,0 +1,4 @@
+# HScard ESM modules, WASM, textures and JSON are fetched cross-origin.
+/*
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
