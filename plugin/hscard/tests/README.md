@@ -83,6 +83,10 @@ EX1_350, CS2_072 and EX1_165a. The test resets only its generated local fixtures
 It runs production imports and real WordPress post/meta/permalink/shortcode APIs;
 SQLite can be used, with the test's serial advisory-lock seam documented inline.
 Enable the local HSdeck theme to cover its category/date permalink filters.
+It also checks the single `카드`/`card` category, classic/REST editor enforcement,
+earliest JSON history date and site-timezone GMT values, deferred publication
+until that date is known, background/local document updates, version-1 post
+migration, and preservation of unrelated posts and authored content.
 
 With that site served locally, `node tests/card-posts-browser.mjs` exercises the
 actual WebGPU renderer, desktop click and mobile tap. `CHROME_PATH` optionally

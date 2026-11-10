@@ -11,10 +11,14 @@ final class Card_Posts {
  const QUEUE = 'hscard_card_post_queue';
  const ERRORS = 'hscard_card_post_errors';
  const BACKFILL = 'hscard_card_posts_version';
+ const BACKFILL_VERSION = 2;
  const CRON = 'hscard_sync_card_posts';
 
  public function register_hooks() {
   add_action( 'hscard_cards_changed', array( __CLASS__, 'queue' ) );
+  add_action( 'hscard_card_document_ready', array( __CLASS__, 'document_ready' ) );
+  add_action( 'save_post_post', array( __CLASS__, 'enforce_category' ) );
+  add_action( 'rest_after_insert_post', static function ( $post ) { self::enforce_category( $post->ID ); } );
   add_action( self::CRON, array( __CLASS__, 'run_batch' ) );
   add_action( 'admin_init', array( __CLASS__, 'backfill' ) );
   add_action( 'init', array( __CLASS__, 'schedule' ) );
@@ -45,7 +49,10 @@ final class Card_Posts {
    wp_cache_delete( self::QUEUE, 'options' );
    $queue = (array) get_option( self::QUEUE, array() );
    $token = wp_generate_uuid4();
-   foreach ( $ids as $id ) { if ( absint( $id ) ) { $queue[ absint( $id ) ] = array( 'token' => $token, 'tries' => 0, 'author' => get_current_user_id() ); } }
+   foreach ( $ids as $id ) { if ( absint( $id ) ) {
+    $id = absint( $id );
+    $queue[ $id ] = array( 'token' => $token, 'tries' => 0, 'author' => get_current_user_id() ?: ( $queue[ $id ]['author'] ?? 0 ) );
+   } }
    update_option( self::QUEUE, $queue, false );
    return get_option( self::QUEUE, array() ) === $queue;
   } );
@@ -55,14 +62,63 @@ final class Card_Posts {
  }
 
  public static function schedule() {
-  if ( get_option( self::QUEUE, array() ) && ! wp_next_scheduled( self::CRON ) ) { wp_schedule_single_event( time() + 1, self::CRON ); }
+  $next = 0;
+  foreach ( (array) get_option( self::QUEUE, array() ) as $job ) {
+   $due = max( time() + 1, (int) ( $job['waiting_date'] ?? 0 ) );
+   $next = $next ? min( $next, $due ) : $due;
+  }
+  $scheduled = wp_next_scheduled( self::CRON );
+  if ( $next && ( ! $scheduled || $next < $scheduled ) ) {
+   if ( $scheduled ) { wp_unschedule_event( $scheduled, self::CRON ); }
+   wp_schedule_single_event( $next, self::CRON );
+  }
  }
 
  /** Replacement ZIPs do not run activation hooks. Backfill tracked imports once. */
  public static function backfill() {
-  if ( ! current_user_can( 'manage_options' ) || 1 === (int) get_option( self::BACKFILL, 0 ) ) { return; }
+  if ( ! current_user_can( 'manage_options' ) || self::BACKFILL_VERSION === (int) get_option( self::BACKFILL, 0 ) ) { return; }
   $refs = self::imported_refs();
-  if ( self::queue( array_keys( $refs ) ) ) { update_option( self::BACKFILL, 1, false ); }
+  if ( self::queue( array_keys( $refs ) ) ) { update_option( self::BACKFILL, self::BACKFILL_VERSION, false ); }
+ }
+
+ /** Wake only cards belonging to this exact document, never a same-ID mirror. */
+ public static function document_ready( $url ) {
+  require_once HSCARD_PATH . 'includes/class-card-store.php';
+  $code = pathinfo( (string) wp_parse_url( $url, PHP_URL_PATH ), PATHINFO_FILENAME );
+  $store = new Card_Store();$found = $store->find_code_ids( array( $code ) );
+  if ( is_wp_error( $found ) || empty( $found[ $code ] ) ) { return; }
+  $cards = $store->find_cards( array_keys( $found[ $code ] ) );
+  $urls = Json_Sources::card_urls_for_cards( $cards );$ids = array();
+  foreach ( $urls as $id => $source ) { if ( $source === $url && self::eligible( $cards[ $id ] ) ) { $ids[] = $id; } }
+  if ( $ids ) { self::queue( $ids ); }
+ }
+
+ private static function category_id() {
+  $term = get_term_by( 'slug', 'card', 'category' );
+  if ( ! $term ) {
+   $created = wp_insert_term( '카드', 'category', array( 'slug' => 'card' ) );
+   if ( is_wp_error( $created ) ) {
+    if ( 'term_exists' !== $created->get_error_code() ) { return $created; }
+    $term = get_term( (int) $created->get_error_data(), 'category' );
+   } else { $term = get_term( (int) $created['term_id'], 'category' ); }
+  }
+  if ( is_wp_error( $term ) || ! $term ) { return new WP_Error( 'hscard_card_category', '카드 카테고리를 확인하지 못했습니다.' ); }
+  if ( '카드' !== $term->name || 'card' !== $term->slug ) {
+   $updated = wp_update_term( $term->term_id, 'category', array( 'name' => '카드', 'slug' => 'card' ) );
+   if ( is_wp_error( $updated ) ) { return $updated; }
+  }
+  return (int) $term->term_id;
+ }
+
+ /** Managed cards have one category; ordinary posts and their terms are untouched. */
+ public static function enforce_category( $post_id ) {
+  if ( ! self::is_card_post( $post_id ) || 'post' !== get_post_type( $post_id ) ) { return true; }
+  $category = self::category_id();if ( is_wp_error( $category ) ) { return $category; }
+  $current = wp_get_post_categories( $post_id );
+  if ( is_wp_error( $current ) ) { return $current; }
+  if ( array( $category ) === array_map( 'intval', $current ) ) { return true; }
+  $result = wp_set_post_categories( $post_id, array( $category ) );
+  return is_wp_error( $result ) ? $result : ( $result ? true : new WP_Error( 'hscard_card_category', '카드 카테고리를 저장하지 못했습니다.' ) );
  }
 
  private static function imported_refs() {
@@ -79,7 +135,8 @@ final class Card_Posts {
    global $wpdb;
    require_once HSCARD_PATH . 'includes/class-card-store.php';
    if ( ! Card_Store::maybe_upgrade() ) { return; }
-   $batch = array_slice( (array) get_option( self::QUEUE, array() ), 0, 25, true );
+   $waiting = (array) get_option( self::QUEUE, array() );
+   $batch = array_slice( array_filter( $waiting, static function ( $job ) { return (int) ( $job['waiting_date'] ?? 0 ) <= time(); } ), 0, 25, true );
    $cards = ( new Card_Store() )->find_cards( array_keys( $batch ) );
    if ( '' !== (string) $wpdb->last_error ) { return; }
    $refs = self::imported_refs();
@@ -102,7 +159,11 @@ final class Card_Posts {
      $job = $queue[ $id ]; unset( $queue[ $id ] );
      if ( is_wp_error( $result ) ) {
       $errors[ $id ] = $result->get_error_message();
-      if ( ++$job['tries'] < 3 ) { $queue[ $id ] = $job; }
+      if ( 'hscard_card_date_pending' === $result->get_error_code() ) {
+       // Ready documents wake immediately. A bounded retry also recovers a
+       // full document queue or transient failure without a one-second spin.
+       $job['waiting_date'] = time() + 300;$queue[ $id ] = $job;
+      } elseif ( ++$job['tries'] < 3 ) { $queue[ $id ] = $job; }
      } else { unset( $errors[ $id ] ); }
     }
     update_option( self::QUEUE, $queue, false );
@@ -147,8 +208,15 @@ final class Card_Posts {
   if ( $occupied && ( ! $page || $occupied->ID !== $page->ID ) ) { return new WP_Error( 'hscard_post_slug', '기존 글 또는 페이지와 주소가 겹칩니다: ' . $code ); }
   $status = $page ? $page->post_status : 'publish';
   if ( $page && get_post_meta( $page->ID, self::INACTIVE_META, true ) ) { $status = 'publish'; }
-  if ( $page && $page->post_title === $card['name'] && $page->post_name === $slug && $page->post_status === $status ) { return true; }
-  $post = array( 'post_type' => 'post', 'post_title' => $card['name'], 'post_name' => $slug, 'post_status' => $status, 'post_parent' => 0 );
+  if ( $page ) { $category = self::enforce_category( $page->ID );if ( is_wp_error( $category ) ) { return $category; } }
+  $first_date = Card_Documents::first_date( $card );
+  if ( '' === $first_date ) { return new WP_Error( 'hscard_card_date_pending', '카드 최초 날짜를 읽은 뒤 게시글을 등록합니다: ' . $code ); }
+  // JSON stores a calendar day only. Keep that date in WordPress and derive
+  // GMT through the site's timezone; never invent an exact release time.
+  $date = $first_date . ' 00:00:00';$gmt = get_gmt_from_date( $date );
+  if ( $page && $page->post_title === $card['name'] && $page->post_name === $slug && $page->post_status === $status && $page->post_date === $date && $page->post_date_gmt === $gmt ) { return true; }
+  $category = self::category_id();if ( is_wp_error( $category ) ) { return $category; }
+  $post = array( 'post_type' => 'post', 'post_title' => $card['name'], 'post_name' => $slug, 'post_status' => $status, 'post_parent' => 0, 'post_date' => $date, 'post_date_gmt' => $gmt, 'edit_date' => true, 'post_category' => array( $category ) );
   if ( $page ) { $post['ID'] = $page->ID; }
   else {
    $post['post_content'] = '[hscard_card]';
@@ -163,7 +231,7 @@ final class Card_Posts {
    return new WP_Error( 'hscard_post_slug_race', '게시글 주소를 확보하지 못했습니다: ' . $code );
   }
   delete_post_meta( $result, self::INACTIVE_META );
-  return true;
+  return self::enforce_category( $result );
  }
 
  public static function urls( array $cards ) {

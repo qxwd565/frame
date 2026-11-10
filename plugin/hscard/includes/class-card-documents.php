@@ -64,6 +64,33 @@ final class Card_Documents {
   }
   if ( self::changed( array_keys( $ids ) ) ) { update_option( self::BACKFILL, 1, false ); }
  }
+ /** Read the same validated source for HTML and publication dates; no HTTP. */
+ private static function content( $url, array $card, array $sources, &$refresh ) {
+  $raw = '';$refresh = false;
+  foreach ( $sources as $sid => $source ) {
+   if ( 'local' === ( $source['mode'] ?? '' ) && Json_Sources::card_url( $sid, $source, $card['card_code'] ?? '' ) === $url ) {
+    $raw = Json_Sources::card_content( $sid, $card['card_code'] );
+    return Json_Sources::valid_card_content( $raw ) ? $raw : '';
+   }
+  }
+  $cached = get_transient( self::key( $url ) );
+  if ( is_array( $cached ) && $url === ( $cached['url'] ?? '' ) ) { $raw = $cached['body'] ?? ''; }
+  $refresh = ! is_array( $cached ) || (int) ( $cached['checked'] ?? 0 ) < time() - 300;
+  if ( ! $raw ) { return ''; }
+  if ( ! Json_Sources::valid_card_content( $raw ) ) { $refresh = true;return ''; }
+  return $raw;
+ }
+ /** dates-v1 keys are Korean calendar dates, not the import/server timestamp. */
+ public static function first_date( array $card ) {
+  $urls = Json_Sources::card_urls_for_cards( array( $card ) );
+  $url = $urls[ $card['id'] ?? 0 ] ?? '';
+  if ( ! $url ) { return ''; }
+  $refresh = false;$raw = self::content( $url, $card, Json_Sources::all(), $refresh );
+  if ( $refresh ) { self::queue( array( $url ) ); }
+  if ( ! $raw ) { return ''; }
+  $dates = array_filter( array_keys( (array) json_decode( $raw ) ), static function ( $key ) { return preg_match( '/\A[0-9]{4}-[0-9]{2}-[0-9]{2}\z/D', $key ); } );
+  sort( $dates, SORT_STRING );return $dates[0] ?? '';
+ }
  /** Original JSON goes into HTML unchanged, keyed by its exact source URL. */
  public static function for_cards( array $cards, array $urls ) {
   $documents = array();$missing = array();$bytes = 0;$sources = Json_Sources::all();
@@ -75,17 +102,9 @@ final class Card_Documents {
    // Deck display order is a list after sideboard grouping, not DBF-keyed.
    $id = absint( $card['id'] ?? $id );
    $url = $urls[ $id ] ?? '';if ( ! $url || isset( $documents[ $url ] ) ) { continue; }
-   $raw = '';
-   foreach ( $sources as $sid => $source ) {
-    if ( 'local' === ( $source['mode'] ?? '' ) && Json_Sources::card_url( $sid, $source, $card['card_code'] ?? '' ) === $url ) { $raw = Json_Sources::card_content( $sid, $card['card_code'] );break; }
-   }
-   if ( '' === $raw ) {
-    $cached = get_transient( self::key( $url ) );
-    if ( is_array( $cached ) && $url === ( $cached['url'] ?? '' ) ) { $raw = $cached['body'] ?? ''; }
-    if ( ! is_array( $cached ) || (int) ( $cached['checked'] ?? 0 ) < time() - 300 ) { $missing[] = $url; }
-   }
+   $refresh = false;$raw = self::content( $url, $card, $sources, $refresh );
+   if ( $refresh ) { $missing[] = $url; }
    if ( ! $raw ) { continue; }
-   if ( ! Json_Sources::valid_card_content( $raw ) ) { $missing[] = $url;continue; }
    $document = json_decode( $raw );
    // Match the browser's limit after JSON encoding, including escaping.
    $length = strlen( wp_json_encode( $url ) ) + strlen( wp_json_encode( $document, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT ) ) + 2;
@@ -101,11 +120,13 @@ final class Card_Documents {
     $response = wp_safe_remote_get( $job['url'], array( 'timeout' => 5, 'redirection' => 0, 'limit_response_size' => 1048577, 'headers' => array( 'Accept' => 'application/json' ) ) );
     $raw = ! is_wp_error( $response ) && 200 === (int) wp_remote_retrieve_response_code( $response ) ? wp_remote_retrieve_body( $response ) : '';
     $valid = Json_Sources::valid_card_content( $raw );
-    self::locked( 'queue', static function () use ( $key, $job, $raw, $valid ) {
+    $changed = self::locked( 'queue', static function () use ( $key, $job, $raw, $valid ) {
      $queue = self::read_queue();
      if ( ( $queue[ $key ]['token'] ?? '' ) !== $job['token'] ) { return; }
      if ( $valid ) {
+      $previous = get_transient( $key );
       set_transient( $key, array( 'url' => $job['url'], 'body' => $raw, 'checked' => time() ), 30 * DAY_IN_SECONDS );
+      if ( ( get_transient( $key )['body'] ?? '' ) !== $raw ) { return false; }
       unset( $queue[ $key ] );
      } elseif ( ++$queue[ $key ]['tries'] >= 3 ) {
       $previous = get_transient( $key );
@@ -113,7 +134,11 @@ final class Card_Documents {
       unset( $queue[ $key ] );
      }
      update_option( self::QUEUE, $queue, false );
+     return $valid && ( $previous['body'] ?? '' ) !== $raw;
     } );
+    // Queue dependent posts outside the document lock. Newer imports cannot
+    // publish a date from a stale in-flight response.
+    if ( $changed ) { do_action( 'hscard_card_document_ready', $job['url'] ); }
    }
   } );
   self::schedule();

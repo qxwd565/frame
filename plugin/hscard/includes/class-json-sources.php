@@ -258,7 +258,13 @@ final class Json_Sources {
   if ( ! self::is_valid_id( $source_id ) || ! is_string( $card_id ) || ! preg_match( '/\A[A-Za-z0-9_]{1,96}\z/D', $card_id ) || ! is_string( $content ) || strlen( $content ) > 1048576 ) { return false; }
   if ( ! self::valid_card_content( $content ) ) { return false; }
   update_option( self::card_option_key( $source_id, $card_id ), $content, false );
-  return self::card_content( $source_id, $card_id ) === $content;
+  $saved = self::card_content( $source_id, $card_id ) === $content;
+  if ( $saved ) {
+   $source = self::all()[ $source_id ] ?? array();
+   $url = self::card_url( $source_id, $source, $card_id );
+   if ( $url ) { do_action( 'hscard_card_document_ready', $url ); }
+  }
+  return $saved;
  }
  /** Validate transport only; the browser remains the sole dates-v1 reducer. */
  public static function valid_card_content( $content ) {
