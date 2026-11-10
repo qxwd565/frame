@@ -43,17 +43,19 @@ async function pixels(root,path){
  },128,96*1024*1024);
 }
 /** Only a matching card in its imported source may supply a golden portrait. */
-export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true){
+export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true,date=null){
  if(!remote?.sourceURL||remote.id!==id||remote.dbfId!==dbfId||!isCurrent())return null;
  try{
   const root=new URL('./',remote.sourceURL);if(root.protocol!=='https:'&&!(root.protocol==='http:'&&root.origin===globalThis.location?.origin))return null;
   const indexURL=new URL('golden/index.json',root).href,index=await cached(indexes,indexURL,()=>document(indexURL),48,8*1024*1024);
   if(!isCurrent())return null;if(index.schema!==1||!index.cards||typeof index.cards!=='object')throw Error('Invalid golden index');
   const entry=index.cards[id];if(!entry)return null;if(entry.dbfId!==dbfId)throw Error('Golden index identity mismatch');
-  const materialURL=sameSetPath(root,entry.material,/^golden\/cards\/[A-Za-z0-9_]+\.json$/);
+  let path=entry.material;if(index.set==='legacy'&&typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Array.isArray(entry.history)){const matches=entry.history.filter(x=>typeof x.from==='string'&&typeof x.until==='string'&&x.from<=date&&date<x.until);if(matches.length>1)throw Error('Overlapping golden history');if(matches.length)path=matches[0].material;}
+  const materialURL=sameSetPath(root,path,/^golden\/(?:cards\/[A-Za-z0-9_]+|history\/cards\/[A-Za-z0-9_]+-[0-9]+)\.json$/);
   const raw=await cached(materials,materialURL,()=>document(materialURL),64,16*1024*1024);if(!isCurrent())return null;
   const data=materialData(raw,id,dbfId,root),bindings=await Promise.all(Object.entries(data.material.textures).map(async([name,t])=>[name,{pixels:await pixels(root,t.pixels),sampler:{...t.sampler},st:[...t.st]}]));
+  if(data.native){if(index.set!=='legacy'||!data.native.shader||data.native.shader.name!==data.material.shader||!/^Native\/LegacyBeta\/[0-9]+\/[a-f0-9]{16}$/.test(data.native.shader.name)||!data.native.programs||Object.keys(data.native.programs).length!==2)throw Error('Invalid historical shader');for(const [id,program] of Object.entries(data.native.programs)){if(!/^[a-f0-9]{64}$/.test(id)||!['vertex','fragment'].includes(program?.stage)||typeof program.source!=='string'||program.source.length>262144)throw Error('Invalid historical shader program');const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(program.source))),x=>x.toString(16).padStart(2,'0')).join('');if(hash!==id)throw Error('Historical shader checksum mismatch');}}
   if(!isCurrent())return null;
-  return{...data.material,legacyGolden:index.set==='legacy',values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
+  return{...data.material,historicalShader:data.native?.shader,historicalPrograms:data.native?.programs,legacyGolden:index.set==='legacy',values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
  }catch(error){debug('using normal artwork',{id,dbfId,reason:String(error?.message||error)});return null;}
 }

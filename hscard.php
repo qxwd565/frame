@@ -3,7 +3,7 @@
  * Plugin Name: HScard
  * Plugin URI: https://hsdeck.com/
  * Description: Lightweight local Hearthstone card data and deck-list rendering for HSdeck.
- * Version: 7.12.15
+ * Version: 7.12.16
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Author: HSdeck
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HSCARD_VERSION', '7.12.15' );
+define( 'HSCARD_VERSION', '7.12.16' );
 define( 'HSCARD_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once HSCARD_PATH . 'includes/class-plugin.php';

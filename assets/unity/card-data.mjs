@@ -1,4 +1,4 @@
-import {loadGoldenPortrait} from './golden-art.mjs?ver=legacy-golden-alpha-1';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=legacy-golden-history-1';
 const sourceCache=new Map(),artCache=new Map(),deckUrlsCache=new WeakMap(),tasks=[];let active=0,artBytes=0;
 const races={ALL:'모두',BEAST:'야수',DEMON:'악마',DRAGON:'용족',DRAENEI:'드레나이',ELEMENTAL:'정령',MECHANICAL:'기계',MURLOC:'멀록',NAGA:'나가',PIRATE:'해적',QUILBOAR:'가시멧돼지',TOTEM:'토템',UNDEAD:'언데드'};
 const schools={ARCANE:'비전',FEL:'지옥',FIRE:'화염',FROST:'냉기',HOLY:'신성',NATURE:'자연',SHADOW:'암흑'};
@@ -86,6 +86,6 @@ export async function resolveCard(element,golden,{isCurrent=()=>true,onMetadata=
  let pixels=null;for(const url of candidates){pixels=await artPixels(url);if(pixels)break;}
  if(!pixels){debugArt('no usable artwork',{id:stored.id,dbfId:stored.dbfId,attempted:candidates.length,locked:!!stored.lockedArt});throw Error('Artwork unavailable for '+String(stored.id||stored.dbfId));}
  if(!isCurrent())throw Error('Card request superseded');
- const goldenPortrait=golden&&!stored.lockedArt?await loadGoldenPortrait(remote,stored.id||remote?.id,Number(stored.dbfId),isCurrent):null;
+ const goldenPortrait=golden&&!stored.lockedArt?await loadGoldenPortrait(remote,stored.id||remote?.id,Number(stored.dbfId),isCurrent,stored.date):null;
  return {...base,goldenPortrait,name:String(stored.name||''),text:resolvedText(stored,remote),artPixels:pixels};
 }

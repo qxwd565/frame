@@ -88,7 +88,9 @@ export class WebGLNativeRenderer {
     while(this.vaoOrder.size&&(this.vaoOrder.size>=1024||this.vaoBytes+bytes>64*1024*1024))this.releaseVao(this.vaoOrder.keys().next().value);
     entries=this.vaos.get(mesh);if(!entries){entries=new Map();this.vaos.set(mesh,entries);}const entry={mesh,program,vao,buffers,missing,bytes};entries.set(program,entry);this.vaoOrder.set(entry,entry);this.vaoBytes+=bytes;return entry;
   }
+  registerHistoricalPrograms(programs){if(programs)for(const [id,program] of Object.entries(programs)){const previous=this.programs[id];if(previous&&previous.source!==program.source)throw Error('Historical shader collision');this.programs[id]=program;}}
   async draw(draw){
+    this.registerHistoricalPrograms(draw.historicalPrograms);
     const gl=this.gl,p=this.program(draw.vertexProgram,draw.fragmentProgram),mesh=await this.geometry(draw.mesh);gl.useProgram(p.program);this.applyState(draw.state);
     const vao=this.vao(mesh,p);gl.bindVertexArray(vao.vao);for(const attr of vao.missing)gl.vertexAttrib4f(attr.location,...(attr.name.startsWith('COLOR')?[1,1,1,1]:[0,0,0,attr.name.startsWith('POSITION')?1:0]));
     for(const block of p.blocks){const entry=draw[block.stage+'Buffers'].find(x=>x.slot===block.slot);if(!entry)throw Error('Missing original constant buffer');gl.bindBuffer(gl.UNIFORM_BUFFER,block.buffer);const bytes=entry.data.length>=block.size?entry.data:new Uint8Array(block.size);if(bytes!==entry.data)bytes.set(entry.data);gl.bufferData(gl.UNIFORM_BUFFER,bytes,gl.DYNAMIC_DRAW);gl.bindBufferBase(gl.UNIFORM_BUFFER,block.index,block.buffer);}

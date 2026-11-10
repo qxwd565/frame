@@ -58,6 +58,7 @@ export class CardRenderer {
       try{for(const part of frame.parts.filter(p=>p.blank)){
         const trial={...part,material:{...part.material,values:new ArtworkAnimation(part.material).sample(0)}};
         for(const draw of await this.builder.draw(trial,{...cardSceneContext(frame.fit,card.quantity),time:0})){
+          this.renderer.registerHistoricalPrograms(draw.historicalPrograms);
           this.renderer.program(draw.vertexProgram,draw.fragmentProgram);
           for(const binding of [...draw.vertexTextures,...draw.fragmentTextures])this.renderer.uploadTexture(binding.texture.pixels,binding.srgb);
         }
