@@ -15,7 +15,7 @@ spec.loader.exec_module(api)
 index_path = root / 'plugin/hscard/assets/unity/frame-api-index.json'
 resource_dir = root / 'v7.14.4-webgpu-20261109/assets/unity'
 package_path = pathlib.Path(r'E:\HSPlus\development\data\assets\portable-cards\historical-components.json.gz')
-versions = ['1.1.6069', '2.0.7283', '2.4.8311', '2.5.8416', '3.1.10378', '4.2.11767']
+versions = ['1.0.0', '1.0.5361', '1.1.6069', '2.0.7283', '2.4.8311', '2.5.8416', '3.1.10378', '4.2.11767']
 
 
 def download(repo, commit, name):
@@ -28,6 +28,8 @@ def main():
     index = json.loads(index_path.read_bytes())
     package = json.loads(gzip.decompress(package_path.read_bytes()))
     profiles = {row['id']: row for row in package['texts']}
+    history = json.loads(pathlib.Path(r'E:\HSPlus\development\data\assets\legacy-frames\frame-history.json').read_bytes())
+    groups_verified = {row['profile']: row['goldenObservedVersionsWithSameSettings'] for row in history['textProfiles'] if 'goldenObservedVersionsWithSameSettings' in row}
     groups = collections.defaultdict(list)
     for version in versions:
         identity = 'ios-' + version + '-minion'
@@ -54,11 +56,13 @@ def main():
             golden = [row for row in profile['rows'] if row['prefab'] == 'Card_Hand_Ally_Premium']
             if len(golden) != 6:
                 raise ValueError('Original normal layout does not match: ' + name)
-            if old['rows'] == normal + golden:
+            matching_versions = groups_verified[identity]
+            if old['rows'] == normal + golden and old.get('goldenObservedVersionsWithSameSettings') == matching_versions:
                 continue
-            if old['rows'] != normal:
+            if old['rows'] not in (normal, normal + golden):
                 raise ValueError('Original normal layout does not match: ' + name)
             old['rows'] = normal + golden
+            old['goldenObservedVersionsWithSameSettings'] = matching_versions
             data = gzip.compress(api.encoded(old), mtime=0)
             record = dict(expected, bytes=len(data), sha256=hashlib.sha256(data).hexdigest())
             if name not in catalog['files']:
