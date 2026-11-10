@@ -197,7 +197,7 @@ export function cardSourceURL(element, cardId) {
 
 export function artUrlForSnapshot(raw, dataUrl) {
   if (typeof raw !== 'string' || !raw) return '';
-  if (/^https:\/\/[^\s<>]+$/i.test(raw)) return raw;
+  if (/^https:\/\/[^\s<>]+$/i.test(raw)) return raw.replace(/^https:\/\/raw\.githubusercontent\.com\/qxwd565\/League-Of-Explorers(?=\/|$)/i,'https://raw.githubusercontent.com/qxwd565/The-League-of-Explorers');
   if (!/^art\/[A-Za-z0-9_/-]+\.(png|jpe?g|webp)$/i.test(raw) || raw.includes('..')) return '';
   try {
     const u = new URL(dataUrl);

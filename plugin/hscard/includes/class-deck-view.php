@@ -301,7 +301,7 @@ final class Deck_View {
 			$filtered_art = apply_filters( 'hscard_deck_legacy_art_url', $art_url, (string) $card['name'], $card );
 			$art_url      = is_string( $filtered_art ) ? $filtered_art : $art_url;
 		}
-		$art_url     = str_replace( '/qxwd565/Hearthstone-legacy-API/', '/qxwd565/legacy/', $art_url );
+		$art_url     = Json_Sources::legacy_url( $art_url );
 		$has_art     = '' !== $art_url;
 		$classes     = 'hscard-deck-tile ' . $state;
 		$classes    .= ! empty( $card['is_sideboard'] ) ? ' is-sideboard' : '';

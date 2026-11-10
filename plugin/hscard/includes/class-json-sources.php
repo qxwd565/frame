@@ -36,13 +36,21 @@ final class Json_Sources {
  }
 
  public static function legacy_url( $url ) {
-  return str_replace( '/qxwd565/Hearthstone-legacy-API/', '/qxwd565/legacy/', (string) $url );
+  $url = str_replace( '/qxwd565/Hearthstone-legacy-API/', '/qxwd565/legacy/', (string) $url );
+  return preg_replace( '~\Ahttps://raw\.githubusercontent\.com/qxwd565/League-Of-Explorers(?=/|\z)~i', 'https://raw.githubusercontent.com/qxwd565/The-League-of-Explorers', $url );
  }
 
  /** No writes happen during frontend requests. A saved empty registry stays empty. */
  public static function all() {
   $value = get_option( self::OPTION, null );
-  return is_array( $value ) ? $value : self::initial_sources();
+  $sources = is_array( $value ) ? $value : self::initial_sources();
+  // Preserve source IDs, order, imported ownership and user settings. Only
+  // canonicalize the previous repository's URLs when reading them.
+  foreach ( $sources as &$source ) {
+   if ( ! is_array( $source ) ) { continue; }
+   foreach ( array( 'url', 'art_base' ) as $key ) { if ( isset( $source[ $key ] ) && is_string( $source[ $key ] ) ) { $source[ $key ] = self::legacy_url( $source[ $key ] ); } }
+  }
+  unset( $source );return $sources;
  }
 
  public static function save( array $sources ) {
@@ -84,7 +92,7 @@ final class Json_Sources {
   if ( ! preg_match( '/\A[A-Za-z0-9_.-]{1,100}\z/D', $repository ) || in_array( $repository, array( '.', '..' ), true ) ) {
    return new WP_Error( 'hscard_repository', '저장소 이름에는 영문, 숫자, 점, 밑줄, 하이픈만 사용할 수 있습니다.' );
   }
-  return self::REPOSITORY_PREFIX . $repository . self::REPOSITORY_SUFFIX;
+  return self::legacy_url( self::REPOSITORY_PREFIX . $repository . self::REPOSITORY_SUFFIX );
  }
 
  /** Only newly repository-managed sources opt in; old set IDs stay intact. */

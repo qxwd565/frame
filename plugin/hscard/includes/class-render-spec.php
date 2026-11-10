@@ -32,7 +32,7 @@ final class Render_Spec {
    'set' => isset( $native['set'] ) && is_string( $native['set'] ) ? $native['set'] : '',
    // Only artworks may fall back to imported index metadata. Never take
    // historical stats, tags, text, race or spell school from this record.
-   'art' => isset( $card['art'] ) ? esc_url_raw( $card['art'] ) : '',
+   'art' => isset( $card['art'] ) ? esc_url_raw( Json_Sources::legacy_url( $card['art'] ) ) : '',
    'lockedArt' => ! empty( $card['native_art_override'] ),
    'artOverride' => ! empty( $card['native_art_override'] ) ? absint( $card['native_art_override'] ) : 0,
   );

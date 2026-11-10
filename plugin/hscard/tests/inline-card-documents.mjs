@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
-import {cardSourceURL,loadCardSnapshot,invalidateCard} from '../assets/unity/card-snapshots.mjs';
+import {cardSourceURL,loadCardSnapshot,invalidateCard,artUrlForSnapshot} from '../assets/unity/card-snapshots.mjs';
 globalThis.document={baseURI:'https://example.test/post/'};
 globalThis.location={origin:'https://example.test'};
+assert.equal(artUrlForSnapshot('https://raw.githubusercontent.com/qxwd565/League-Of-Explorers/main/art/LOE_002.png',''), 'https://raw.githubusercontent.com/qxwd565/The-League-of-Explorers/main/art/LOE_002.png');
+assert.equal(artUrlForSnapshot('https://example.test/qxwd565/League-Of-Explorers/x.png',''), 'https://example.test/qxwd565/League-Of-Explorers/x.png');
 const url='https://raw.githubusercontent.com/qxwd565/legacy/main/data/CS2_072.json';
 const original={
  '2013-08-17':{id:'CS2_072',dbfId:180,name:'기습',type:'SPELL',cardClass:'ROGUE',rarity:'RARE',text:'<b>원문</b><br></br>줄바꿈',races:['DRAGON']},
