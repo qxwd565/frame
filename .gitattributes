@@ -1,0 +1,4 @@
+v7.14.4-webgpu-20261109/assets/** -text
+tools/*.mjs text eol=lf
+tools/*.cpp text eol=lf
+*.md text eol=lf

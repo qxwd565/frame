@@ -1,0 +1,21 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><link rel="stylesheet" href="/plugin/assets/unity/deck-cards.css"><style>body{margin:16px;background:white}.hscard-deck-list{max-width:1100px;margin:auto}</style><section class="hscard-deck-list hscard-deck-list--v2"><div class="hscard-deck-layout--v2"><div class="hscard-deck-body"><ol class="hscard-deck-cards hscard-deck-column"></ol></div></div></section><script type="module">
+const parameters=new URLSearchParams(location.search),date=parameters.get('date')||'2013-08-17',latency=Number(parameters.get('latency')||100),deferNames=Number(parameters.get('names')||0),begin=performance.now(),events=[],errors=[];
+window.result={running:true,step:'frames'};
+const pause=ms=>new Promise(r=>setTimeout(r,ms)),nativeFetch=window.fetch;
+window.fetch=async function(input,...args){const url=String(input),start=performance.now();await pause(latency+(url.includes('name-meshes')?deferNames:0));const response=await nativeFetch.call(this,input,...args);events.push({url:url.split('/').at(-1),start:Math.round(start-begin),end:Math.round(performance.now()-begin)});return response;};
+addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));document.addEventListener('hscard-render-error',e=>errors.push(JSON.stringify(e.detail)));
+const samples=parameters.has('mixed')?[['EX1_350',9],['CS2_072',180],['CS2_080',421],['EX1_284',825]]:Array.from({length:4},()=>['EX1_350',9]);
+const deck=document.querySelector('section'),list=document.querySelector('ol');deck.dataset.hscardDate=date;deck.dataset.hscardFrameProfile='historical';deck.dataset.hscardCardUrls=JSON.stringify(Object.fromEntries(samples.map(([id,dbf])=>[dbf,'https://raw.githubusercontent.com/qxwd565/legacy/main/data/'+id+'.json'])));
+for(const [id,dbfId] of samples){const li=document.createElement('li');li.className='hscard-deck-card has-card-surface is-snapshot-pending';li.dataset.hscardDbfId=String(dbfId);li.dataset.hscardOwnerDbf='0';const figure=document.createElement('figure');figure.className='hscard-card-surface';figure.dataset.hscardCard=JSON.stringify({specVersion:2,snapshotMode:'dates-v1',dbfId,id,date,frameProfile:'historical',quantity:2,set:'EXPERT1',art:'https://raw.githubusercontent.com/qxwd565/legacy/main/art/'+id+'.png'});figure.innerHTML='<div class="hscard-card-placeholder" style="aspect-ratio:436/682" aria-busy="true"></div>';li.append(figure);list.append(li);}
+const figures=[...document.querySelectorAll('figure')],first=new Map(),loaded=new Map();
+const observer=new MutationObserver(()=>{for(const [i,el] of figures.entries()){if(el.classList.contains('is-native-ready')&&!first.has(i))first.set(i,Math.round(performance.now()-begin));if(el.classList.contains('is-native-ready')&&el.querySelector('[aria-busy]').getAttribute('aria-busy')==='false'&&!loaded.has(i))loaded.set(i,Math.round(performance.now()-begin));}});observer.observe(list,{subtree:true,attributes:true});
+await import('/plugin/assets/unity/deck-cards.js');
+for(let i=0;i<1200;i++){if(errors.length||loaded.size===4){
+ const names=events.find(e=>e.url==='name-meshes.json.gz'),fonts=events.filter(e=>/freetype|original-fonts/.test(e.url));
+ if(loaded.size===4){
+  if(first.size!==4||Math.max(...first.values())>Math.min(...loaded.values()))errors.push('Card content blocked another available frame');
+  if(fonts.length!==2||fonts.some(e=>e.start<Math.min(...first.values())-5))errors.push('Fonts started before native frame');
+  if(deferNames>=2000&&(!names||Math.max(...first.values())>=names.end))errors.push('Name geometry blocked frame display');
+ }
+ window.result={running:false,date,latency,deferNames,first:[...first.values()],loaded:[...loaded.values()],events,resourceEntries:performance.getEntriesByType('resource').filter(e=>e.name.includes('/resources/')).map(e=>({url:e.name.split('/').at(-1),initiator:e.initiatorType,transfer:e.transferSize})),errors};break;}await pause(100);if(i===1199)window.result={running:false,error:'Timeout',events,errors};}
+</script>

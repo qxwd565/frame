@@ -1,0 +1,53 @@
+<!doctype html><meta charset="utf-8"><title>Expansion frame API verification</title>
+<meta name="hscard-resource-base" content="https://raw.githubusercontent.com/qxwd565/legacy/main/frame/">
+<canvas></canvas>
+<script>
+if(new URL(location.href).searchParams.get('source')==='local')document.querySelector('meta[name="hscard-resource-base"]').content='http://127.0.0.1:19420/resources/';
+window.result={running:true};
+</script>
+<script type="module">
+import {resourceURL,resourceFetch} from '/plugin/assets/unity/resource-url.mjs';
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+const cases=[],errors=[];
+try{
+ const bytes=async name=>new Uint8Array(await(await resourceFetch(resourceURL(name))).arrayBuffer());
+ const json=async name=>new Response(new Blob([await bytes(name)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts),textures=new Map();
+ const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;const key=t.key||t.embedded;if(!textures.has(key))textures.set(key,(async()=>{if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};})());return textures.get(key);});
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',event=>errors.push(event.error.message));
+ async function hashPixels(target){
+  const {width,height}=target,stride=Math.ceil(width*4/256)*256,buffer=renderer.device.createBuffer({size:stride*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+  try{const encoder=renderer.device.createCommandEncoder();encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:stride},{width,height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);const padded=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(width*height*4);for(let y=0;y<height;y++)pixels.set(padded.subarray(y*stride,y*stride+width*4),y*width*4);if(!pixels.some(x=>x))throw Error('Empty render');return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pixels)),b=>b.toString(16).padStart(2,'0')).join('');}finally{buffer.destroy();}
+ }
+ const base={name:'원본 연결 검사',text:'<b>전투의 함성:</b>\n줄바꿈과 굵기 검사',race:'야수',cost:3,attack:2,health:4,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
+ for(const [kind,cardClass,renderDate,frameProfile,textProfile] of [
+  ['MINION','MAGE','2013-08-17','historical'],['MINION','MAGE','2013-10-03','historical'],
+  ['MINION','NEUTRAL','2016-10-21','historical'],['SPELL','HUNTER','2020-08-01','historical'],
+  ['SPELL','DEMONHUNTER','2021-03-25','historical'],['MINION','DEATHKNIGHT','2023-01-18','historical'],
+  ['WEAPON','DEATHKNIGHT','2023-02-15','historical'],['MINION','NEUTRAL','2026-11-09','current'],
+  ...['1.1.6069','2.0.7283','2.4.8311','2.5.8416','3.1.10378','4.2.11767'].map(v=>['MINION','MAGE','2026-11-09','current','ios-'+v+'-minion'])]){
+  for(const golden of [false,true]){
+   window.result={running:true,case:[kind,cardClass,renderDate,golden],completed:cases.length};
+   const prepared=await cards.prepare({...base,kind,cardClass,renderDate,frameProfile,textProfile,golden}),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+   if(kind==='MINION'&&frameProfile==='historical'&&renderDate<'2014-01-01'){
+    if(!prepared.frame.parts.length||prepared.frame.parts.some(p=>!p.material.shader.startsWith('Native/')))throw Error('Original beta frame shader was substituted');
+    if(!prepared.textDraws.length||prepared.textDraws.some(p=>!p.shader.startsWith('Native/')))throw Error('Original beta text shader was substituted');
+   }
+   try{await cards.renderPrepared(prepared,{transparent:true,time:1.25,destination:target});cases.push({kind,cardClass,renderDate,golden,textProfile:textProfile||null,width:target.width,height:target.height,sha256:await hashPixels(target)});}finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
+  }
+ }
+ let unsupportedRejected=false;
+ try{await cards.prepare({...base,kind:'MINION',cardClass:'MAGE',renderDate:'2026-11-09',frameProfile:'current',textProfile:'ios-5.0.12574-minion',golden:true});}
+ catch(error){if(!String(error).includes('Native text layout unavailable'))throw error;unsupportedRejected=true;}
+ if(!unsupportedRejected)throw Error('Unsupported golden layout must not silently fall back');
+ renderer.dispose();raster.dispose();window.result={running:false,cases,errors,unsupportedRejected};
+}catch(error){window.result={running:false,error:error.stack,cases,errors};}
+</script>
