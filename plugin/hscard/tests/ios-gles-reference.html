@@ -5,6 +5,9 @@ import {multiply,inverse} from '/plugin/assets/unity/native-draw-builder.mjs';
 import {cardSceneContext} from '/plugin/assets/unity/quantity-ribbon.mjs';
 const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:true,depth:true});
 if(!gl)throw Error('WebGL unavailable');
+// Unity's source meshes use clockwise front faces in this reference projection.
+// WebGL defaults to counterclockwise, which culls the main card face.
+gl.frontFace(gl.CW);
 const base='/resources/historical-frames/',fetchBytes=async p=>{const r=await fetch(base+p);if(!r.ok)throw Error('Missing original resource '+p);return new Uint8Array(await r.arrayBuffer());};
 const gunzip=async p=>new Uint8Array(await new Response(new Blob([await fetchBytes(p)]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
 const ungzipJson=async p=>JSON.parse(new TextDecoder().decode(await gunzip(p)));

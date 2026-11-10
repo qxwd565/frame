@@ -1,6 +1,6 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-a573f18746776bc1';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-a573f18746776bc1';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-04cee350cdf6eecd';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-04cee350cdf6eecd';
 
 const artCache = new Map(), tasks = [];
 let active = 0, artBytes = 0;

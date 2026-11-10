@@ -29,7 +29,7 @@ try{
    try{
     const response=await call('Runtime.evaluate',{expression:`window.renderOriginal(${JSON.stringify(snapshot.file)},${JSON.stringify(family)},${golden},${time},${JSON.stringify(cardClass)},${JSON.stringify(rarity)})`,awaitPromise:true,returnByValue:true});
     if(response.exceptionDetails)throw Error(response.exceptionDetails.exception?.description||response.exceptionDetails.text);
-    const result=response.result.value;if(!result||result.visiblePixels<10000)throw Error('Reference frame empty');
+    const result=response.result.value;if(!result||result.visiblePixels<100000)throw Error('Reference frame missing its main body');
     result.status='rendered';result.comparedTo=prior?.source||null;result.pixelsEqual=prior?prior.rgbaSha256===result.rgbaSha256:null;
     previous.set(key,{source:snapshot.source,rgbaSha256:result.rgbaSha256});item.results.push(result);
    }catch(error){item.results.push({family,golden,time,cardClass,rarity,status:'unverified',reason:String(error.message||error)});}
