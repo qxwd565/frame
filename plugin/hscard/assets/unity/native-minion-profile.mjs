@@ -1,4 +1,4 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-9594085564777cd7';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-0860fc570044ac2a';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -45,7 +45,7 @@ export class NativeMinionProfile {
   };
   const data=await load(version);
   if(data.schema!==1||data.version!==version||data.packages.length!==2)throw Error('Invalid native minion profile');
-  if(globalThis.HSCARD_EXPERIMENT_BETA_NATIVE){
+  {
    if(!adapter.betaShaderBank)adapter.betaShaderBank=json(base,'native-beta-shaders.json.gz').catch(error=>{adapter.betaShaderBank=null;throw error;});
    const bank=await adapter.betaShaderBank;
    if(bank.schema!==1||!Array.isArray(bank.shaders)||!bank.programs)throw Error('Invalid beta shader bank');
@@ -62,13 +62,6 @@ export class NativeMinionProfile {
    }
    return new NativeMinionProfile(adapter,{...data,materials},{shaders:bank.shaders});
   }
-  const materials={};
-  for(const [key,original] of Object.entries(data.materials)){
-   const binding=manifest.shaderBindings?.[original.shader];
-   if(!binding||!builder.shaders.has(binding.shader))throw Error('Current native shader unavailable '+original.shader);
-   materials[key]={...original,shader:binding.shader,queue:original.queue>=0?original.queue:binding.queue};
-  }
-  return new NativeMinionProfile(adapter,{...data,materials}, {shaders:[...builder.shaders.values()]});
  }
  constructor(adapter,data,library){
   Object.assign(this,{adapter,data,library});this.fontLoads=new WeakMap();

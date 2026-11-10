@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-9594085564777cd7';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-9594085564777cd7';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-9594085564777cd7';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-9594085564777cd7';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-9594085564777cd7';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-9594085564777cd7';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-9594085564777cd7';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-0860fc570044ac2a';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-0860fc570044ac2a';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-0860fc570044ac2a';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-0860fc570044ac2a';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-0860fc570044ac2a';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-0860fc570044ac2a';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-0860fc570044ac2a';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -90,7 +90,7 @@ export class WebGPUCardRenderer {
       // readback or any changes to the authored name mesh or texture UVs.
       if(toTexture){local.projection[5]=-local.projection[5];local.projection[13]=-local.projection[13];}
       const groups=[];for(const q of glyph.quads){const key=q.material+':'+q.color.join(','),last=groups[groups.length-1];if(!last||last.key!==key)groups.push({key,quads:[q]});else last.quads.push(q);}
-      const batches=[];for(const group of groups){const q=group.quads[0],part={path:'text:'+role,slot:0,mesh:quadGroup(group.quads),material:glyphMaterial(q,s,atlas),pose};if(nativeProfile&&globalThis.HSCARD_EXPERIMENT_BETA_NATIVE)part.material.shader=nativeProfile.data.textShaders[part.material.shader]||part.material.shader;transientMeshes.push(part.mesh);batches.push(...await this.builder.draw(part,local));}
+      const batches=[];for(const group of groups){const q=group.quads[0],part={path:'text:'+role,slot:0,mesh:quadGroup(group.quads),material:glyphMaterial(q,s,atlas),pose};if(nativeProfile)part.material.shader=nativeProfile.data.textShaders[part.material.shader]||part.material.shader;transientMeshes.push(part.mesh);batches.push(...await this.builder.draw(part,local));}
       if(toTexture){
         for(const draw of batches)if(draw.state.cull)draw.state={...draw.state,cull:draw.state.cull===1?2:1};
         await this.renderer.renderTo(textTargets[textTargets.length-1],batches,color(s[s.m_Outline?'m_OutlineColor':'m_TextColor']).map((v,i)=>i===3?0:v));const width=Number(s.m_Width),height=Number(s.m_Height),resolution=Number(s.m_Resolution),w=Math.trunc(width>=height?resolution:resolution*width/height),h=Math.trunc(height>=width?resolution:resolution*height/width);
@@ -100,7 +100,7 @@ export class WebGPUCardRenderer {
         const image={width:w,height:h,format:28,levels:[null],gpuTexture:textTarget.texture},meshInfo=this.nameMeshes.prefabs[frame.fit.kind?this.sources.card(card.kind,card.golden).name:''];if(!meshInfo)throw Error('Missing shared name geometry');
         const surfaceMesh=config.nativeMesh|| (config.componentMesh?historical.textGeometry(config.componentMesh):meshInfo.mesh?{encoded:meshInfo.mesh,sha256:meshInfo.sha256}:plane(Number(s.m_Width),Number(s.m_Height),s,this.sources.frames.palette)),rotation=[1,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1],surfacePose=(config.nativeMesh||config.componentMesh||meshInfo.mesh)?config.binding.destinationPose:multiply(config.binding.sourcePose,rotation);
         const material={shader:s.m_AntiAlias?'Hidden/TextAntialiasing':'Hidden/TextPlane',keywords:[],values:{_Color:[1,1,1,1],_OffsetX:[f(Number(s.m_AntiAliasAmount)/w)],_OffsetY:[f(Number(s.m_AntiAliasAmount)/h)],_Edge:[Number(s.m_AntiAliasEdge)]},textures:{_MainTex:{pixels:image,sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]}}};
-        if(nativeProfile&&globalThis.HSCARD_EXPERIMENT_BETA_NATIVE)material.shader=nativeProfile.data.textShaders[material.shader]||material.shader;
+        if(nativeProfile)material.shader=nativeProfile.data.textShaders[material.shader]||material.shader;
         textDraws.push(...await this.builder.draw({path:'text:'+role,slot:0,mesh:surfaceMesh,material,pose:surfacePose},context));
       }else textDraws.push(...batches);
     }

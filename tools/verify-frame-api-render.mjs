@@ -27,7 +27,7 @@ try{
   throw Error('Render verification timed out: '+source);
  }
  const local=await run('local');
- if(nativeBeta){console.log(JSON.stringify({ok:true,mode:'experimental-original-beta-shaders',cases:local}));process.exitCode=0;}
+ if(nativeBeta){console.log(JSON.stringify({ok:true,mode:'original-beta-shaders',cases:local}));process.exitCode=0;}
  else {
  requests.length=0;
  const remote=await run('api');

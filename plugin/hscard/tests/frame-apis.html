@@ -3,7 +3,6 @@
 <canvas></canvas>
 <script>
 if(new URL(location.href).searchParams.get('source')==='local')document.querySelector('meta[name="hscard-resource-base"]').content='http://127.0.0.1:19420/resources/';
-if(new URL(location.href).searchParams.get('native')==='1')globalThis.HSCARD_EXPERIMENT_BETA_NATIVE=true;
 window.result={running:true};
 </script>
 <script type="module">
@@ -38,6 +37,10 @@ try{
   for(const golden of [false,true]){
    window.result={running:true,case:[kind,cardClass,renderDate,golden],completed:cases.length};
    const prepared=await cards.prepare({...base,kind,cardClass,renderDate,frameProfile,textProfile,golden}),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+   if(kind==='MINION'&&frameProfile==='historical'&&renderDate<'2014-01-01'){
+    if(!prepared.frame.parts.length||prepared.frame.parts.some(p=>!p.material.shader.startsWith('Native/')))throw Error('Original beta frame shader was substituted');
+    if(!prepared.textDraws.length||prepared.textDraws.some(p=>!p.shader.startsWith('Native/')))throw Error('Original beta text shader was substituted');
+   }
    try{await cards.renderPrepared(prepared,{transparent:true,time:1.25,destination:target});cases.push({kind,cardClass,renderDate,golden,textProfile:textProfile||null,width:target.width,height:target.height,sha256:await hashPixels(target)});}finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
   }
  }

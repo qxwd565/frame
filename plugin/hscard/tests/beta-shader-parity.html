@@ -1,0 +1,52 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><style>body{background:#fff}canvas{width:224px}</style><canvas id="gpu"></canvas><canvas id="reference"></canvas><canvas id="output"></canvas>
+<script type="module">
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {WebGLNativeRenderer} from '/reference/webgl-native.mjs';
+import {loadGoldenPortrait} from '/plugin/assets/unity/golden-art.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+import {NativeDrawBuilder as ReferenceDrawBuilder} from '/reference/native-draw-builder.mjs';
+import {CardRenderer} from '/reference/card-renderer.mjs';
+window.result={running:true,step:'resources'};window.errors=[];
+addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
+try{
+ const bytes=async n=>new Uint8Array(await(await fetch('/resources/'+n)).arrayBuffer()),json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const work=async n=>{const r=await fetch('/gpu-reference/'+n);return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();};
+ const [frames,settings,portraits,fits,watermarks,library,programs,names,fontArchive,wasm,glsl]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),work('shader-library.json.gz'),work('wgsl-programs.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm'),(async()=>{const r=await fetch('/reference/shader-programs.json.gz');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();})()]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fontArchive,sources.text.fonts);
+ const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};});
+ window.result={running:true,step:'device'};
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('#gpu'),await loadShaderIndex(),sources),reference=new WebGLNativeRenderer(document.querySelector('#reference'),glsl,sources);
+ const cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names}),oldCards=new CardRenderer({sources,composer,builder:new ReferenceDrawBuilder(library,sources.frames.pipelineKeywords,builder.resolveTexture),renderer:reference,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ const example={kind:'MINION',cardClass:'NEUTRAL',golden:false,name:'시린빛 점쟁이',text:'<b>전투의 함성:</b> 각 플레이어가\n카드를 2장 뽑습니다.',race:'멀록',cost:3,attack:2,health:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,frameProfile:'current',renderDate:'2026-11-09',tags:{}};
+ example.artPixels={width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]};
+ const cases=[];
+ for(const kind of ['MINION','SPELL','WEAPON','HERO','LOCATION'])for(const golden of [false,true])cases.push({...example,kind,golden,name:kind,cardClass:'ROGUE',race:kind==='MINION'?'멀록':'',school:kind==='SPELL'?'비전':'',durability:2,armor:5,rarity:'LEGENDARY',quantity:2});
+ for(const date of ['2013-08-17','2013-10-03','2016-08-01','2020-12-01','2023-01-20'])for(const golden of [false,true])cases.push({...example,golden,frameProfile:'historical',renderDate:date,name:date,rarity:'LEGENDARY',quantity:3});
+ for(const date of ['2016-08-01','2020-12-01'])for(const kind of ['SPELL','WEAPON'])for(const golden of [false,true])cases.push({...example,kind,golden,frameProfile:'historical',renderDate:date,cardClass:'DRUID',name:kind+date,rarity:'EPIC',race:'',durability:2,quantity:2});
+ const bank=await (async()=>{const r=await fetch('/reference/historical-frames/minion-shaders(2013-08-17).json.gz');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json()})();Object.assign(reference.programs,bank.programs);
+ const results=[];let lastPixels;
+ for(const [index,example] of cases.entries()){
+  if(index<10||index>13)continue;const start=performance.now();window.result={running:true,index,total:cases.length,card:{kind:example.kind,golden:example.golden,date:example.renderDate}};
+  try{
+   const prepared=await cards.prepare(example),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+   const draws=(await Promise.all(prepared.frame.parts.map(part=>builder.draw(part,{...prepared.context,time:0})))).flat();await renderer.transparent(target.width,target.height,draws,target);await renderer.device.queue.onSubmittedWorkDone();
+   const {width,height}=target,pitch=Math.ceil(width*4/256)*256,buffer=renderer.device.createBuffer({size:pitch*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}),encoder=renderer.device.createCommandEncoder();encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:pitch},{width,height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
+   const raw=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(width*height*4);for(let y=0;y<height;y++)pixels.set(raw.subarray(y*pitch,y*pitch+width*4),y*width*4);buffer.unmap();buffer.destroy();
+   const output=document.querySelector('#output');output.width=width;output.height=height;output.getContext('2d').putImageData(new ImageData(new Uint8ClampedArray(pixels),width,height),0,0);
+   await reference.transparent(width,height,draws);const ref=new Uint8Array(width*height*4);reference.gl.readPixels(0,0,width,height,reference.gl.RGBA,reference.gl.UNSIGNED_BYTE,ref);
+   let error=0,changed=0,visible=0;for(let y=0;y<height;y++)for(let x=0;x<width;x++){const a=(y*width+x)*4,b=((height-1-y)*width+x)*4;if(pixels[a+3]>0||ref[b+3]>0)visible++;let d=0;for(let c=0;c<4;c++)d+=Math.abs(pixels[a+c]-ref[b+c]);error+=d;if(d>8)changed++;}
+   let animationDelta=0;if(example.time&&lastPixels)for(let i=0;i<pixels.length;i++)animationDelta+=Math.abs(pixels[i]-lastPixels[i]);lastPixels=pixels;
+   results.push({index,kind:example.kind,golden:example.golden,date:example.renderDate,visible,changed,meanAbsoluteError:error/(width*height*4),animationDelta,elapsedMs:performance.now()-start});
+   cards.releasePrepared(prepared);renderer.releaseTarget(target);
+  }catch(error){results.push({index,error:error.stack});}
+  window.samples=results;
+ }
+ window.result={running:false,results,errors,adapter:{vendor:renderer.device.adapterInfo?.vendor}};
+}catch(e){window.result={running:false,error:e.stack,errors};}
+</script>

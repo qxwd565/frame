@@ -1,5 +1,13 @@
 # Browser verification
 
+`node tools/verify-beta-shader-parity.mjs` compares the same original beta
+minion frame draw commands through the original GLSL WebGL reference and the
+converted WGSL WebGPU backend. Start this test server first. It checks normal
+and golden 3664/3890 shaders and does not claim whole-card or in-game parity.
+The existing old renderer and conversion artifacts are read from
+`E:/HSdeck/.webgpu-work/`; `HSCARD_OLD_RENDERER_REFERENCE` and
+`HSCARD_WEBGPU_REFERENCE` can point the server at equivalent copies.
+
 These files are development-only and are excluded from the WordPress ZIP.
 Run `php tests/admin-sources.php` for source ordering, filtered slots, storage
 failures, authorization/nonce checks, repository URL construction and existing
