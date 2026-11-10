@@ -1,5 +1,5 @@
 /** Resources live in the corresponding expansion API's frame/ directory. */
-import index from './frame-api-index.json?ver=hscard-f982cd0502be9297' with {type:'json'};
+import index from './frame-api-index.json?ver=hscard-045a95eb032ce0a2' with {type:'json'};
 const META = 'meta[name="hscard-resource-base"]';
 export const FRAME_API_BASE = 'https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';
 let cachedBase = null;

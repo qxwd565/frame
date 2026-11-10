@@ -30,6 +30,7 @@ try{
  const base={name:'원본 연결 검사',text:'<b>전투의 함성:</b>\n줄바꿈과 굵기 검사',race:'야수',cost:3,attack:2,health:4,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
  for(const [kind,cardClass,renderDate,frameProfile,textProfile] of [
   ['MINION','MAGE','2013-08-17','historical'],['MINION','MAGE','2013-10-03','historical'],
+  ['MINION','MAGE','2013-12-11','historical'],['MINION','MAGE','2013-12-12','historical'],
   ['MINION','NEUTRAL','2016-10-21','historical'],['SPELL','HUNTER','2020-08-01','historical'],
   ['SPELL','DEMONHUNTER','2021-03-25','historical'],['MINION','DEATHKNIGHT','2023-01-18','historical'],
   ['WEAPON','DEATHKNIGHT','2023-02-15','historical'],['MINION','NEUTRAL','2026-11-09','current'],
@@ -40,6 +41,11 @@ try{
    if(kind==='MINION'&&frameProfile==='historical'&&renderDate<'2014-01-01'){
     if(!prepared.frame.parts.length||prepared.frame.parts.some(p=>!p.material.shader.startsWith('Native/')))throw Error('Original beta frame shader was substituted');
     if(!prepared.textDraws.length||prepared.textDraws.some(p=>!p.shader.startsWith('Native/')))throw Error('Original beta text shader was substituted');
+    if(golden&&renderDate==='2013-12-12'){
+     const reflection=prepared.frame.parts.find(p=>p.material.name==='Card_Inhand_Premium')?.material.textures._ReflTex
+       || prepared.frame.parts.find(p=>p.material.textures?._ReflTex?.pixels?.width===256)?.material.textures._ReflTex;
+     if(!reflection||reflection.pixels.width!==256||reflection.sampler.filter!==2||reflection.sampler.bias!==-0.5)throw Error('4217 original reflection texture or sampler not selected');
+    }
    }
    try{await cards.renderPrepared(prepared,{transparent:true,time:1.25,destination:target});cases.push({kind,cardClass,renderDate,golden,textProfile:textProfile||null,width:target.width,height:target.height,sha256:await hashPixels(target)});}finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
   }

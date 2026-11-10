@@ -1,4 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-f982cd0502be9297';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-045a95eb032ce0a2';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-045a95eb032ce0a2';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -68,7 +69,25 @@ export class NativeMinionProfile {
   this.catalog={edition:data.version,textures:Object.entries(data.textures).map(([id,tx])=>({id,...tx,encoding:'webp-rgba32-planes',filterMode:tx.sampler.m_FilterMode,wrapMode:tx.sampler.m_WrapMode,aniso:tx.sampler.m_Aniso,mipBias:tx.sampler.m_MipBias}))};
  }
  package(card){return this.data.packages.find(p=>p.golden===!!card.golden);}
- texture(key){return this.adapter.texture(this.catalog,key);}
+ async texture(key,card,material,property){
+  const date=String(card.renderDate||'');
+  // The 4217 cloud texture is safe with these two 3890 materials: both source
+  // material hashes and the executable D3D11 shader programs were compared.
+  // Later client combinations are not inferred from this beta evidence.
+  if(key==='clouds7'&&property==='_ReflTex'&&date>='2013-12-12'&&date<='2014-03-13'){
+   const adapter=this.adapter;
+   if(!adapter.textureHistory)adapter.textureHistory=json(adapter.history.base,'texture-history/index.json').catch(error=>{adapter.textureHistory=null;throw error;});
+   const history=await adapter.textureHistory, proof=history.clouds7Compatibility;
+   if(!proof?.materials?.some(row=>row.material===material.name)||!proof.d3d11Programs?.length)throw Error('Unverified native texture combination');
+   const row=selectTextureVariant(history,key,date);
+   if(row?.version==='1.0.0.4217'){
+    adapter.textureHistoryEntries??=new Map();
+    if(!adapter.textureHistoryEntries.has(row.file))adapter.textureHistoryEntries.set(row.file,loadTextureVariant(adapter.history.base,row).catch(error=>{adapter.textureHistoryEntries.delete(row.file);throw error;}));
+    return adapter.textureHistoryEntries.get(row.file);
+   }
+  }
+  return this.adapter.texture(this.catalog,key);
+ }
  async ensureFonts(raster){
   if(!this.fontLoads.has(raster))this.fontLoads.set(raster,json(this.adapter.history.base,this.data.fonts).then(archive=>raster.register(archive,this.data.fontSettings)).catch(error=>{this.fontLoads.delete(raster);throw error;}));
   return this.fontLoads.get(raster);
@@ -96,7 +115,7 @@ export class NativeMinionProfile {
     // then retain the authored part/property order regardless of completion.
     material.textures=Object.fromEntries(await Promise.all(Object.entries(original.textures).map(async([name,tx])=>[
      name,blank&&name==='_MainTex'?{pixels:card.artPixels||blankPixels,sampler:{filter:1,wrapU:1,wrapV:1},st:tx.st.slice()}:
-      {...await this.texture(classFront&&name==='_MainTex'?classTexture:tx.key),st:tx.st.slice()}
+      {...await this.texture(classFront&&name==='_MainTex'?classTexture:tx.key,card,original,name),st:tx.st.slice()}
     ])));
     if(blank&&card.golden&&card.goldenPortrait)material={...card.goldenPortrait,values:{...card.goldenPortrait.values},textures:{...card.goldenPortrait.textures}};
     if(card.golden&&node.path===d.m_cardMesh&&slot.slot===p.actor.m_premiumRibbon)material.values._Color=this.data.palette['CLASS_COLOR_'+(cls==='NEUTRAL'?'GENERIC':cls)];

@@ -118,6 +118,15 @@ def plan():
         if name.startswith('2015-11-11/'):
             for source in ['4.0.10784', '4.0.10833', '4.1.10956', '4.2.11767', '4.3.12266']:
                 assign(name, source)
+        if name.startswith(prefix + 'texture-history/'):
+            parts = name[len(prefix + 'texture-history/'):].split('/')
+            if parts == ['index.json']:
+                for source in ['1.0.0.3664', '1.0.0.3890', '1.0.0.4217']:
+                    assign(name, source)
+            elif len(parts) == 2 and parts[1].endswith('.png'):
+                assign(name, parts[0])
+            else:
+                raise ValueError('Invalid beta texture history path: ' + name)
     shared = {'manifest.json', 'index.json', 'resource-index.json', 'frame-history.json',
               'historical-components.json.gz', 'legacy-text-settings.json.gz',
               'native-minion-profiles.json', 'blobs.json'}
@@ -127,7 +136,9 @@ def plan():
         sources = sorted(candidates[name], key=version)
         if sources:
             repo = owner(sources[0])
-            scope = ('native-texture' if name.startswith('2015-11-11/') and name.endswith('.png')
+            scope = ('native-texture-index' if name == prefix + 'texture-history/index.json'
+                     else 'native-texture' if name.startswith(prefix + 'texture-history/')
+                     else 'native-texture' if name.startswith('2015-11-11/') and name.endswith('.png')
                      else 'native-texture-index' if name.startswith('2015-11-11/') and name.endswith('/index.json')
                      else 'native-snapshot-without-textures' if name.startswith(prefix + 'native-snapshots/')
                      else 'native-shaders-without-textures' if name == prefix + 'native-beta-shaders.json.gz'

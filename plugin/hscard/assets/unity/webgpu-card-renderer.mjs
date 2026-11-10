@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-f982cd0502be9297';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-f982cd0502be9297';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-f982cd0502be9297';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-f982cd0502be9297';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-f982cd0502be9297';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-f982cd0502be9297';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-f982cd0502be9297';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-045a95eb032ce0a2';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-045a95eb032ce0a2';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-045a95eb032ce0a2';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-045a95eb032ce0a2';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-045a95eb032ce0a2';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-045a95eb032ce0a2';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-045a95eb032ce0a2';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
