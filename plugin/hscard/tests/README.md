@@ -83,7 +83,8 @@ EX1_350, CS2_072 and EX1_165a. The test resets only its generated local fixtures
 It runs production imports and real WordPress post/meta/permalink/shortcode APIs;
 SQLite can be used, with the test's serial advisory-lock seam documented inline.
 Enable the local HSdeck theme to cover its category/date permalink filters.
-It also checks the single `카드`/`card` category, classic/REST editor enforcement,
+It also checks automatic `카드` category assignment, WordPress-generated or
+user-edited slugs, normal classic/REST editor changes without forced reversion,
 earliest JSON history date and site-timezone GMT values, deferred publication
 until that date is known, background/local document updates, version-1 post
 migration, and preservation of unrelated posts and authored content.

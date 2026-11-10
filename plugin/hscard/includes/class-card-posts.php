@@ -17,8 +17,6 @@ final class Card_Posts {
  public function register_hooks() {
   add_action( 'hscard_cards_changed', array( __CLASS__, 'queue' ) );
   add_action( 'hscard_card_document_ready', array( __CLASS__, 'document_ready' ) );
-  add_action( 'save_post_post', array( __CLASS__, 'enforce_category' ) );
-  add_action( 'rest_after_insert_post', static function ( $post ) { self::enforce_category( $post->ID ); } );
   add_action( self::CRON, array( __CLASS__, 'run_batch' ) );
   add_action( 'admin_init', array( __CLASS__, 'backfill' ) );
   add_action( 'init', array( __CLASS__, 'schedule' ) );
@@ -94,26 +92,21 @@ final class Card_Posts {
  }
 
  private static function category_id() {
-  $term = get_term_by( 'slug', 'card', 'category' );
+  $term = get_term_by( 'name', '카드', 'category' );
   if ( ! $term ) {
-   $created = wp_insert_term( '카드', 'category', array( 'slug' => 'card' ) );
+   // Reuse the named category. WordPress or the user owns its slug.
+   $created = wp_insert_term( '카드', 'category' );
    if ( is_wp_error( $created ) ) {
     if ( 'term_exists' !== $created->get_error_code() ) { return $created; }
     $term = get_term( (int) $created->get_error_data(), 'category' );
    } else { $term = get_term( (int) $created['term_id'], 'category' ); }
   }
   if ( is_wp_error( $term ) || ! $term ) { return new WP_Error( 'hscard_card_category', '카드 카테고리를 확인하지 못했습니다.' ); }
-  if ( '카드' !== $term->name || 'card' !== $term->slug ) {
-   $updated = wp_update_term( $term->term_id, 'category', array( 'name' => '카드', 'slug' => 'card' ) );
-   if ( is_wp_error( $updated ) ) { return $updated; }
-  }
   return (int) $term->term_id;
  }
 
- /** Managed cards have one category; ordinary posts and their terms are untouched. */
- public static function enforce_category( $post_id ) {
-  if ( ! self::is_card_post( $post_id ) || 'post' !== get_post_type( $post_id ) ) { return true; }
-  $category = self::category_id();if ( is_wp_error( $category ) ) { return $category; }
+ /** Assign during automatic synchronization, never intercept editor saves. */
+ private static function assign_category( $post_id, $category ) {
   $current = wp_get_post_categories( $post_id );
   if ( is_wp_error( $current ) ) { return $current; }
   if ( array( $category ) === array_map( 'intval', $current ) ) { return true; }
@@ -208,14 +201,14 @@ final class Card_Posts {
   if ( $occupied && ( ! $page || $occupied->ID !== $page->ID ) ) { return new WP_Error( 'hscard_post_slug', '기존 글 또는 페이지와 주소가 겹칩니다: ' . $code ); }
   $status = $page ? $page->post_status : 'publish';
   if ( $page && get_post_meta( $page->ID, self::INACTIVE_META, true ) ) { $status = 'publish'; }
-  if ( $page ) { $category = self::enforce_category( $page->ID );if ( is_wp_error( $category ) ) { return $category; } }
+  $category = self::category_id();if ( is_wp_error( $category ) ) { return $category; }
+  if ( $page ) { $assigned = self::assign_category( $page->ID, $category );if ( is_wp_error( $assigned ) ) { return $assigned; } }
   $first_date = Card_Documents::first_date( $card );
   if ( '' === $first_date ) { return new WP_Error( 'hscard_card_date_pending', '카드 최초 날짜를 읽은 뒤 게시글을 등록합니다: ' . $code ); }
   // JSON stores a calendar day only. Keep that date in WordPress and derive
   // GMT through the site's timezone; never invent an exact release time.
   $date = $first_date . ' 00:00:00';$gmt = get_gmt_from_date( $date );
   if ( $page && $page->post_title === $card['name'] && $page->post_name === $slug && $page->post_status === $status && $page->post_date === $date && $page->post_date_gmt === $gmt ) { return true; }
-  $category = self::category_id();if ( is_wp_error( $category ) ) { return $category; }
   $post = array( 'post_type' => 'post', 'post_title' => $card['name'], 'post_name' => $slug, 'post_status' => $status, 'post_parent' => 0, 'post_date' => $date, 'post_date_gmt' => $gmt, 'edit_date' => true, 'post_category' => array( $category ) );
   if ( $page ) { $post['ID'] = $page->ID; }
   else {
@@ -231,7 +224,7 @@ final class Card_Posts {
    return new WP_Error( 'hscard_post_slug_race', '게시글 주소를 확보하지 못했습니다: ' . $code );
   }
   delete_post_meta( $result, self::INACTIVE_META );
-  return self::enforce_category( $result );
+  return self::assign_category( $result, $category );
  }
 
  public static function urls( array $cards ) {

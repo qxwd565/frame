@@ -31,9 +31,11 @@ $GLOBALS['wpdb']->query( 'DELETE FROM ' . Card_Store::table_name() );
 $source=array('label'=>'고전','repository'=>'legacy','url'=>Json_Sources::repository_url('legacy'),'art_base'=>'','mode'=>'remote','enabled'=>1,'set'=>'legacy');
 Json_Sources::save(array('legacy'=>$source));
 update_option('timezone_string','Asia/Seoul');
-$category=get_term_by('slug','card','category');
-if($category){wp_update_term($category->term_id,'category',array('name'=>'Cards'));}
-else{wp_insert_term('Cards','category',array('slug'=>'card'));}
+$category=get_term_by('name','카드','category');
+if($category){wp_delete_term($category->term_id,'category');}
+$unrelated=get_term_by('slug','card','category');
+if(!$unrelated){$term=wp_insert_term('기존 다른 분류','category',array('slug'=>'card'));$unrelated=get_term((int)$term['term_id'],'category');}
+$unrelatedName=$unrelated->name;
 $sample=json_decode(file_get_contents(getenv('HSCARD_TEST_CATALOG')),true)['cards'];
 $cards=array_values(array_filter($sample,static function($c){return in_array($c['id'],array('EX1_350','CS2_072','EX1_165a'),true);}));
 check_card_post(count($cards)===3,'Expected real legacy fixtures');
@@ -56,7 +58,9 @@ wp_clear_scheduled_hook(Card_Posts::CRON);Card_Posts::schedule();check_card_post
 wp_set_current_user(0);Card_Documents::run();Card_Posts::run_batch();wp_set_current_user(1);$warmDocuments=true;
 Card_Posts::run_batch();$posts=imported_card_posts();check_card_post(count($posts)===2,'Tokens created posts or parents missing');
 $ids=array();foreach($posts as $post){$ids[get_post_meta($post->ID,Card_Posts::META,true)]=$post->ID;check_card_post($post->post_type==='post'&&$post->post_status==='publish'&&(int)$post->post_author===1,'Not a published authored post');}
-$category=get_term_by('slug','card','category');check_card_post($category&&$category->name==='카드','Card category name/slug not enforced');
+$category=get_term_by('name','카드','category');check_card_post($category&&$category->slug===sanitize_title('카드'),'Category slug was forced instead of using WordPress');
+check_card_post(get_term($unrelated->term_id,'category')->name===$unrelatedName,'Unrelated card-slug category renamed');
+wp_update_term($category->term_id,'category',array('slug'=>'my-card-category'));
 foreach($posts as $post){check_card_post(wp_get_post_categories($post->ID)===array((int)$category->term_id),'Unexpected extra/default category');check_card_post($post->post_date==='2013-08-17 00:00:00'&&$post->post_date_gmt==='2013-08-16 15:00:00','First date or timezone conversion incorrect');}
 Card_Posts::document_ready('https://example.org/data/EX1_350.json');check_card_post(!get_option(Card_Posts::QUEUE),'Unrelated source woke posts');
 check_card_post(get_permalink($ids['EX1_350'])==='http://127.0.0.1:19460/EX1_350/','Card-code URL not retained');
@@ -69,13 +73,14 @@ check_card_post($xp->query('//div[@class="hscard-card-navigation"]/a[@class="hsc
 wp_update_post(array('ID'=>$ids['EX1_350'],'post_content'=>'[hscard_card]<p>추가한 내용</p>'));
 $other=wp_insert_term('검사용 일반 글','category',array('slug'=>'post-date-test-other'));$otherId=is_wp_error($other)?(int)$other->get_error_data():(int)$other['term_id'];
 wp_update_post(array('ID'=>$ids['EX1_350'],'post_category'=>array($otherId)));
-check_card_post(wp_get_post_categories($ids['EX1_350'])===array((int)$category->term_id),'Classic editor changed managed category');
+check_card_post(wp_get_post_categories($ids['EX1_350'])===array($otherId),'Classic editor category change was forcibly reverted');
 wp_set_post_categories($ids['EX1_350'],array($otherId));do_action('rest_after_insert_post',get_post($ids['EX1_350']));
-check_card_post(wp_get_post_categories($ids['EX1_350'])===array((int)$category->term_id),'REST editor changed managed category');
+check_card_post(wp_get_post_categories($ids['EX1_350'])===array($otherId),'REST editor category change was forcibly reverted');
 $ordinary=wp_insert_post(array('post_type'=>'post','post_status'=>'publish','post_title'=>'일반 글 보존 검사','post_category'=>array($otherId),'post_date'=>'2020-02-03 00:00:00'));
 check_card_post(wp_get_post_categories($ordinary)===array($otherId)&&get_post($ordinary)->post_date==='2020-02-03 00:00:00','Unrelated post modified');wp_delete_post($ordinary,true);
 foreach($doc['cards'] as &$card){if($card['id']==='EX1_350')$card['name']='예언자 벨렌 수정';}unset($card);
 $import($doc);Card_Posts::run_batch();check_card_post(count(imported_card_posts())===2,'Reimport duplicated posts');
+check_card_post(get_term($category->term_id,'category')->slug==='my-card-category'&&wp_get_post_categories($ids['EX1_350'])===array((int)$category->term_id),'Automatic category assignment changed the slug');
 check_card_post(get_post($ids['EX1_350'])->post_title==='예언자 벨렌 수정'&&strpos(get_post($ids['EX1_350'])->post_content,'추가한 내용')!==false,'Reimport lost title/content');
 // Remove and then restore a parent; the same post and URL are reused.
 $without=$doc;$without['cards']=array_values(array_filter($doc['cards'],static function($c){return $c['id']!=='EX1_350';}));
@@ -128,4 +133,4 @@ $request=(object)array('request'=>'unrelated-page','query_vars'=>array('pagename
 // Leave a representative deck and real card posts for HTTP/browser checks.
 $deck=get_page_by_path('card-link-check',OBJECT,'page');$deck_id=wp_insert_post(array('ID'=>$deck?$deck->ID:0,'post_type'=>'page','post_status'=>'publish','post_name'=>'card-link-check','post_title'=>'Deck link check','post_content'=>$html));
 update_option('active_plugins',array('hscard/hscard.php'));flush_rewrite_rules(false);
-echo wp_json_encode(array('ok'=>true,'wordpress'=>get_bloginfo('version'),'posts'=>$ids,'parentsOnly'=>true,'reimport'=>true,'backfill'=>true,'queueRevision'=>true,'slugConflict'=>true,'rootRouting'=>true,'deckLinks'=>true,'detailRenderer'=>true,'categoryOnlyCard'=>true,'firstHistoryDate'=>true,'dateWaitAndWake'=>true,'timezone'=>true,'ordinaryPostsUnchanged'=>true),JSON_UNESCAPED_UNICODE).PHP_EOL;
+echo wp_json_encode(array('ok'=>true,'wordpress'=>get_bloginfo('version'),'posts'=>$ids,'parentsOnly'=>true,'reimport'=>true,'backfill'=>true,'queueRevision'=>true,'slugConflict'=>true,'rootRouting'=>true,'deckLinks'=>true,'detailRenderer'=>true,'automaticCategory'=>true,'categorySlugPreserved'=>true,'editorChangesAllowed'=>true,'firstHistoryDate'=>true,'dateWaitAndWake'=>true,'timezone'=>true,'ordinaryPostsUnchanged'=>true),JSON_UNESCAPED_UNICODE).PHP_EOL;
