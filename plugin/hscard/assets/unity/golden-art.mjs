@@ -1,5 +1,5 @@
-import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-6f5666d116dae839';
-import {validateAnimation} from './artwork-animation.mjs?ver=hscard-6f5666d116dae839';
+import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-3ee5aa3c9c608ee2';
+import {validateAnimation} from './artwork-animation.mjs?ver=hscard-3ee5aa3c9c608ee2';
 
 // Documents are relative to the owning set root, not golden/cards/.
 const indexes=new Map(),materials=new Map(),textures=new Map(),queue=[];

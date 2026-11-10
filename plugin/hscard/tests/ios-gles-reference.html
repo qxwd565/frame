@@ -10,6 +10,7 @@ if(!gl)throw Error('WebGL unavailable');
 gl.frontFace(gl.CW);
 const base='/resources/historical-frames/',fetchBytes=async p=>{const r=await fetch(base+p);if(!r.ok)throw Error('Missing original resource '+p);return new Uint8Array(await r.arrayBuffer());};
 const originalCollection=new URLSearchParams(location.search).get('originalCollection')==='1';
+const framePixels=originalCollection&&new URLSearchParams(location.search).get('framePixels')==='1';
 const gunzip=async p=>new Uint8Array(await new Response(new Blob([await fetchBytes(p)]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
 const ungzipJson=async p=>JSON.parse(new TextDecoder().decode(await gunzip(p)));
 const fits=await (async()=>{const r=await fetch('/resources/frame-fits.json.gz');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();})();
@@ -89,9 +90,19 @@ function chainPose(chain){return [...chain].reverse().reduce((m,n)=>multiply(m,t
 async function originalContext(archive){
  const r=await fetch('http://127.0.0.1:19421/scene?'+new URLSearchParams({archive}));if(!r.ok)throw Error('Source camera: '+await r.text());const {camera,anchor}=await r.json();
  const cam=chainPose(camera.transformChain),rigid=cam.slice();for(const i of [0,4,8]){const size=Math.hypot(rigid[i],rigid[i+1],rigid[i+2]);for(let j=0;j<3;j++)rigid[i+j]/=size;}
- const fields=camera.fields,width=2048,height=1536,near=fields['near clip plane'],far=fields['far clip plane'],f=1/Math.tan(fields['field of view']*Math.PI/360);
+ const fields=camera.fields,near=fields['near clip plane'],far=fields['far clip plane'],f=1/Math.tan(fields['field of view']*Math.PI/360);let width=2048,height=1536;
  if(fields.orthographic)throw Error('Unexpected source camera projection');
- const projection=[f/(width/height),0,0,0,0,f,0,0,0,0,(far+near)/(far-near),1,0,0,-2*near*far/(far-near),0];
+ let projection=[f/(width/height),0,0,0,0,f,0,0,0,0,(far+near)/(far-near),1,0,0,-2*near*far/(far-near),0];
+ if(framePixels){
+  // iOS original front is 512px and uses the same 0.9802 vertical UV span.
+  // The baseline source neutral minion is 260px high at 2048x1536. Reframe
+  // before drawing; do not upscale an existing rendered screenshot.
+  // The projected flat-front UV Jacobian at that provisional scale measures
+  // 0.979555 output pixels per source texel; correct it to approximately 1:1.
+  const scale=512*(0.9856908321380615-0.005504518747329712)/(260*0.979555),tw=448,th=576,cx=573,cy=601;
+  const crop=[scale*width/tw,0,0,0,0,scale*height/th,0,0,0,0,1,0,scale*(width-2*cx)/tw,scale*(2*cy-height)/th,0,1];
+  projection=multiply(crop,projection);width=tw;height=th;
+ }
  const anchors=structuredClone(anchor.transformChain),start=anchors.shift().position;for(const n of anchors)if(n.name==='CollectionPage'||n.name==='CollectionPageA')n.position={x:0,y:.25,z:0};
  const actor=multiply(chainPose(anchors),trs({position:start,rotation:{x:0,y:0,z:0,w:1},scale:{x:.73,y:.73,z:.73}}));
  return {width,height,projection,view:inverse(rigid),actor,cameraPosition:[cam[12],cam[13],cam[14],0]};

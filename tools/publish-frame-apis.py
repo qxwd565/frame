@@ -138,6 +138,10 @@ def plan():
         if original_comparison in files:
             for build in ['3664','3749','3890','3937','4217','4243','4458','4482','4944']:assign(original_comparison,'1.0.0.'+build)
             for source in ['1.0.0','1.0.5361','1.0.5435','1.0.5834']:assign(original_comparison,source)
+        frame_comparison=prefix+'early-native/original-frame-pixel-comparison.json.gz'
+        if frame_comparison in files:
+            for build in ['3664','3749','3890','3937','4217','4243','4458','4482','4944']:assign(frame_comparison,'1.0.0.'+build)
+            for source in ['1.0.0','1.0.5361','1.0.5435','1.0.5834']:assign(frame_comparison,source)
     for row in read(prefix + 'native-minion-profiles.json')['profiles']:
         assign(prefix + row['file'], row['version'])
         dependencies(read(prefix + row['file']), row['version'])
@@ -176,7 +180,7 @@ def plan():
             repo = owner(sources[0])
             scope = ('original-scene-index' if name == prefix + 'early-native/index.json'
                      else 'original-route-index' if name == prefix + 'early-native/routes.json.gz'
-                     else 'visual-comparison-evidence' if name in (prefix + 'early-native/pc-render-comparison.json',prefix + 'early-native/pc-webgpu-d3d-parity.json',prefix + 'early-native/ios-gles-render-comparison.json',prefix + 'early-native/original-collection-comparison.json.gz')
+                     else 'visual-comparison-evidence' if name in (prefix + 'early-native/pc-render-comparison.json',prefix + 'early-native/pc-webgpu-d3d-parity.json',prefix + 'early-native/ios-gles-render-comparison.json',prefix + 'early-native/original-collection-comparison.json.gz',prefix + 'early-native/original-frame-pixel-comparison.json.gz')
                      else 'original-scene-snapshot' if name.startswith(prefix + 'early-native/snapshots/')
                      else 'original-texture' if name.startswith(prefix + 'early-native/objects/texture/')
                      else 'original-asset' if name.startswith(prefix + 'early-native/objects/')

@@ -45,12 +45,19 @@ if family not in ['Ally','Ability','Weapon']:
     raise ValueError('Unsupported source family')
 
 doc = json.loads(gzip.decompress((ROOT / ('early-native/snapshots/pc-1.0.0.'+build+'.json.gz')).read_bytes()))
-old = json.loads(gzip.decompress((EXTRACTED / ('PC 1.0.0.'+build+'.json.gz')).read_bytes()))
+old = json.loads(gzip.decompress((ROOT / ('native-snapshots/pc-1.0.0.'+build+'.json.gz')).read_bytes()))
 camera_data = json.loads((REPORTS / '베타-오리지널 원본 카메라.json').read_text(encoding='utf-8'))
 version = '1.0.0.' + build
 cam = next(x for x in camera_data['cameras'] if x['platform']=='PC' and x['version']==version and x['camera']=='TheBoxCamera')
 anchors = [x for x in camera_data['collectionAnchors'] if x['platform']=='PC' and x['version']==version and x['anchor']=='8_CollectionCardStartPosition']
 anchor = next((x for x in anchors if any(t['name']=='CollectionPageA' for t in x['transformChain'])), anchors[0])
+if '--frame-pixels' in sys.argv:
+    # Compare frame assets at a common viewpoint. The 4217+ collection anchor
+    # moves independently of the card; letting it move would count layout
+    # changes as frame changes. The rendered prefab still comes from `build`.
+    cam = next(x for x in camera_data['cameras'] if x['platform']=='PC' and x['version']=='1.0.0.3664' and x['camera']=='TheBoxCamera')
+    refs = [x for x in camera_data['collectionAnchors'] if x['platform']=='PC' and x['version']=='1.0.0.3664' and x['anchor']=='8_CollectionCardStartPosition']
+    anchor = next((x for x in refs if any(t['name']=='CollectionPageA' for t in x['transformChain'])), refs[0])
 layouts = json.loads((REPORTS / '베타-오리지널 수집품 배치 코드.json').read_text(encoding='utf-8'))
 layout = next(x for x in layouts['versions'] if x['version']==version)
 method = next(m for m in layout['methods'] if 'CollectionPageDisplay::GetCollectionCardVisual' in m['name'])
@@ -104,9 +111,38 @@ if camera['orthographic'] or camera['m_NormalizedViewPortRect'] != {'x':0.0,'y':
     raise ValueError('Unsupported original collection camera')
 width, height = 1920, 1080
 near, far = camera['near clip plane'], camera['far clip plane']
+if '--frame-pixels' in sys.argv:
+    # The comparison renderer has a 24-bit depth buffer. At the original
+    # collection camera's ~320-unit distance, near=1 makes almost coplanar
+    # description/front surfaces quantize to the same depth and creates
+    # stripes. Reparameterize depth with near=10; x/y projection is unchanged.
+    # Every rendered source vertex is checked against this near plane below.
+    near=10.0
 f = 1.0 / np.tan(np.deg2rad(camera['field of view'])/2)
 projection = np.array([[f/(width/height),0,0,0],[0,f,0,0],
                        [0,0,far/(far-near),-near*far/(far-near)],[0,0,1,0]],dtype=float)
+if '--frame-pixels' in sys.argv:
+    # Reframe the original projection before rendering. 3664's neutral minion
+    # occupies 183 screen pixels in the original 1920x1080 diagnostic. Its
+    # 1024px source front uses ~0.9802 of the texture vertically. This common
+    # calibration preserves comparable geometry across builds, and keeps the
+    # 1024px reference detail even if a later source texture was halved.
+    # It is an explicit comparison scale, not an intrinsic Unity card size.
+    reference_h=1024*(0.9856908321380615-0.005504518747329712)
+    # Original flat front triangles measure 0.978551 output pixels per source
+    # texel at the provisional scale, via the projected UV Jacobian. Correct the
+    # projection so the original 1024px texture is sampled at ~1:1 on that
+    # surface. Curved or overlapping parts naturally have different density.
+    scale=reference_h/(183*0.978551)
+    target_width,target_height=1024,1536
+    centre_x,centre_y=642.5,410.0
+    crop=np.eye(4)
+    crop[0,0]=scale*width/target_width
+    crop[0,3]=scale*(width-2*centre_x)/target_width
+    crop[1,1]=scale*height/target_height
+    crop[1,3]=scale*(2*centre_y-height)/target_height
+    projection=crop@projection
+    width,height=target_width,target_height
 chain = copy.deepcopy(anchor['transformChain'])
 start_position = chain.pop(0)['position']
 for entry in chain:
@@ -223,6 +259,11 @@ for node in prefab['nodes']:
     if any(path.startswith(p['path']+'/') and not p['gameObject'].get('m_IsActive') for p in prefab['nodes']):
         continue
     model = actor @ ns['pose'](prefab,node)
+    if '--frame-pixels' in sys.argv:
+        vertices=np.asarray(assets[node['mesh']]['mesh']['vertices'],dtype=float)
+        camera_points=np.c_[vertices,np.ones(len(vertices))]@(view@model).T
+        if np.any(camera_points[:,2]<=near) or np.any(camera_points[:,2]>=far):
+            raise ValueError('A source mesh is clipped by the depth-precision adjustment: '+path)
     for slot, ref in enumerate(node.get('materials',[])):
         material = copy.deepcopy(assets[ref])
         name = material['name']

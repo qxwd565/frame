@@ -120,7 +120,7 @@ def prepared_script():
     source=RENDERER.read_text(encoding='utf-8')
     edits={
       "json.loads(gzip.decompress((ROOT / ('early-native/snapshots/pc-1.0.0.'+build+'.json.gz')).read_bytes()))":"BATCH_GZ_JSON(ROOT / ('early-native/snapshots/pc-1.0.0.'+build+'.json.gz'))",
-      "json.loads(gzip.decompress((EXTRACTED / ('PC 1.0.0.'+build+'.json.gz')).read_bytes()))":"BATCH_GZ_JSON(EXTRACTED / ('PC 1.0.0.'+build+'.json.gz'))",
+      "json.loads(gzip.decompress((ROOT / ('native-snapshots/pc-1.0.0.'+build+'.json.gz')).read_bytes()))":"BATCH_GZ_JSON(ROOT / ('native-snapshots/pc-1.0.0.'+build+'.json.gz'))",
       "json.loads(gzip.decompress((ROOT / ('early-native/snapshots/pc-1.0.0.'+replacement_build+'.json.gz')).read_bytes()))":"BATCH_GZ_JSON(ROOT / ('early-native/snapshots/pc-1.0.0.'+replacement_build+'.json.gz'))",
       "json.loads((REPORTS / '베타-오리지널 원본 카메라.json').read_text(encoding='utf-8'))":"BATCH_JSON(REPORTS / '베타-오리지널 원본 카메라.json')",
       "json.loads((REPORTS / '베타-오리지널 수집품 배치 코드.json').read_text(encoding='utf-8'))":"BATCH_JSON(REPORTS / '베타-오리지널 수집품 배치 코드.json')",
