@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-802d6a89a7024809';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-802d6a89a7024809';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-802d6a89a7024809';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-802d6a89a7024809';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-802d6a89a7024809';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-802d6a89a7024809';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-802d6a89a7024809';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-842a4736645303d0';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-842a4736645303d0';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-842a4736645303d0';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-842a4736645303d0';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-842a4736645303d0';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-842a4736645303d0';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-842a4736645303d0';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -41,6 +41,8 @@ export class WebGPUCardRenderer {
     const textProfile=card.textProfile||selection?.textProfile||null;
     if(card.textProfile && (card.kind!=='MINION'||!/^ios-[0-9.]+-minion$/.test(card.textProfile)))throw Error('Unsupported explicit native text profile');
     const renderCard=selection?.hideSchool?{...card,school:''}:card;
+    this.composer.registerHistoricalShader(card.goldenPortrait?.historicalShader);
+    this.renderer.registerHistoricalPrograms(card.goldenPortrait?.historicalPrograms);
     const fillArtwork=base=>({...base,parts:base.parts.map(part=>{
       if(!part.blank)return part;
       const portrait=card.golden&&card.goldenPortrait;

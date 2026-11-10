@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-802d6a89a7024809';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-842a4736645303d0';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -188,6 +188,7 @@ export class WebGPUNativeRenderer {
   const value=this.device.createSampler({addressModeU:wraps[settings.wrapU??1],addressModeV:wraps[settings.wrapV??1],addressModeW:wraps[settings.wrapW??1],magFilter:texFilter,minFilter:texFilter,mipmapFilter:anisotropy>1||mips>1&&filter===2?'linear':'nearest',lodMinClamp:0,lodMaxClamp:Math.max(0,mips-1),maxAnisotropy:anisotropy,...(compare?{compare:'less-equal'}:{})});
   this.samplers.set(key,value);return value;
  }
+ registerHistoricalPrograms(programs){if(programs){this.extraPrograms??=new Map();for(const [id,program] of Object.entries(programs)){const old=this.extraPrograms.get(id);if(old&&old.wgsl!==program.wgsl)throw Error('Historical program collision');if(!old&&this.modules.has(id))throw Error('Historical program already compiled');this.extraPrograms.set(id,program);}}}
  module(id){if(this.modules.has(id))return this.modules.get(id);
   const task=(async()=>{const spec=this.extraPrograms?.get(id)||(typeof this.programs==='function'?await this.programs(id):this.programs[id]);if(!spec)throw Error('Missing source WGSL shader '+id);
    const module=this.device.createShaderModule({label:`HS ${spec.stage} ${id}`,code:spec.wgsl});

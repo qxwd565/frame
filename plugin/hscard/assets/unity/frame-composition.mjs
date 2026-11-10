@@ -1,4 +1,4 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-802d6a89a7024809';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-842a4736645303d0';
 
 const classNames=['NEUTRAL','DEATHKNIGHT','DEMONHUNTER','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'];
 function reference(frame,key){const target=frame.actor?.[key]?.ref;if(!target)return null;const node=frame.nodes.find(n=>(n.componentSources||[]).includes(target));return node?.source||target;}
@@ -7,6 +7,7 @@ function multiply(a,b){const f=Math.fround,out=new Array(16);for(let col=0;col<4
 
 export class FrameComposer {
   constructor(sources,portraitMeshes,fits,shaderLibrary,watermarks){this.sources=sources;this.portraits=portraitMeshes.variants;this.fits=fits.variants;this.shaders=new Map(shaderLibrary.shaders.map(s=>[s.name,s]));this.watermarks=watermarks.entries;}
+  registerHistoricalShader(shader){if(!shader)return;const existing=this.shaders.get(shader.name);if(existing&&existing!==shader&&JSON.stringify(existing)!==JSON.stringify(shader))throw Error('Historical shader collision');if(!existing)this.shaders.set(shader.name,shader);}
   texture(key){const asset=this.sources.asset(key);if(asset.type!==28||!(asset.textureData||asset.textureFile))throw Error('Missing shared frame texture');return{key,sampler:asset.sampler,st:[1,1,0,0]};}
   watermark(name){
     if(!name||name==='NONE')return null;if(name==='HallOfFameIcon_Current')name='HallOfFameIcon';

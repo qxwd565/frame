@@ -1,8 +1,8 @@
-import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-802d6a89a7024809';
-import {validateAnimation} from './artwork-animation.mjs?ver=hscard-802d6a89a7024809';
+import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-842a4736645303d0';
+import {validateAnimation} from './artwork-animation.mjs?ver=hscard-842a4736645303d0';
 
 // Documents are relative to the owning set root, not golden/cards/.
-const indexes=new Map(),materials=new Map(),textures=new Map(),queue=[];
+const indexes=new Map(),materials=new Map(),textures=new Map(),historicalBanks=new Map(),queue=[];
 let active=0;
 const debug=(reason,details)=>{if(globalThis.HSCARD_DEBUG===true)console.debug('[HScard golden]',reason,details);};
 function limited(fn){return new Promise((resolve,reject)=>{queue.push({fn,resolve,reject});pump();});}
@@ -22,6 +22,7 @@ async function download(url,limit){return limited(async()=>{
  }finally{clearTimeout(timer);}
 });}
 async function document(url){const bytes=await download(url,4*1024*1024);return{value:JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes)),bytes:bytes.byteLength};}
+async function digest(bytes){return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),x=>x.toString(16).padStart(2,'0')).join('');}
 function sameSetPath(root,path,pattern){if(typeof path!=='string'||!pattern.test(path))throw Error('Invalid golden resource path');const url=new URL(path,root);if(!url.href.startsWith(root.href))throw Error('Golden resource outside set');return url.href;}
 const finiteArray=(v,length)=>Array.isArray(v)&&(!length||v.length===length)&&v.length>0&&v.length<=4&&v.every(Number.isFinite);
 function materialData(data,id,dbfId,root){
@@ -42,18 +43,33 @@ async function pixels(root,path){
   return{value:image,bytes:image.levels.reduce((n,b)=>n+b.byteLength,0)};
  },128,96*1024*1024);
 }
+async function historicalPrograms(root,index,data){
+ const native=data.native,shader=native?.shader,programs=native?.programs;
+ if(index.set!=='legacy'||shader?.name!==data.material.shader||!/^Native\/LegacyBeta\/[0-9]+\/[a-f0-9]{16}$/.test(shader.name)||!programs||Object.keys(programs).length!==2)throw Error('Invalid historical golden shader');
+ const descriptor=index.webgpuBank;if(descriptor?.path!=='golden/historical-webgpu.json'||!/^[a-f0-9]{64}$/.test(descriptor.sha256))throw Error('Historical WebGPU bank unavailable');
+ const url=sameSetPath(root,descriptor.path,/^golden\/historical-webgpu\.json$/);
+ const bank=await cached(historicalBanks,url+':'+descriptor.sha256,async()=>{const bytes=await download(url,4*1024*1024);if(await digest(bytes)!==descriptor.sha256)throw Error('Historical WebGPU bank checksum mismatch');const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(value?.schema!==1||!value.programs||typeof value.programs!=='object')throw Error('Invalid historical WebGPU bank');return{value,bytes:bytes.byteLength};},8,16*1024*1024);
+ const resolved={};for(const [id,p] of Object.entries(programs)){
+  if(!/^[a-f0-9]{64}$/.test(id)||!['vertex','fragment'].includes(p?.stage)||typeof p.source!=='string'||p.source.length>262144||await digest(new TextEncoder().encode(p.source))!==id)throw Error('Historical shader checksum mismatch');
+  const spec=bank.programs[id];if(spec?.sourceSha256!==id||spec.stage!==p.stage||typeof spec.wgsl!=='string'||spec.wgsl.length>262144||!/^[a-f0-9]{64}$/.test(spec.wgslSha256)||await digest(new TextEncoder().encode(spec.wgsl))!==spec.wgslSha256)throw Error('Historical WebGPU shader checksum mismatch');
+  if(['buffers','textures','samplers','attributes'].some(k=>!Array.isArray(spec[k])||spec[k].length>64))throw Error('Invalid historical WebGPU bindings');resolved[id]=spec;
+ }
+ return{shader,programs:resolved};
+}
 /** Only a matching card in its imported source may supply a golden portrait. */
-export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true){
+export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true,date=null){
  if(!remote?.sourceURL||remote.id!==id||remote.dbfId!==dbfId||!isCurrent())return null;
+ let historical=false;
  try{
   const root=new URL('./',remote.sourceURL);if(root.protocol!=='https:'&&!(root.protocol==='http:'&&root.origin===globalThis.location?.origin))return null;
   const indexURL=new URL('golden/index.json',root).href,index=await cached(indexes,indexURL,()=>document(indexURL),48,8*1024*1024);
   if(!isCurrent())return null;if(index.schema!==1||!index.cards||typeof index.cards!=='object')throw Error('Invalid golden index');
   const entry=index.cards[id];if(!entry)return null;if(entry.dbfId!==dbfId)throw Error('Golden index identity mismatch');
-  const materialURL=sameSetPath(root,entry.material,/^golden\/cards\/[A-Za-z0-9_]+\.json$/);
+  let path=entry.material;if(index.set==='legacy'&&typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Array.isArray(entry.history)){const matches=entry.history.filter(x=>typeof x.from==='string'&&typeof x.until==='string'&&x.from<=date&&date<x.until);if(matches.length>1)throw Error('Overlapping golden history');if(matches.length){path=matches[0].material;historical=true;}else if(entry.history.some(x=>typeof x.until==='string'&&date<x.until)){historical=true;throw Error('Historical golden portrait unavailable at '+date);}}
+  const materialURL=sameSetPath(root,path,/^golden\/(?:cards\/[A-Za-z0-9_]+|history\/cards\/[A-Za-z0-9_]+-[0-9]+)\.json$/);
   const raw=await cached(materials,materialURL,()=>document(materialURL),64,16*1024*1024);if(!isCurrent())return null;
-  const data=materialData(raw,id,dbfId,root),bindings=await Promise.all(Object.entries(data.material.textures).map(async([name,t])=>[name,{pixels:await pixels(root,t.pixels),sampler:{...t.sampler},st:[...t.st]}]));
+  const data=materialData(raw,id,dbfId,root),[bindings,native]=await Promise.all([Promise.all(Object.entries(data.material.textures).map(async([name,t])=>[name,{pixels:await pixels(root,t.pixels),sampler:{...t.sampler},st:[...t.st]}])),historical?historicalPrograms(root,index,data):Promise.resolve(null)]);
   if(!isCurrent())return null;
-  return{...data.material,values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
- }catch(error){debug('using normal artwork',{id,dbfId,reason:String(error?.message||error)});return null;}
+  return{...data.material,historicalShader:native?.shader,historicalPrograms:native?.programs,legacyGolden:index.set==='legacy',values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
+ }catch(error){if(historical)throw error;debug('using normal artwork',{id,dbfId,reason:String(error?.message||error)});return null;}
 }

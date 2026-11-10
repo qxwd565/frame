@@ -49,6 +49,7 @@ function state(s,material,properties,ctx){const v=x=>x?.name&&x.name!=='<noninit
 export class NativeDrawBuilder {
   constructor(library,globalKeywords=[],resolveTexture){this.shaders=new Map(library.shaders.map(s=>[s.name,s]));this.globalKeywords=globalKeywords;this.resolveTexture=resolveTexture;this.defaults=new Map();this.shaderMeta=new WeakMap();this.textureResolutions=new WeakMap();}
   async draw(part,ctx){
+    if(part.material.historicalShader){const supplied=part.material.historicalShader,existing=this.shaders.get(supplied.name);if(existing&&existing!==supplied&&JSON.stringify(existing)!==JSON.stringify(supplied))throw Error('Historical shader collision');if(!existing)this.shaders.set(supplied.name,supplied);}
     const shader=this.shaders.get(part.material.shader);if(!shader)throw Error('Original shader missing: '+part.material.shader);
     let meta=this.shaderMeta.get(shader);
     if(!meta){const sub=shader.subshaders.findIndex(x=>x.passes.every(p=>p.vertex.variants.length&&p.fragment.variants.length));
@@ -69,7 +70,7 @@ export class NativeDrawBuilder {
     const textures=await textureTask,material={...part.material,textures},matrix=matrices(ctx.view,ctx.projection,part.pose),used=new Set(),output=[];
     for(const pass of shader.subshaders[sub].passes){const mode=(pass.lightMode||'').toLowerCase();if(!['srpdefaultunlit','universalforward','lightweightforward'].includes(mode)||used.has(mode))continue;used.add(mode);
       const vertex=select(pass.vertex,keywords),fragment=select(pass.fragment,keywords);
-      const bindings=layout=>layout.textures.map(t=>{let texture=material.textures[t.name];if(!texture){const name=properties.get(t.name)?.m_DefTexture?.m_DefaultName,v=name==='black'?0:name==='gray'?128:255;if(!this.defaults.has(v))this.defaults.set(v,{pixels:{width:1,height:1,format:28,levels:[new Uint8Array([v,v,v,255])]},sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]});texture=this.defaults.get(v);}return{slot:t.slot,sampler:t.sampler,texture,srgb:[29,72,78,99].includes(texture.pixels.format)};});
+      const bindings=layout=>layout.textures.map(t=>{let texture=material.textures[t.name];if(!texture){const name=properties.get(t.name)?.m_DefTexture?.m_DefaultName,v=name==='black'?0:name==='gray'?128:255,alpha=material.legacyGolden&&name==='black'?0:255,key=v+':'+alpha;if(!this.defaults.has(key))this.defaults.set(key,{pixels:{width:1,height:1,format:28,levels:[new Uint8Array([v,v,v,alpha])]},sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]});texture=this.defaults.get(key);}return{slot:t.slot,sampler:t.sampler,texture,srgb:[29,72,78,99].includes(texture.pixels.format)};});
       output.push({path:part.path,slot:part.slot,mesh:part.mesh,shader:shader.name,subshader:sub,pass:pass.index,keywords,animated:usesTime(vertex)||usesTime(fragment),vertexProgram:vertex.sha256,fragmentProgram:fragment.sha256,vertexBuffers:buffers(vertex.layout,material,properties,ctx,matrix),fragmentBuffers:buffers(fragment.layout,material,properties,ctx,matrix),vertexTextures:bindings(vertex.layout),fragmentTextures:bindings(fragment.layout),state:state(pass.state,material,properties,ctx)});
     }
     return output;
