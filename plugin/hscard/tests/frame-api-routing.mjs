@@ -17,6 +17,18 @@ for (const [name, record] of Object.entries(index.files)) {
   assert.equal(bytes.length, record.bytes, name);
   assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), record.sha256, name);
 }
+for (const name of ['Card_InHand_BannerAtlas', 'Card_InHand_Premium_BannerAtlas']) {
+  const path = `2015-11-11/${name}.png`, record = index.files[path];
+  assert.equal(record.repository, 'The-League-of-Explorers');
+  assert.equal(record.patchDateKorea, '2015-11-11');
+  assert.equal(record.textureChangeDateVerified, false);
+  assert.deepEqual(record.sourceVersions, ['4.0.10784', '4.0.10833', '4.1.10956', '4.2.11767', '4.3.12266']);
+  assert.ok(resourceURL(path).href.includes('/The-League-of-Explorers/'));
+}
+for (const name of ['historical-frames/41010956.json', 'historical-frames/41010957.json']) {
+  assert.equal(index.files[name].repository, 'One-Night-In-Karazhan');
+  assert.deepEqual(index.files[name].sourceVersions, ['6.2.15153']);
+}
 for (const name of ['../secret', '/secret', '%2e%2e/secret', 'x\\y', 'x?y', 'x#y']) assert.throws(() => resourceURL(name));
 assert.throws(() => resourceURL('not-published.bin'), /Unpublished/);
 assert.equal(resourceURL('historical-frames/').href, FRAME_API_BASE + 'historical-frames/');

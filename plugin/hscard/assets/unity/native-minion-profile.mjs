@@ -1,4 +1,4 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-0860fc570044ac2a';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-f982cd0502be9297';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 

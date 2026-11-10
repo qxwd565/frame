@@ -105,12 +105,18 @@ def plan():
         dependencies(read(prefix + row['file']), row['version'])
     for key, rows in manifest.get('atlasSnapshots', {}).items():
         dependencies(rows, key)
-    for stem, source in [('41010956', '4.1.10956'), ('41010957', '4.1.10956'),
+    for stem, source in [('41010956', '6.2.15153'), ('41010957', '6.2.15153'),
                          ('62015154', '6.2.15153'), ('62015155', '6.2.15153'),
                          ('demonhunter-spell-19.6.74257', '19.6.74257'),
                          ('deathknight-source-audit', '25.4.165029')]:
         for name in files:
             if name in (prefix + stem + '.json', prefix + stem + '.png'):
+                assign(name, source)
+                if stem in ('41010956', '41010957'):
+                    candidates[name] = {source}
+    for name in files:
+        if name.startswith('2015-11-11/'):
+            for source in ['4.0.10784', '4.0.10833', '4.1.10956', '4.2.11767', '4.3.12266']:
                 assign(name, source)
     shared = {'manifest.json', 'index.json', 'resource-index.json', 'frame-history.json',
               'historical-components.json.gz', 'legacy-text-settings.json.gz',
@@ -121,7 +127,9 @@ def plan():
         sources = sorted(candidates[name], key=version)
         if sources:
             repo = owner(sources[0])
-            scope = ('native-snapshot-without-textures' if name.startswith(prefix + 'native-snapshots/')
+            scope = ('native-texture' if name.startswith('2015-11-11/') and name.endswith('.png')
+                     else 'native-texture-index' if name.startswith('2015-11-11/') and name.endswith('/index.json')
+                     else 'native-snapshot-without-textures' if name.startswith(prefix + 'native-snapshots/')
                      else 'native-shaders-without-textures' if name == prefix + 'native-beta-shaders.json.gz'
                      else 'native-snapshot')
         elif not name.startswith(prefix):
@@ -134,6 +142,9 @@ def plan():
         data = path.read_bytes()
         result[name] = {'repository': repo, 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
                         'sourceVersions': sources, 'scope': scope}
+        if name.startswith('2015-11-11/'):
+            result[name].update({'patchDateKorea': '2015-11-11', 'patchVersion': '4.0.0.10833',
+                                 'textureChangeDateVerified': False})
     if unresolved:
         raise ValueError('Unassigned resources: ' + json.dumps(unresolved, ensure_ascii=False))
     return result
