@@ -45,3 +45,7 @@ if(error.trim())console.error(error.slice(0,500));
 const data=z.gzipSync(JSON.stringify({schema:1,shaders:Object.values(shaders),programs}),{level:9,mtime:0});
 await fs.writeFile(out,data);
 console.log(JSON.stringify({file:out,shaders:Object.keys(shaders).length,programs:Object.keys(programs).length,bytes:data.length,sha256:digest(data)}));
+// Preserve the later verified 4944 shader when rebuilding the beta bank.
+const later=spawn(process.execPath,['tools/compile-pc-4944-shader.mjs'],{windowsHide:true,stdio:'inherit'});
+const status=await new Promise((resolve,reject)=>{later.on('error',reject);later.on('close',resolve);});
+if(status!==0)throw Error('4944 shader compilation failed: '+status);

@@ -98,8 +98,39 @@ def plan():
             if not match:
                 raise ValueError('Invalid native snapshot filename: ' + name)
             assign(name, match.group(1))
-    for source in ['1.0.0.3664', '1.0.0.3890']:
+    for source in ['1.0.0.3664', '1.0.0.3890', '1.0.0.4944']:
         assign(prefix + 'native-beta-shaders.json.gz', source)
+    early_index=prefix + 'early-native/index.json'
+    if early_index in files:
+        assign(early_index,'1.0.0.3664')
+        for row in read(early_index)['snapshots']:
+            source=row['source']['version']; name=prefix+row['file']
+            assign(name,source); snapshot=read(name)
+            def original(resource):
+                if isinstance(resource,dict) and isinstance(resource.get('file'),str):
+                    assign(prefix+resource['file'],source)
+            for prefab in snapshot['prefabs']:
+                for node in prefab['nodes']:
+                    original(node.get('originalObject'))
+                    for item in node.get('components',[]):original(item.get('originalObject'))
+                    for item in node.get('renderers',[]):original(item.get('originalObject'))
+            for asset in snapshot['assets']:
+                for key in ('originalObject','png','nativeImage','shaderSource','fontData'):original(asset.get(key))
+            for assembly in snapshot.get('managedAssemblies',[]):
+                for key in ('original','metadata'):original(assembly.get(key))
+        evidence=prefix+'early-native/pc-render-comparison.json'
+        if evidence in files:
+            for build in ['3664','3749','3890','3937','4217','4243','4458','4482','4944']:
+                assign(evidence,'1.0.0.'+build)
+        parity=prefix+'early-native/pc-webgpu-d3d-parity.json'
+        if parity in files:
+            for build in ['3664','3890','4217','4944']:assign(parity,'1.0.0.'+build)
+        ios_render=prefix+'early-native/ios-gles-render-comparison.json'
+        if ios_render in files:
+            for row in read(early_index)['snapshots']:
+                if row['source']['platform']=='iOS':assign(ios_render,row['source']['version'])
+        routes=prefix+'early-native/routes.json.gz'
+        if routes in files:assign(routes,'1.0.0.3664')
     for row in read(prefix + 'native-minion-profiles.json')['profiles']:
         assign(prefix + row['file'], row['version'])
         dependencies(read(prefix + row['file']), row['version'])
@@ -136,7 +167,13 @@ def plan():
         sources = sorted(candidates[name], key=version)
         if sources:
             repo = owner(sources[0])
-            scope = ('native-texture-index' if name == prefix + 'texture-history/index.json'
+            scope = ('original-scene-index' if name == prefix + 'early-native/index.json'
+                     else 'original-route-index' if name == prefix + 'early-native/routes.json.gz'
+                     else 'visual-comparison-evidence' if name in (prefix + 'early-native/pc-render-comparison.json',prefix + 'early-native/pc-webgpu-d3d-parity.json',prefix + 'early-native/ios-gles-render-comparison.json')
+                     else 'original-scene-snapshot' if name.startswith(prefix + 'early-native/snapshots/')
+                     else 'original-texture' if name.startswith(prefix + 'early-native/objects/texture/')
+                     else 'original-asset' if name.startswith(prefix + 'early-native/objects/')
+                     else 'native-texture-index' if name == prefix + 'texture-history/index.json'
                      else 'native-texture' if name.startswith(prefix + 'texture-history/')
                      else 'native-texture' if name.startswith('2015-11-11/') and name.endswith('.png')
                      else 'native-texture-index' if name.startswith('2015-11-11/') and name.endswith('/index.json')
@@ -158,6 +195,20 @@ def plan():
                                  'textureChangeDateVerified': False})
     if unresolved:
         raise ValueError('Unassigned resources: ' + json.dumps(unresolved, ensure_ascii=False))
+    return result
+
+
+def compact_index(files):
+    """Keep matching audit-only routes in the on-demand index, not startup."""
+    path=SOURCE/'historical-frames/early-native/routes.json.gz'
+    if not path.exists():return files
+    routes=json.loads(gzip.decompress(path.read_bytes()))
+    if routes.get('schema')!=1:raise ValueError('Invalid lazy original frame routes')
+    result=dict(files)
+    for name,route in routes['files'].items():
+        record=result.get(name)
+        if record and all(record.get(k)==route.get(k) for k in ('repository','bytes','sha256')):
+            del result[name]
     return result
 
 
@@ -249,7 +300,7 @@ def publish(files):
         print(json.dumps({'published': repo, 'files': len(rows), 'commit': commit}), flush=True)
         # A final deliverable, also records successful publications on interruption.
         old.setdefault('repositories', {}).update(commits)
-        old.update({'schema': 1, 'owner': CONFIG['owner'], 'files': files})
+        old.update({'schema': 1, 'owner': CONFIG['owner'], 'files': compact_index(files)})
         INDEX.write_bytes(encoded(old))
     INDEX.write_bytes(encoded({'schema': 1, 'owner': CONFIG['owner'], 'repositories': commits, 'files': files}))
 

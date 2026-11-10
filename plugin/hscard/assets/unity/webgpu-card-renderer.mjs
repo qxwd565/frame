@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-045a95eb032ce0a2';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-045a95eb032ce0a2';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-045a95eb032ce0a2';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-045a95eb032ce0a2';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-045a95eb032ce0a2';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-045a95eb032ce0a2';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-045a95eb032ce0a2';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-a573f18746776bc1';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-a573f18746776bc1';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-a573f18746776bc1';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-a573f18746776bc1';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-a573f18746776bc1';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-a573f18746776bc1';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-a573f18746776bc1';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -58,6 +58,7 @@ export class WebGPUCardRenderer {
     // A fill never composes a second frame. Geometry, UVs, class texture,
     // rarity and historical parts remain those already on screen.
     let frame=basePrepared?fillArtwork(basePrepared.frame):nativeProfile?await nativeProfile.compose(renderCard,this.composer):this.composer.compose(renderCard);
+    if(nativeProfile)frame.sourceEvidence=selection.evidence;
     if(card.goldenPortrait){
       try{for(const part of frame.parts.filter(p=>p.blank)){
         const trial={...part,material:{...part.material,values:new ArtworkAnimation(part.material).sample(0)}};

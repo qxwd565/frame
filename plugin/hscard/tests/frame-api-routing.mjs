@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import crypto from 'node:crypto';
+import zlib from 'node:zlib';
 import {resourceURL, resourceFetch, FRAME_API_BASE} from '../assets/unity/resource-url.mjs';
 import {HistoricalFrames} from '../assets/unity/historical-frames.mjs';
 import index from '../assets/unity/frame-api-index.json' with {type:'json'};
@@ -8,6 +9,14 @@ import index from '../assets/unity/frame-api-index.json' with {type:'json'};
 const source = new URL('../../../v7.14.4-webgpu-20261109/assets/unity/', import.meta.url);
 const requests = [], originalFetch = globalThis.fetch;
 const reverse = new Map();
+const routesPath = 'historical-frames/early-native/routes.json.gz';
+const routes = JSON.parse(zlib.gunzipSync(await fs.readFile(new URL(routesPath, source))));
+assert.equal(routes.schema, 1);
+const [lazyName, lazyRecord] = Object.entries(routes.files).find(([name, record]) =>
+  record.repository !== 'legacy' && !index.files[name]);
+const lazyURL = new URL(lazyName.split('/').map(encodeURIComponent).join('/'),
+  index.repositories[lazyRecord.repository].base).href;
+reverse.set(lazyURL, lazyName);
 for (const [name, record] of Object.entries(index.files)) {
   const url = resourceURL(name);
   assert.ok(url.href.startsWith(index.repositories[record.repository].base));
@@ -51,6 +60,10 @@ try {
     'components/texts/ios-1.1.6069-minion.json.gz']) {
     assert.ok((await resourceFetch(new URL(name + '?rev=old-cache-key', history.base))).ok);
   }
+  assert.ok((await resourceFetch(new URL(lazyName, FRAME_API_BASE))).ok);
+  assert.ok(requests.includes(routesPath));
+  assert.ok(requests.includes(lazyName));
+  await assert.rejects(resourceFetch(new URL('historical-frames/early-native/does-not-exist.bin', FRAME_API_BASE)), /Unpublished/);
   assert.ok(requests.length >= 10);
   globalThis.fetch = async () => new Response('corrupted');
   await assert.rejects(resourceFetch(resourceURL('frames-constructed.json.gz')), /integrity failure/);

@@ -1,0 +1,110 @@
+<!doctype html><meta charset="utf-8"><canvas></canvas>
+<script type="module">
+import {decodeTexturePng} from '/plugin/assets/unity/native-texture-history.mjs';
+import {multiply,inverse} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {cardSceneContext} from '/plugin/assets/unity/quantity-ribbon.mjs';
+const canvas=document.querySelector('canvas'),gl=canvas.getContext('webgl',{alpha:true,antialias:false,premultipliedAlpha:false,preserveDrawingBuffer:true,depth:true});
+if(!gl)throw Error('WebGL unavailable');
+const base='/resources/historical-frames/',fetchBytes=async p=>{const r=await fetch(base+p);if(!r.ok)throw Error('Missing original resource '+p);return new Uint8Array(await r.arrayBuffer());};
+const gunzip=async p=>new Uint8Array(await new Response(new Blob([await fetchBytes(p)]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+const ungzipJson=async p=>JSON.parse(new TextDecoder().decode(await gunzip(p)));
+const fits=await (async()=>{const r=await fetch('/resources/frame-fits.json.gz');return new Response(r.body.pipeThrough(new DecompressionStream('gzip'))).json();})();
+const shaderCache=new Map(),textureCache=new Map(),snapshotCache=new Map();let textureBytes=0;
+const srcs={};
+const original=async p=>{if(!snapshotCache.has(p))snapshotCache.set(p,ungzipJson(p));return snapshotCache.get(p);};
+const f=Math.fround;
+function trs(n){const {x,y,z,w}=n.rotation,{x:sx,y:sy,z:sz}=n.scale,{x:px,y:py,z:pz}=n.position;return[f((1-2*(y*y+z*z))*sx),f(2*(x*y+z*w)*sx),f(2*(x*z-y*w)*sx),0,f(2*(x*y-z*w)*sy),f((1-2*(x*x+z*z))*sy),f(2*(y*z+x*w)*sy),0,f(2*(x*z+y*w)*sz),f(2*(y*z-x*w)*sz),f((1-2*(x*x+y*y))*sz),0,px,py,pz,1];}
+function pose(p,path){let result=[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];for(const n of p.nodes)if(n.path!==p.name&&(path===n.path||path.startsWith(n.path+'/')))result=multiply(result,trs(n));return result;}
+function compile(type,source,name){const shader=gl.createShader(type);gl.shaderSource(shader,source+'\n');gl.compileShader(shader);if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS))throw Error('Original GLES compile '+name+': '+gl.getShaderInfoLog(shader));return shader;}
+async function program(asset){
+ const id=asset.shaderSource?.rawSha256;if(!id)throw Error('Original GLES source unavailable: '+asset.name);
+ if(shaderCache.has(id))return shaderCache.get(id);
+ const text=new TextDecoder().decode(await gunzip(asset.shaderSource.file)),matches=[...text.matchAll(/"(!!GLES[\s\S]*?)(?<!\\)"/g)];
+ const options=matches.filter(m=>m[1].includes('#ifdef VERTEX')&&m[1].includes('#ifdef FRAGMENT')&&/^SubProgram\s+"gles\s*"/.test(text.slice(text.lastIndexOf('SubProgram "',m.index),m.index))&&!text.slice(text.lastIndexOf('Pass {',m.index),m.index).includes('SHADOWCASTER'));
+ const chosen=options.filter(m=>!/(SHADOWS_SCREEN|VERTEXLIGHT_ON)/.test(text.slice(text.lastIndexOf('SubProgram "gles',m.index),m.index)));
+ if(chosen.length!==1)throw Error('Original GLES variant unavailable or ambiguous: '+asset.name+' ('+chosen.length+')');
+ const source=chosen[0][1].replace(/^!!GLES\s*/,''),make=stage=>(/^#version\s+100/m.test(source)?source.replace(/(#version\s+100[^\n]*\n)/,'$1#define '+stage+' 1\n'):'#version 100\n#define '+stage+' 1\n'+source).replace(/gl_FragData\s*\[\s*0\s*\]/g,'gl_FragColor');
+ const vs=compile(gl.VERTEX_SHADER,make('VERTEX'),asset.name),fs=compile(gl.FRAGMENT_SHADER,make('FRAGMENT'),asset.name),p=gl.createProgram();gl.attachShader(p,vs);gl.attachShader(p,fs);gl.linkProgram(p);gl.deleteShader(vs);gl.deleteShader(fs);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error('Original GLES link: '+asset.name+' '+gl.getProgramInfoLog(p));
+ const result={program:p,head:text.slice(0,text.indexOf('Program "vp"')),uniforms:[]};for(let i=0;i<gl.getProgramParameter(p,gl.ACTIVE_UNIFORMS);i++){const u=gl.getActiveUniform(p,i);result.uniforms.push({type:u.type,size:u.size,name:u.name.replace(/\[0\]$/,''),location:gl.getUniformLocation(p,u.name)});}
+ shaderCache.set(id,result);return result;
+}
+async function texture(asset){
+ if(!asset?.png)throw Error('Original texture unavailable');const key=asset.png.sha256+JSON.stringify(asset.sampler);if(textureCache.has(key)){const entry=textureCache.get(key);textureCache.delete(key);textureCache.set(key,entry);return entry.texture;}
+ const pixels=await decodeTexturePng(await fetchBytes(asset.png.file),{pngSha256:asset.png.sha256,rgbaSha256:asset.rgbaSha256,width:asset.width,height:asset.height});
+ const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_ALIGNMENT,1);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,false);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);
+ gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,pixels.width,pixels.height,0,gl.RGBA,gl.UNSIGNED_BYTE,pixels.levels[0]);
+ const repeat=asset.sampler?.m_WrapMode===0;gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,repeat?gl.REPEAT:gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,repeat?gl.REPEAT:gl.CLAMP_TO_EDGE);
+ // Base-level linear filtering is held fixed across source versions. Exact
+ // native mip levels and mobile GPU precision are not yet reproduced here.
+ gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,asset.sampler?.m_FilterMode===0?gl.NEAREST:gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,asset.sampler?.m_FilterMode===0?gl.NEAREST:gl.LINEAR);
+ const size=pixels.width*pixels.height*4;textureCache.set(key,{texture:t,size});textureBytes+=size;
+ for(const [old,entry] of textureCache){if(textureBytes<=128*1024*1024)break;if(old===key)continue;gl.deleteTexture(entry.texture);textureCache.delete(old);textureBytes-=entry.size;}
+ return t;
+}
+const art=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,art);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,1,1,0,gl.RGBA,gl.UNSIGNED_BYTE,new Uint8Array([80,130,190,255]));gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+// Fixed test inputs, held constant across all versions. This comparison does
+// not claim that the historical game's class palette was identical.
+const colors={NEUTRAL:[.8,.8,.8,1],DRUID:[.42,.29,.14,1],HUNTER:[.26,.54,.18,1],MAGE:[.44,.48,.69,1],PALADIN:[.71,.49,.2,1],PRIEST:[.65,.65,.65,1],ROGUE:[.72,.68,.76,1],SHAMAN:[0,.32,.71,1],WARLOCK:[.33,.2,.4,1],WARRIOR:[.43,.14,.14,1]};
+function defaults(head){const values={};for(const m of head.matchAll(/\b(\w+)\s*\("[^"\n]*",\s*(?:Float|Range\([^)]*\))\)\s*=\s*([-+.0-9eE]+)/g))values[m[1]]=[Number(m[2])];for(const m of head.matchAll(/\b(\w+)\s*\("[^"\n]*",\s*(?:Color|Vector)\)\s*=\s*\(([^)]+)\)/g))values[m[1]]=m[2].split(',').map(Number);return values;}
+function attributes(p,mesh,slot){
+ const buffers=[],definitions=[['_glesVertex','vertices',4,1],['_glesNormal','normals',3,0],['_glesColor','colors',4,1],['_glesMultiTexCoord0','uv',2,0],['_glesMultiTexCoord1','uv2',2,0]];
+ for(let i=0;i<gl.getParameter(gl.MAX_VERTEX_ATTRIBS);i++)gl.disableVertexAttribArray(i);
+ for(const [attribute,field,dim,fill] of definitions){const location=gl.getAttribLocation(p,attribute);if(location<0)continue;const rows=mesh[field],values=new Float32Array(mesh.vertices.length*dim);
+  for(let i=0;i<mesh.vertices.length;i++)for(let j=0;j<dim;j++)values[i*dim+j]=rows?.[i]?.[j]??(field==='colors'?1:j===3?fill:0);
+  const b=gl.createBuffer();buffers.push(b);gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,values,gl.STATIC_DRAW);gl.enableVertexAttribArray(location);gl.vertexAttribPointer(location,dim,gl.FLOAT,false,0,0);
+ }
+ const triangles=mesh.triangles[slot];if(!triangles)throw Error('Original submesh unavailable');const index=gl.createBuffer();buffers.push(index);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,index);if(triangles.some(x=>x>65535))throw Error('Original mesh requires 32-bit indices');gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(triangles),gl.STATIC_DRAW);return{buffers,count:triangles.length};
+}
+function state(head){
+ if(/\bCull Off\b/i.test(head))gl.disable(gl.CULL_FACE);else{gl.enable(gl.CULL_FACE);gl.cullFace(/\bCull Front\b/i.test(head)?gl.FRONT:gl.BACK);}
+ gl.enable(gl.DEPTH_TEST);gl.depthFunc(gl.LEQUAL);gl.depthMask(!/\bZWrite Off\b/i.test(head));
+ const blend=/\bBlend\s+(\w+)\s+(\w+)/.exec(head),factors={Zero:gl.ZERO,One:gl.ONE,SrcAlpha:gl.SRC_ALPHA,OneMinusSrcAlpha:gl.ONE_MINUS_SRC_ALPHA,DstColor:gl.DST_COLOR,OneMinusDstColor:gl.ONE_MINUS_DST_COLOR,SrcColor:gl.SRC_COLOR,OneMinusSrcColor:gl.ONE_MINUS_SRC_COLOR,DstAlpha:gl.DST_ALPHA,OneMinusDstAlpha:gl.ONE_MINUS_DST_ALPHA};
+ if(blend){if(factors[blend[1]]===undefined||factors[blend[2]]===undefined)throw Error('Unsupported original blend');gl.enable(gl.BLEND);gl.blendFunc(factors[blend[1]],factors[blend[2]]);}else gl.disable(gl.BLEND);
+}
+function setUniform(u,value){if(value==null)value=[0,0,0,0];const a=Array.isArray(value)||ArrayBuffer.isView(value)?value:[value],take=n=>Float32Array.from({length:n*u.size},(_,i)=>a[i]??0);switch(u.type){case gl.FLOAT:if(u.size===1)gl.uniform1f(u.location,a[0]);else gl.uniform1fv(u.location,take(1));break;case gl.FLOAT_VEC2:gl.uniform2fv(u.location,take(2));break;case gl.FLOAT_VEC3:gl.uniform3fv(u.location,take(3));break;case gl.FLOAT_VEC4:gl.uniform4fv(u.location,take(4));break;case gl.FLOAT_MAT4:gl.uniformMatrix4fv(u.location,false,take(16));break;case gl.INT:case gl.BOOL:gl.uniform1i(u.location,a[0]);break;default:throw Error('Unsupported original uniform '+u.name+' '+u.type);}}
+window.renderOriginal=async(snapshotPath,family,golden,time=0,cardClass='NEUTRAL',rarity='FREE')=>{
+ const doc=await original(snapshotPath);
+ const assets=new Map(doc.assets.map(a=>[a.key,a])),name='Card_Hand_'+family+(golden?'_Premium':''),prefab=doc.prefabs.find(p=>p.name===name);if(!prefab)throw Error('Original prefab unavailable');
+ const kind={Ally:'MINION',Ability:'SPELL',Weapon:'WEAPON'}[family],fit=fits.variants[`${kind}:${golden?'golden':'normal'}:ordinary`];if(!fit)throw Error('Fixed reference projection unavailable');const ctx=cardSceneContext(fit,1);canvas.width=ctx.width;canvas.height=ctx.height;gl.viewport(0,0,ctx.width,ctx.height);gl.clearColor(0,0,0,0);gl.clearDepth(1);gl.depthMask(true);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+ const suffix=cardClass[0]+cardClass.slice(1).toLowerCase();
+ const selected=family==='Ally'?(cardClass==='NEUTRAL'?'Card_Inhand_Generic':cardClass==='WARLOCK'?'Card_Inhand_Warlock':'Card_Inhand_Minion_'+suffix):'Card_Inhand_'+(family==='Ability'?'Ability_':'Weapon_')+(cardClass==='NEUTRAL'?'Neutral':suffix);
+ const classAsset=doc.assets.find(a=>a.type===28&&a.name===selected);if(!classAsset)throw Error('Original class texture missing '+selected);
+ const draws=[];
+ for(const node of prefab.nodes){
+  const legendary=/Unique_Ally_Dragon/.test(node.path),gem=/RarityGem/.test(node.path);
+  if(!node.mesh||!node.gameObject?.m_IsActive||(!node.renderers?.some(r=>r.settings.m_Enabled)&&!(legendary&&rarity==='LEGENDARY'))||/CurvedText|GhostCard|FakeShadow/.test(node.path)||(legendary&&rarity!=='LEGENDARY')||(gem&&rarity==='FREE'))continue;
+  if(prefab.nodes.some(parent=>node.path.startsWith(parent.path+'/')&&parent.gameObject?.m_IsActive===false))continue;
+  const mesh=assets.get(node.mesh)?.mesh;if(!mesh)throw Error('Original mesh unavailable');const model=pose(prefab,node.path);
+  for(const [slot,ref] of (node.materials||[]).entries()){
+   const material=assets.get(ref);if(!material||material.type!==21)throw Error('Original material unavailable');if(material.name==='Card_Back_Default_D')continue;
+   const shader=assets.get(material.properties.m_Shader.ref);if(!shader?.shaderSource)throw Error('Original shader unavailable '+material.name);
+   const compiled=await program(shader),renderQueue=material.properties.m_CustomRenderQueue;
+   const order=renderQueue>=0?renderQueue:/"Queue"\s*=\s*"Transparent/i.test(compiled.head)?3000:2000;
+   draws.push({node,slot,mesh,model,material,compiled,order});
+  }
+ }
+ draws.sort((a,b)=>a.order-b.order||(a.order<2500?b.model[13]-a.model[13]:a.model[13]-b.model[13]));
+ for(const draw of draws){
+  const {node,slot,mesh,model,material,compiled}=draw,p=compiled.program;gl.useProgram(p);state(compiled.head);
+  const props=material.properties.m_SavedProperties,values=defaults(compiled.head);for(const [k,v] of Object.entries(props.m_Floats))values[k]=[v];for(const [k,v] of Object.entries(props.m_Colors))values[k]=[v.r,v.g,v.b,v.a];
+  // The same explicitly fixed neutral tint is used even where the original
+  // Actor MonoBehaviour was stripped; this is not a claim about its runtime.
+  if(golden&&/_Premium_Warlock$/.test(material.name)&&node.path.endsWith('/RootObject/Mesh'))values._Color=colors[cardClass];
+  const maps={};for(const [key,t] of Object.entries(props.m_TexEnvs)){const ref=t.m_Texture?.ref;if(ref)maps[key]={asset:assets.get(ref),st:[t.m_Scale.x,t.m_Scale.y,t.m_Offset.x,t.m_Offset.y]};}
+  if(!golden&&/Card_Inhand_(?:Ability_|Weapon_)?Warlock(?:_transparent)?$/.test(material.name))maps._MainTex={asset:classAsset,st:maps._MainTex?.st||[1,1,0,0]};
+  if(/RarityGem$/.test(node.path)&&rarity==='LEGENDARY'){values._tint=[1,.5333,0,1];if(maps._MainTex)maps._MainTex.st=[maps._MainTex.st[0],maps._MainTex.st[1],.5,.5];}
+  if(/PortraitFrame_mesh$/.test(node.path)&&/portrait/i.test(material.name))maps._MainTex={art:true,st:maps._MainTex?.st||[1,1,0,0]};
+  values.glstate_matrix_mvp=multiply(ctx.projection,multiply(ctx.view,model));values._Object2World=model;values._World2Object=inverse(model);values.unity_Scale=[1,1,1,1];values._LightColor0=[1,1,1,1];values.glstate_lightmodel_ambient=[1,1,1,1];values._Time=[time/20,time,time*2,time*3];values._SinTime=[8,4,2,1].map(x=>Math.sin(time/x));values._CosTime=[8,4,2,1].map(x=>Math.cos(time/x));values._ShaderTime=[time/20];values._WorldSpaceCameraPos=[0,12,0,0];
+  for(const [key,val] of Object.entries(maps))values[key+'_ST']=val.st;
+  let unit=0;
+  for(const u of compiled.uniforms){
+   if(u.type===gl.SAMPLER_2D){const map=maps[u.name];if(!map)throw Error('Original texture binding unavailable: '+material.name+' '+u.name);gl.activeTexture(gl.TEXTURE0+unit);gl.bindTexture(gl.TEXTURE_2D,map.art?art:await texture(map.asset));gl.uniform1i(u.location,unit++);}
+   else setUniform(u,values[u.name]);
+   const uniformError=gl.getError();if(uniformError!==gl.NO_ERROR)throw Error('Original GLES uniform '+material.name+' '+u.name+' type '+u.type+' value '+JSON.stringify(values[u.name])+' error '+uniformError);
+  }
+  const geometry=attributes(p,mesh,slot);gl.drawElements(gl.TRIANGLES,geometry.count,gl.UNSIGNED_SHORT,0);const error=gl.getError();for(const buffer of geometry.buffers)gl.deleteBuffer(buffer);if(error!==gl.NO_ERROR)throw Error('Original GLES draw '+material.name+': GL error '+error);
+ }
+ gl.finish();const pixels=new Uint8Array(ctx.width*ctx.height*4);gl.readPixels(0,0,ctx.width,ctx.height,gl.RGBA,gl.UNSIGNED_BYTE,pixels);const hash=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pixels)),b=>b.toString(16).padStart(2,'0')).join('');
+ return{version:doc.source.version,archiveId:doc.source.archiveId,family,golden,time,cardClass,rarity,draws:draws.length,width:ctx.width,height:ctx.height,rgbaSha256:hash,unresolvedComponents:doc.coverage.unresolvedMonoBehaviours,visiblePixels:pixels.reduce((n,v,i)=>n+(i%4===3&&v>0?1:0),0)};
+};window.releaseOriginal=path=>snapshotCache.delete(path);window.ready=true;
+</script>

@@ -15,13 +15,13 @@ index_path = root / 'plugin/hscard/assets/unity/frame-api-index.json'
 name = 'historical-frames/native-beta-shaders.json.gz'
 data = (root / 'v7.14.4-webgpu-20261109/assets/unity' / name).read_bytes()
 bank = json.loads(gzip.decompress(data))
-if bank['schema'] != 1 or len(bank['shaders']) != 14 or len(bank['programs']) != 26:
+if bank['schema'] != 1 or len(bank['shaders']) != 15 or len(bank['programs']) != 27:
     raise ValueError('Unexpected original beta shader bank')
 for identity, program in bank['programs'].items():
     if program['sourceSha256'] != identity or hashlib.sha256(program['wgsl'].encode()).hexdigest() != program['wgslSha256']:
         raise ValueError('Original beta program identity or WGSL checksum')
 record = {'repository': 'legacy', 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest(),
-          'sourceVersions': ['1.0.0.3664', '1.0.0.3890'], 'scope': 'native-shaders-without-textures'}
+          'sourceVersions': ['1.0.0.3664', '1.0.0.3890', '1.0.0.4944'], 'scope': 'native-shaders-without-textures'}
 url = 'https://github.com/qxwd565/legacy.git'
 api.git('fetch', '--no-tags', '--filter=blob:none', url, 'main')
 parent = api.git('rev-parse', 'FETCH_HEAD').decode().strip()

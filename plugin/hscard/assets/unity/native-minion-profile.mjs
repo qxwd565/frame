@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-045a95eb032ce0a2';
-import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-045a95eb032ce0a2';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-a573f18746776bc1';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-a573f18746776bc1';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -66,7 +66,7 @@ export class NativeMinionProfile {
  }
  constructor(adapter,data,library){
   Object.assign(this,{adapter,data,library});this.fontLoads=new WeakMap();
-  this.catalog={edition:data.version,textures:Object.entries(data.textures).map(([id,tx])=>({id,...tx,encoding:'webp-rgba32-planes',filterMode:tx.sampler.m_FilterMode,wrapMode:tx.sampler.m_WrapMode,aniso:tx.sampler.m_Aniso,mipBias:tx.sampler.m_MipBias}))};
+  this.catalog={edition:data.version,textures:Object.entries(data.textures).map(([id,tx])=>({id,...tx,encoding:tx.encoding||'webp-rgba32-planes',filterMode:tx.sampler.m_FilterMode,wrapMode:tx.sampler.m_WrapMode,aniso:tx.sampler.m_Aniso,mipBias:tx.sampler.m_MipBias}))};
  }
  package(card){return this.data.packages.find(p=>p.golden===!!card.golden);}
  async texture(key,card,material,property){
