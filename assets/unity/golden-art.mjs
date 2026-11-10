@@ -54,6 +54,6 @@ export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true){
   const raw=await cached(materials,materialURL,()=>document(materialURL),64,16*1024*1024);if(!isCurrent())return null;
   const data=materialData(raw,id,dbfId,root),bindings=await Promise.all(Object.entries(data.material.textures).map(async([name,t])=>[name,{pixels:await pixels(root,t.pixels),sampler:{...t.sampler},st:[...t.st]}]));
   if(!isCurrent())return null;
-  return{...data.material,values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
+  return{...data.material,legacyGolden:index.set==='legacy',values:Object.fromEntries(Object.entries(data.material.values).map(([k,v])=>[k,[...v]])),textures:Object.fromEntries(bindings),noisePermutation:data.noisePermutation};
  }catch(error){debug('using normal artwork',{id,dbfId,reason:String(error?.message||error)});return null;}
 }

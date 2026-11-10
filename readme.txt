@@ -3,7 +3,7 @@ Contributors: hsdeck
 Tags: hearthstone, deck, deckstring
 Requires at least: 6.6
 Requires PHP: 7.4
-Stable tag: 7.12.14
+Stable tag: 7.12.15
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
