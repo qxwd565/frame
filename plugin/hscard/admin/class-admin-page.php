@@ -41,8 +41,7 @@ final class Admin_Page {
  }
 
  private function tab() {
-  $tab = isset( $_GET['tab'] ) && is_string( $_GET['tab'] ) ? sanitize_key( wp_unslash( $_GET['tab'] ) ) : 'sources';
-  return in_array( $tab, array( 'sets', 'sources' ), true ) ? $tab : 'sources';
+  return 'sources';
  }
  private function query( $key ) {
   return isset( $_GET[ $key ] ) && is_string( $_GET[ $key ] ) ? sanitize_text_field( wp_unslash( $_GET[ $key ] ) ) : '';
@@ -138,7 +137,7 @@ final class Admin_Page {
   $notice = get_transient( self::NOTICE_PREFIX . get_current_user_id() );
   delete_transient( self::NOTICE_PREFIX . get_current_user_id() );
   $tab = $this->tab();
-  $single = '' !== $this->query( 'edit_json' ) || '' !== $this->query( 'edit_source' ) || '' !== $this->query( 'edit_dated_source' ) || '' !== $this->query( 'edit_set' ) || '' !== $this->query( 'delete_source' ) || '' !== $this->query( 'delete_set' ) || 'new' === $this->query( 'view' );
+  $single = '' !== $this->query( 'edit_source' ) || '' !== $this->query( 'delete_source' ) || 'new' === $this->query( 'view' );
   $enabled = 0;
   foreach ( $sources as $source ) { if ( is_array( $source ) && ! empty( $source['enabled'] ) ) { $enabled++; } }
   ?>
@@ -162,12 +161,10 @@ final class Admin_Page {
    <?php if ( ! $single ) : ?>
     <nav class="nav-tab-wrapper" aria-label="카드 데이터 메뉴">
      <a class="nav-tab <?php echo 'sources' === $tab ? 'nav-tab-active' : ''; ?>" <?php echo 'sources' === $tab ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">JSON 관리</a>
-     <a class="nav-tab <?php echo 'sets' === $tab ? 'nav-tab-active' : ''; ?>" <?php echo 'sets' === $tab ? 'aria-current="page"' : ''; ?> href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sets' ) ) ); ?>">카드 세트</a>
     </nav>
    <?php endif; ?>
    <?php
-   if ( 'sets' === $tab ) { $this->render_sets( $imports, $sources ); }
-   else { $this->render_sources( $sources, $imports ); }
+   $this->render_sources( $sources, $imports );
    ?>
   </div>
   <?php
@@ -257,12 +254,8 @@ final class Admin_Page {
 
  private function render_sources( array $sources, array $imports ) {
   $editing = $this->query( 'edit_source' );
-  $json_id = $this->query( 'edit_json' );
-  $dated_id = $this->query( 'edit_dated_source' );
   $removing = $this->query( 'delete_source' );
   if ( '' !== $removing && isset( $sources[ $removing ] ) ) { $this->confirm_delete_source( $removing, $sources[ $removing ] ); return; }
-  if ( '' !== $json_id && isset( $sources[ $json_id ] ) ) { $this->render_json_editor( $json_id, $sources[ $json_id ] ); return; }
-  if ( '' !== $dated_id && isset( $sources[ $dated_id ] ) ) { $this->render_dated_editor( $dated_id, $sources[ $dated_id ] ); return; }
   if ( ( '' !== $editing && isset( $sources[ $editing ] ) ) || 'new' === $this->query( 'view' ) ) {
    $existing = isset( $sources[ $editing ] ) && is_array( $sources[ $editing ] ) ? $sources[ $editing ] : array();
    $this->render_source_form( $editing, $existing );
@@ -271,7 +264,7 @@ final class Admin_Page {
   $search = $this->query( 's' );
   ?>
   <div class="hscard-section-head">
-   <div><h2>JSON 관리</h2><p>카드를 가져오거나 JSON을 직접 수정할 수 있습니다.</p></div>
+   <div><h2>JSON 관리</h2><p>연결된 저장소에서 카드를 가져옵니다.</p></div>
    <a class="button button-primary" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'view' => 'new' ) ) ); ?>">+ JSON 추가</a>
   </div>
   <?php $this->render_search( 'sources', $search ); ?>
@@ -294,20 +287,11 @@ final class Admin_Page {
      <td data-label="상태"><span class="hscard-usage <?php echo ! empty( $source['enabled'] ) ? 'is-enabled' : 'is-disabled'; ?>"><?php echo ! empty( $source['enabled'] ) ? '사용 중' : '중지'; ?></span></td>
      <td data-label="작업"><div class="hscard-actions">
       <?php $this->action_form( self::ACTION, '가져오기', array( 'source_id' => $id ) ); ?>
-      <a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'edit_json' => $id ) ) ); ?>">세트 목록 편집</a>
-      <a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'edit_dated_source' => $id ) ) ); ?>">날짜별 카드 JSON</a>
-      <details class="hscard-row-more"><summary>더보기</summary><div class="hscard-more-content">
-       <button type="button" class="hscard-order-move" data-hscard-move="up">위로 이동</button>
-       <button type="button" class="hscard-order-move" data-hscard-move="down">아래로 이동</button>
-       <a href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'edit_source' => $id ) ) ); ?>">연결 설정</a>
-       <a href="<?php echo esc_url( wp_nonce_url( add_query_arg( array( 'action' => 'hscard_export_json', 'source_id' => $id ), $this->post_url() ), 'hscard_export_json' ) ); ?>">JSON 다운로드</a>
-       <?php if ( '' !== $url ) : ?><a href="<?php echo esc_url( $url ); ?>" target="_blank" rel="noopener noreferrer">JSON 주소 열기 <span aria-hidden="true">↗</span></a><?php endif; ?>
-       <span class="hscard-more-divider" aria-hidden="true"></span>
-       <a class="hscard-delete-link" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'delete_source' => $id ) ) ); ?>">JSON 연결 삭제</a>
-      </div></details>
+      <a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'edit_source' => $id ) ) ); ?>">편집</a>
+      <a class="button hscard-delete-link" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'delete_source' => $id ) ) ); ?>">삭제</a>
      </div></td>
     </tr>
-   <?php endforeach; if ( 0 === $listed ) : ?><tr><td colspan="4"><div class="hscard-empty"><strong><?php echo '' === $search ? '등록된 JSON이 없습니다.' : '검색 결과가 없습니다.'; ?></strong><p><?php echo '' === $search ? 'URL 연결, 파일 업로드 또는 직접 입력으로 추가할 수 있습니다.' : '다른 이름이나 식별자로 검색해 보세요.'; ?></p><?php if ( '' !== $search ) : ?><a href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">전체 목록 보기</a><?php else : ?><a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'view' => 'new' ) ) ); ?>">+ JSON 추가</a><?php endif; ?></div></td></tr><?php endif; ?>
+   <?php endforeach; if ( 0 === $listed ) : ?><tr><td colspan="4"><div class="hscard-empty"><strong><?php echo '' === $search ? '등록된 JSON이 없습니다.' : '검색 결과가 없습니다.'; ?></strong><p><?php echo '' === $search ? '저장소를 연결해 추가할 수 있습니다.' : '다른 이름이나 식별자로 검색해 보세요.'; ?></p><?php if ( '' !== $search ) : ?><a href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">전체 목록 보기</a><?php else : ?><a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources', 'view' => 'new' ) ) ); ?>">+ JSON 추가</a><?php endif; ?></div></td></tr><?php endif; ?>
    </tbody></table></div>
    <?php if ( count( array_filter( $sources, static function ( $source ) { return is_array( $source ) && ! empty( $source['enabled'] ); } ) ) > Json_Sources::FRONTEND_LIMIT ) : ?><div class="notice notice-warning inline"><p>사용 중인 JSON이 <?php echo absint( Json_Sources::FRONTEND_LIMIT ); ?>개를 초과했습니다. 렌더러는 앞쪽 <?php echo absint( Json_Sources::FRONTEND_LIMIT ); ?>개만 참조하므로 필요하지 않은 소스를 중지하세요.</p></div><?php endif; ?>
   <?php
@@ -370,45 +354,30 @@ final class Admin_Page {
 
  private function render_source_form( $editing, array $existing ) {
   $is_edit = ! empty( $existing );
+  $repository = '';
+  if ( preg_match( '~\Ahttps://raw\.githubusercontent\.com/qxwd565/([A-Za-z0-9_.-]{1,100})/main/cards\.json\z~i', (string) ( $existing['url'] ?? '' ), $matches ) ) { $repository = $matches[1]; }
+  elseif ( empty( $existing['url'] ) && ! empty( $existing['repository'] ) ) { $repository = (string) $existing['repository']; }
+  $repository_form = ! $is_edit || '' !== $repository;
   ?>
   <a class="hscard-back" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">&larr; JSON 관리</a>
   <div class="hscard-panel hscard-form-panel">
    <h2><?php echo $is_edit ? 'JSON 연결 설정' : 'JSON 추가'; ?></h2>
-   <p class="hscard-panel-lead"><?php echo $is_edit ? '이름, URL과 사용 여부를 변경합니다. 카드를 새로 가져오려면 목록에서 가져오기를 누르세요.' : '가져올 JSON의 방식을 선택하세요.'; ?></p>
+   <p class="hscard-panel-lead"><?php echo $is_edit ? '처음 입력한 연결 정보를 수정합니다.' : '이름과 저장소를 입력하세요.'; ?></p>
    <form method="post" enctype="multipart/form-data" action="<?php echo esc_url( $this->post_url() ); ?>" data-hscard-source-form>
     <input type="hidden" name="action" value="hscard_save_source"><input type="hidden" name="source_id" value="<?php echo esc_attr( $is_edit ? $editing : '' ); ?>">
     <?php wp_nonce_field( 'hscard_save_source' ); ?>
     <div class="hscard-form-stack">
      <div class="hscard-field"><label for="hscard-source-label">이름 <span class="hscard-required" aria-hidden="true">*</span></label><input id="hscard-source-label" name="source_label" class="regular-text" required maxlength="100" value="<?php echo esc_attr( isset( $existing['label'] ) ? $existing['label'] : '' ); ?>" placeholder="예: 시간의 길"></div>
-     <?php if ( ! $is_edit ) : ?>
-      <fieldset class="hscard-method-choices" data-hscard-methods><legend>추가 방식</legend>
-       <label><input type="radio" name="hscard_add_method" value="url" checked> 저장소 연결</label>
-       <label><input type="radio" name="hscard_add_method" value="file"> 파일 업로드</label>
-       <label><input type="radio" name="hscard_add_method" value="text"> 직접 입력</label>
-      </fieldset>
-     <?php endif; ?>
-     <div class="hscard-field" <?php echo $is_edit ? '' : 'data-hscard-mode-panel="url"'; ?>>
-      <?php if ( $is_edit ) : ?>
-      <label for="hscard-source-url">원격 JSON URL</label>
-      <input id="hscard-source-url" name="source_url" class="large-text" type="url" inputmode="url" autocomplete="off" value="<?php echo esc_attr( isset( $existing['url'] ) ? $existing['url'] : '' ); ?>" placeholder="https://raw.githubusercontent.com/.../cards.json">
-      <p class="hscard-help">원격 파일 주소입니다. 로컬 JSON으로 편집한 경우에도 원래 주소를 유지할 수 있습니다.</p>
-      <?php else : ?>
+     <?php if ( $repository_form ) : ?>
+     <div class="hscard-field">
       <label for="hscard-source-repository">저장소 이름 <span class="hscard-required" aria-hidden="true">*</span></label>
-      <input id="hscard-source-repository" name="source_repository" class="large-text" type="text" autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" pattern="[A-Za-z0-9_.\x2D]{1,100}" placeholder="예: Curse-of-Naxxramas" data-repository-prefix="<?php echo esc_attr( Json_Sources::REPOSITORY_PREFIX ); ?>" data-repository-suffix="<?php echo esc_attr( Json_Sources::REPOSITORY_SUFFIX ); ?>" aria-describedby="hscard-repository-url">
+      <input id="hscard-source-repository" name="source_repository" class="large-text" type="text" required autocomplete="off" autocapitalize="none" spellcheck="false" maxlength="100" pattern="[A-Za-z0-9_.\x2D]{1,100}" value="<?php echo esc_attr( $repository ); ?>" placeholder="예: Curse-of-Naxxramas" data-repository-prefix="<?php echo esc_attr( Json_Sources::REPOSITORY_PREFIX ); ?>" data-repository-suffix="<?php echo esc_attr( Json_Sources::REPOSITORY_SUFFIX ); ?>" aria-describedby="hscard-repository-url">
       <output id="hscard-repository-url" class="hscard-help hscard-repository-url" for="hscard-source-repository" hidden></output>
-      <?php endif; ?>
      </div>
-     <?php if ( ! $is_edit ) : ?>
-      <div class="hscard-field" data-hscard-mode-panel="file"><label for="hscard-source-file">JSON 파일 <span class="hscard-required" aria-hidden="true">*</span></label>
-       <input id="hscard-source-file" name="json_file" type="file" accept=".json,application/json"><p class="hscard-help">.json 파일을 선택하세요. 저장하면 카드도 바로 등록됩니다.</p></div>
-      <div class="hscard-field" data-hscard-mode-panel="text"><label for="hscard-source-text">JSON 내용 <span class="hscard-required" aria-hidden="true">*</span></label>
-       <textarea id="hscard-source-text" name="json_text" class="large-text code" rows="14" spellcheck="false" placeholder='{"schema":1,"set":"My Set","cards":[{"id":"TEST_001","dbfId":100001,"name":"테스트 카드","type":"MINION","cost":1}]}'></textarea><p class="hscard-help">JSON 원문을 붙여넣으세요. 저장하면 카드도 바로 등록됩니다.</p><span class="hscard-validation" data-hscard-validation role="status" aria-live="polite"></span></div>
+     <?php elseif ( ! empty( $existing['url'] ) ) : ?>
+     <div class="hscard-field"><label for="hscard-source-url">원격 JSON URL</label><input id="hscard-source-url" name="source_url" class="large-text" type="url" value="<?php echo esc_attr( $existing['url'] ); ?>"></div>
      <?php endif; ?>
     </div>
-    <details class="hscard-advanced"><summary>고급 설정</summary><div class="hscard-advanced-content">
-     <div class="hscard-field"><label for="hscard-source-art">원화 기준 JSON 주소</label><input id="hscard-source-art" class="large-text" type="url" name="source_art_base" value="<?php echo esc_attr( isset( $existing['art_base'] ) ? $existing['art_base'] : '' ); ?>" placeholder="https://raw.githubusercontent.com/.../cards.json"><p class="hscard-help">선택 사항. 원화 파일의 상대 경로를 해석할 기준입니다.</p></div>
-    </div></details>
-    <label class="hscard-checkbox"><input type="checkbox" name="source_enabled" value="1" <?php checked( ! $is_edit || ! empty( $existing['enabled'] ) ); ?>> 웹사이트에서 이 JSON 사용</label>
     <div class="hscard-form-actions"><?php submit_button( $is_edit ? '설정 저장' : 'JSON 추가', 'primary', 'submit', false ); ?><a class="button" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">취소</a></div>
    </form>
   </div>
@@ -480,7 +449,7 @@ final class Admin_Page {
  private function confirm_delete_source( $id, array $source ) {
   ?><a class="hscard-back" href="<?php echo esc_url( $this->admin_url( array( 'tab' => 'sources' ) ) ); ?>">&larr; JSON 관리</a>
   <div class="hscard-panel hscard-confirm-panel"><h2>JSON 연결을 삭제할까요?</h2><p><strong><?php echo esc_html( $source['label'] ); ?></strong>의 연결이 삭제됩니다. 이 사이트에 저장한 해당 로컬 JSON도 제거됩니다.</p>
-   <p>이미 가져온 카드와 카드 세트는 유지됩니다. 세트 삭제는 별도로 진행해야 합니다.</p>
+   <p>이미 가져온 카드와 카드 세트는 유지됩니다.</p>
    <form method="post" action="<?php echo esc_url( $this->post_url() ); ?>">
     <input type="hidden" name="action" value="hscard_delete_source"><input type="hidden" name="source_id" value="<?php echo esc_attr( $id ); ?>">
     <?php wp_nonce_field( 'hscard_delete_source' ); ?>
@@ -550,9 +519,9 @@ final class Admin_Page {
   if ( ! $is_edit && count( $sources ) >= Json_Sources::MAX_SOURCES ) { $this->finish( true, 'JSON 소스는 최대 100개까지 등록할 수 있습니다.' ); }
   $label = $this->label( $this->post( 'source_label' ) );
   if ( '' === $label ) { $this->finish( true, 'JSON 소스 이름을 입력하세요.' ); }
-  $url = $this->post( 'source_url' );
+  $url = isset( $_POST['source_url'] ) ? $this->post( 'source_url' ) : ( $is_edit ? (string) ( $sources[ $id ]['url'] ?? '' ) : '' );
   $repository = '';
-  if ( ! $is_edit && isset( $_POST['source_repository'] ) ) {
+  if ( isset( $_POST['source_repository'] ) ) {
    if ( in_array( $this->post( 'hscard_add_method' ), array( 'file', 'text' ), true ) ) { $url = ''; }
    else {
     $url = Json_Sources::repository_url( $this->post( 'source_repository' ) );
@@ -560,17 +529,21 @@ final class Admin_Page {
     $repository = trim( $this->post( 'source_repository' ) );
    }
   }
-  $art_base = $this->post( 'source_art_base' );
+  $art_base = isset( $_POST['source_art_base'] ) ? $this->post( 'source_art_base' ) : ( $is_edit ? (string) ( $sources[ $id ]['art_base'] ?? '' ) : '' );
   $api = $this->api();
   if ( '' !== $url ) { $url = $api->validate_url( $url ); if ( is_wp_error( $url ) ) { $this->finish_result( $url ); } }
   if ( '' !== $art_base ) { $art_base = $api->validate_url( $art_base ); if ( is_wp_error( $art_base ) ) { $this->finish_result( $art_base ); } }
   if ( $is_edit ) {
    $source = $sources[ $id ];
    if ( 'local' !== $source['mode'] && '' === $url ) { $this->finish( true, '원격 JSON 소스의 URL을 비울 수 없습니다.' ); }
+   foreach ( $sources as $other_id => $other ) {
+    if ( $other_id !== $id && '' !== $url && is_array( $other ) && Json_Sources::legacy_url( $other['url'] ?? '' ) === Json_Sources::legacy_url( $url ) ) { $this->finish( true, '동일한 JSON 주소가 이미 등록되어 있습니다.' ); }
+   }
    $source['label'] = $label;
    $source['url'] = $url;
    $source['art_base'] = $art_base;
-   $source['enabled'] = isset( $_POST['source_enabled'] ) ? 1 : 0;
+   if ( '' !== $repository ) { $source['repository'] = $repository; }
+   if ( isset( $_POST['source_enabled'] ) ) { $source['enabled'] = 1; }
    $sources[ $id ] = $source;
    Json_Sources::save( $sources );
    $this->finish( false, 'JSON 소스 설정을 저장했습니다. 카드 데이터는 가져오기 버튼으로 갱신하세요.' );
@@ -584,7 +557,7 @@ final class Admin_Page {
    }
   }
   $id = Json_Sources::new_id( $sources );
-  $source = array( 'label' => $label, 'url' => $url, 'art_base' => $art_base, 'mode' => '' !== $raw ? 'local' : 'remote', 'enabled' => isset( $_POST['source_enabled'] ) ? 1 : 0, 'set' => '', 'count' => 0 );
+  $source = array( 'label' => $label, 'url' => $url, 'art_base' => $art_base, 'mode' => '' !== $raw ? 'local' : 'remote', 'enabled' => 1, 'set' => '', 'count' => 0 );
   if ( '' !== $repository ) { $source['repository'] = $repository; $source['set'] = $repository; }
   if ( '' === $raw ) {
    $sources[ $id ] = $source;
@@ -781,9 +754,10 @@ final class Admin_Page {
     }
    }
    $automatic_id = Json_Sources::repository_set_id( $source );
-   $set = '' !== $automatic_id ? $automatic_id : $data['set'];
+   $set = '' !== $automatic_id && '' !== $old_set ? $old_set : ( '' !== $automatic_id ? $automatic_id : $data['set'] );
    if ( isset( $imports[ $set ] ) && $set !== $old_set && $this->linked_source_id( $set, $imports[ $set ], $sources ) !== $id ) {
-    return new WP_Error( 'hscard_set_conflict', '동일한 세트 이름이 다른 JSON 소스에 연결되어 있습니다. 세트 설정에서 연결을 수정하세요.' );
+    $orphan = is_array( $imports[ $set ] ) && empty( $imports[ $set ]['source_id'] ) && empty( $imports[ $set ]['url'] );
+    if ( ! $orphan ) { return new WP_Error( 'hscard_set_conflict', '동일한 세트 이름이 다른 JSON 소스에 연결되어 있습니다.' ); }
    }
    $previous = '' !== $old_set && isset( $imports[ $old_set ] ) ? $imports[ $old_set ] : ( isset( $imports[ $set ] ) ? $imports[ $set ] : array() );
    $old_refs = isset( $previous['cards'] ) && is_array( $previous['cards'] ) ? $previous['cards'] : array();

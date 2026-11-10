@@ -28,6 +28,15 @@ namespace {
  $again=$apply->invoke($admin,'repo',\HScard\Json_Sources::all()['repo'],json_encode($doc));
  verify(!is_wp_error($again)&&array_keys(get_option(\HScard\Admin_Page::IMPORTS_OPTION))===array('Curse-of-Naxxramas'),'Reimport renamed or duplicated set');
  verify(\HScard\Card_Store::$cards[123]['mana']===2,'Reimport no longer updates cards');
+ // Editing a repository changes the address, not the identity of imported data.
+ $edited=$source;$edited['repository']='Blackrock-Mountain';$edited['url']=\HScard\Json_Sources::repository_url('Blackrock-Mountain');
+ \HScard\Json_Sources::save(array('repo'=>$edited));$changed=$apply->invoke($admin,'repo',$edited,json_encode($doc));
+ verify(!is_wp_error($changed)&&array_keys(get_option(\HScard\Admin_Page::IMPORTS_OPTION))===array('Curse-of-Naxxramas'),'Repository edit orphaned existing imported cards');
+ // Reconnecting a deliberately removed source reuses its unlinked set.
+ $orphan=get_option(\HScard\Admin_Page::IMPORTS_OPTION);$orphan['Curse-of-Naxxramas']['source_id']='';$orphan['Curse-of-Naxxramas']['url']='';
+ $GLOBALS['options']=array(\HScard\Json_Sources::OPTION=>array('replacement'=>$source),\HScard\Admin_Page::IMPORTS_OPTION=>$orphan);
+ $restored=$apply->invoke($admin,'replacement',$source,json_encode($doc));
+ verify(!is_wp_error($restored)&&get_option(\HScard\Admin_Page::IMPORTS_OPTION)['Curse-of-Naxxramas']['source_id']==='replacement','Reconnecting deleted source failed');
  // Existing sources retain their document-based IDs, including spaces.
  $legacy=$source;unset($legacy['repository']);$legacy['set']='Old Set';
  $GLOBALS['options']=array(\HScard\Json_Sources::OPTION=>array('old'=>$legacy));\HScard\Card_Store::$cards=array();$doc['set']='Old Set';

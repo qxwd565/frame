@@ -21,7 +21,6 @@
     source.addEventListener('change', updateSetKey);
     updateSetKey();
   }
-  const choices = form && form.querySelector('[data-hscard-methods]');
   const repository = form && form.querySelector('[name="source_repository"]');
   if (repository) {
     const preview = form.querySelector('#hscard-repository-url');
@@ -36,25 +35,6 @@
     repository.addEventListener('change', function () { repository.value = repository.value.trim(); updateRepository(); });
     updateRepository();
   }
-  if (choices) {
-    const radios = Array.from(choices.querySelectorAll('input[name="hscard_add_method"]'));
-    const panels = Array.from(form.querySelectorAll('[data-hscard-mode-panel]'));
-    const updateMode = function () {
-      const selected = radios.find(function (radio) { return radio.checked; });
-      const mode = selected ? selected.value : 'url';
-      panels.forEach(function (panel) {
-        const active = panel.getAttribute('data-hscard-mode-panel') === mode;
-        panel.hidden = !active;
-        panel.querySelectorAll('input,textarea,select').forEach(function (input) {
-          input.disabled = !active;
-          input.required = active;
-        });
-      });
-    };
-    radios.forEach(function (radio) { radio.addEventListener('change', updateMode); });
-    updateMode();
-  }
-
   /** Perform syntax checks only on explicit request or on save (large files). */
   function validate(textarea, result) {
     try {
@@ -105,38 +85,11 @@
     });
   }
 
-  if (form && choices) {
-    const directText = form.querySelector('textarea[name="json_text"]');
-    const feedback = form.querySelector('[data-hscard-validation]');
-    if (directText && feedback) directText.addEventListener('input', function () {
-      directText.removeAttribute('aria-invalid');
-      feedback.textContent = '';
-      feedback.className = 'hscard-validation';
-    });
-    form.addEventListener('submit', function (event) {
-      const selected = choices.querySelector('input[name="hscard_add_method"]:checked');
-      if (!selected || selected.value !== 'text') return;
-      const textarea = form.querySelector('textarea[name="json_text"]');
-      if (!validate(textarea, form.querySelector('[data-hscard-validation]'))) event.preventDefault();
-    });
-  }
-
   root.addEventListener('submit', function (event) {
     const target = event.target;
     if (!target.matches('form[data-hscard-confirm]')) return;
     const message = target.getAttribute('data-hscard-confirm');
     if (message && !window.confirm(message)) event.preventDefault();
-  });
-
-  const menus = Array.from(root.querySelectorAll('details.hscard-row-more'));
-  menus.forEach(function (menu) {
-    menu.querySelector('summary').addEventListener('click', function () {
-      if (menu.open) return;
-      menus.forEach(function (other) { if (other !== menu) other.open = false; });
-    });
-  });
-  root.addEventListener('keydown', function (event) {
-    if (event.key === 'Escape') menus.forEach(function (menu) { menu.open = false; });
   });
 
   const orderList = root.querySelector('[data-hscard-source-order]');
@@ -147,10 +100,8 @@
     let saved = rows(), saving = false, statusTimer;
     function refreshControls() {
       const list = rows();
-      list.forEach(function (row, index) {
+      list.forEach(function (row) {
         row.querySelector('.hscard-sort-handle').disabled = saving;
-        row.querySelector('[data-hscard-move="up"]').disabled = saving || index === 0;
-        row.querySelector('[data-hscard-move="down"]').disabled = saving || index === list.length - 1;
       });
       if (sortable) sortable.sortable('option', 'disabled', saving || list.length < 2);
     }
@@ -196,13 +147,24 @@
         clone.children().each(function (index) { window.jQuery(this).width(row.children().eq(index).width()); });
         return clone;
       },
-      start:function () { menus.forEach(function (menu) { menu.open = false; }); },
       update:saveOrder
     });
-    orderList.addEventListener('click', function (event) {
-      const button = event.target.closest('[data-hscard-move]');
-      if (button) { button.closest('details').open = false; move(button.closest('[data-source-id]'), button.dataset.hscardMove === 'up' ? -1 : 1); }
-    });
+    let touchedRow = null;
+    orderList.addEventListener('touchstart', function (event) {
+      const handle = event.target.closest('.hscard-sort-handle');
+      if (!handle || saving || event.touches.length !== 1) return;
+      touchedRow = handle.closest('[data-source-id]');event.preventDefault();
+    }, {passive:false});
+    orderList.addEventListener('touchend', function (event) {
+      if (!touchedRow || !event.changedTouches.length) return;
+      const touch = event.changedTouches[0], target = document.elementFromPoint(touch.clientX,touch.clientY)?.closest('[data-source-id]');
+      const row = touchedRow;touchedRow = null;
+      if (!target || target === row || target.parentElement !== orderList) return;
+      const box = target.getBoundingClientRect();
+      orderList.insertBefore(row, touch.clientY < box.top + box.height / 2 ? target : target.nextSibling);
+      saveOrder();event.preventDefault();
+    }, {passive:false});
+    orderList.addEventListener('touchcancel', function () { touchedRow = null; });
     orderList.addEventListener('keydown', function (event) {
       if (!event.target.closest('.hscard-sort-handle') || !['ArrowUp','ArrowDown'].includes(event.key)) return;
       event.preventDefault(); move(event.target.closest('[data-source-id]'), event.key === 'ArrowUp' ? -1 : 1);

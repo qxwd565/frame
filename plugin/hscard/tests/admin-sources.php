@@ -31,6 +31,9 @@ function absint($n){return abs((int)$n);}
 function get_current_user_id(){return 1;}
 function do_action(...$args){}
 function set_transient($k,$v,$ttl){$GLOBALS['notice']=$v;}
+function get_transient($key){return false;}
+function delete_transient($key){return true;}
+function esc_html_e($value,$domain=''){echo esc_html($value);}
 function wp_safe_redirect($url){throw new Test_Redirect($url);}
 function wp_generate_password($length,$special=false,$extra=false){return substr(bin2hex(random_bytes(20)),0,$length);}
 function admin_url($s){return '/wp-admin/'.$s;}
@@ -84,14 +87,26 @@ $_POST=array('_wpnonce'=>'test-nonce','source_id'=>$newId,'source_label'=>'기�
 try{$admin->save_source();}catch(Test_Redirect $r){verify(!$GLOBALS['notice']['error'],'Existing URL edit failed');}
 verify(Json_Sources::all()[$newId]['url']==='https://example.test/custom/cards.json','Existing custom URL changed');
 verify(Json_Sources::all()[$newId]['set']==='Curse-of-Naxxramas','URL edit renamed the set');
+$beforeEdit=Json_Sources::all()[$newId];$beforeEdit['art_base']='https://example.test/art/cards.json';$beforeEdit['enabled']=0;
+$stored=Json_Sources::all();$stored[$newId]=$beforeEdit;Json_Sources::save($stored);
+$_POST=array('_wpnonce'=>'test-nonce','source_id'=>$newId,'source_label'=>'변경한 이름','source_repository'=>'Blackrock-Mountain');
+try{$admin->save_source();}catch(Test_Redirect $r){verify(!$GLOBALS['notice']['error'],'Repository edit failed');}
+$edited=Json_Sources::all()[$newId];verify($edited['url']===Json_Sources::repository_url('Blackrock-Mountain')&&$edited['repository']==='Blackrock-Mountain','Repository edit not saved');
+verify($edited['set']===$beforeEdit['set']&&$edited['art_base']===$beforeEdit['art_base']&&$edited['enabled']===0,'Edit changed hidden data');
 $admin->enqueue_styles('toplevel_page_hscard-api');verify($GLOBALS['script'][2]===array('jquery-ui-sortable'),'WordPress sortable dependency missing');verify($GLOBALS['script'][3]===$GLOBALS['style'][3]&&$GLOBALS['script'][3]!==HSCARD_VERSION,'Admin asset revisions missing');
 $_GET=array();$GLOBALS['options']=array(Json_Sources::OPTION=>$original);
 $method=new ReflectionMethod($admin,'render_source_form');$method->setAccessible(true);
 ob_start();$method->invoke($admin,'',array());$form=ob_get_clean();
 verify(strpos($form,'name="source_repository"')!==false&&strpos($form,'name="source_url"')===false,'New form requires full URL');
-ob_start();$method->invoke($admin,'legacy',$original['legacy']);$edit=ob_get_clean();verify(strpos($edit,'name="source_url"')!==false,'Existing form changed');
+foreach(array('hscard_add_method','json_file','json_text','source_art_base','source_enabled','고급 설정') as $removed){verify(strpos($form,$removed)===false,'Unrequested form element remains: '.$removed);}
+ob_start();$method->invoke($admin,'legacy',$original['legacy']);$edit=ob_get_clean();verify(strpos($edit,'name="source_repository"')!==false&&strpos($edit,'value="legacy"')!==false,'Edit does not show creation fields');
+$custom=array_merge($original['legacy'],array('url'=>'https://example.test/custom/cards.json'));ob_start();$method->invoke($admin,'legacy',$custom);$edit=ob_get_clean();verify(strpos($edit,'name="source_url"')!==false,'Old custom URL edit lost');
 $method=new ReflectionMethod($admin,'render_sources');$method->setAccessible(true);ob_start();$method->invoke($admin,$original,array());$list=ob_get_clean();
 verify(substr_count($list,'data-source-id=')===4&&strpos($list,'data-order-nonce="test-nonce"')!==false,'Missing sortable markup');
+foreach(array('세트 목록 편집','날짜별 카드 JSON','더보기') as $removed){verify(strpos($list,$removed)===false,'Unrequested action remains');}
+verify(substr_count($list,'>편집</a>')===4&&substr_count($list,'>삭제</a>')===4,'Missing direct edit/delete actions');
+$_GET=array('tab'=>'sets');ob_start();$admin->render();$page=ob_get_clean();
+verify(substr_count($page,'class="nav-tab ')===1&&strpos($page,'>카드 세트</a>')===false&&strpos($page,'>JSON 관리</a>')!==false,'Obsolete tab remains accessible');$_GET=array();
 $fixtureSources=$original;$fixtureSources['managed']=array_merge($original['naxx'],array('repository'=>'Curse-of-Naxxramas','set'=>'Curse-of-Naxxramas'));
 $method=new ReflectionMethod($admin,'render_set_form');$method->setAccessible(true);ob_start();$method->invoke($admin,'',array(),$fixtureSources);$setForm=ob_get_clean();
 verify(strpos($setForm,'data-set-id="Curse-of-Naxxramas"')!==false&&strpos($setForm,'data-hscard-auto-set')!==false,'Automatic set form metadata missing');
