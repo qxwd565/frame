@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-63a7df135aff1da6';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-643c69b2f3c412d7';
 // Reads the unmodified HS Plus resource snapshots. No card-specific scenes are used.
 const HAND_PREFABS = Object.freeze({
   MINION: 'Card_Hand_Ally', SPELL: 'Card_Hand_Ability',

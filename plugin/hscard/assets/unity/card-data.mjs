@@ -1,6 +1,6 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-63a7df135aff1da6';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-63a7df135aff1da6';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-643c69b2f3c412d7';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-643c69b2f3c412d7';
 
 const artCache = new Map(), tasks = [];
 let active = 0, artBytes = 0;
@@ -130,7 +130,7 @@ export async function resolveCard(element,golden,{isCurrent=()=>true,onMetadata=
  }
  const base={id:identity.id,dbfId:Number(identity.dbfId),kind,
   cardClass:card.cardClass.replace(/[^A-Za-z]/g,'').toUpperCase()||'NEUTRAL',
-  golden,rarity:card.rarity,frameProfile,renderDate:date,
+  golden,rarity:card.rarity,frameProfile,textProfile:identity.textProfile||'',renderDate:date,
   quantity:Number.isSafeInteger(Number(identity.quantity))&&Number(identity.quantity)>=2?Number(identity.quantity):1,
   cost:card.cost??0,attack:card.attack??0,health:card.health??0,
   durability:card.durability??0,armor:card.armor??0,

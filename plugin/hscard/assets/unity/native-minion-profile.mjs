@@ -1,4 +1,4 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-63a7df135aff1da6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-643c69b2f3c412d7';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -45,6 +45,23 @@ export class NativeMinionProfile {
   };
   const data=await load(version);
   if(data.schema!==1||data.version!==version||data.packages.length!==2)throw Error('Invalid native minion profile');
+  if(globalThis.HSCARD_EXPERIMENT_BETA_NATIVE){
+   if(!adapter.betaShaderBank)adapter.betaShaderBank=json(base,'native-beta-shaders.json.gz').catch(error=>{adapter.betaShaderBank=null;throw error;});
+   const bank=await adapter.betaShaderBank;
+   if(bank.schema!==1||!Array.isArray(bank.shaders)||!bank.programs)throw Error('Invalid beta shader bank');
+   renderer.extraPrograms??=new Map();
+   const byName=new Map(bank.shaders.map(shader=>[shader.name,shader]));
+   for(const shader of bank.shaders)builder.shaders.set(shader.name,shader);
+   for(const [id,program] of Object.entries(bank.programs))renderer.extraPrograms.set(id,program);
+   const materials={};
+   for(const [key,material] of Object.entries(data.materials)){
+    const shader=byName.get(material.shader),queue=shader?.subshaders?.[0]?.tags?.tags?.find(x=>x.Key==='Queue')?.Value;
+    const queues={Background:1000,Geometry:2000,AlphaTest:2450,Transparent:3000,Overlay:4000};
+    if(!(queue in queues))throw Error('Original shader queue unavailable: '+material.shader);
+    materials[key]={...material,queue:material.queue>=0?material.queue:queues[queue]};
+   }
+   return new NativeMinionProfile(adapter,{...data,materials},{shaders:bank.shaders});
+  }
   const materials={};
   for(const [key,original] of Object.entries(data.materials)){
    const binding=manifest.shaderBindings?.[original.shader];

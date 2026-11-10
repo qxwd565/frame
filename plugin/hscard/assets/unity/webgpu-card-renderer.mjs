@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-63a7df135aff1da6';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-63a7df135aff1da6';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-63a7df135aff1da6';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-63a7df135aff1da6';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-63a7df135aff1da6';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-63a7df135aff1da6';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-63a7df135aff1da6';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-643c69b2f3c412d7';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-643c69b2f3c412d7';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-643c69b2f3c412d7';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-643c69b2f3c412d7';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-643c69b2f3c412d7';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-643c69b2f3c412d7';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-643c69b2f3c412d7';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -27,7 +27,7 @@ function glyphMaterial(q,settings,atlas){
 // A changed frame signature requires a new user selection, never a content fill.
 function frameStructureSignature(card){
  const tags=card.tags||{},ids=[482,483,484,1720,2196,2197,2198,2785,3457,3458,3469,4354];
- return JSON.stringify([card.kind,originalClasses(card),card.golden,card.rarity,card.frameProfile,card.renderDate,card.race,card.school,card.attack>0,card.armor>0,...ids.map(id=>Number(tags[id]||0))]);
+ return JSON.stringify([card.kind,originalClasses(card),card.golden,card.rarity,card.frameProfile,card.textProfile||'',card.renderDate,card.race,card.school,card.attack>0,card.armor>0,...ids.map(id=>Number(tags[id]||0))]);
 }
 function frameSignature(card){const tags=card.tags||{};return JSON.stringify([frameStructureSignature(card),card.watermark,card.set,Number(tags[183]||0),Number(tags[1107]||0)]);}
 export class WebGPUCardRenderer {
@@ -38,6 +38,8 @@ export class WebGPUCardRenderer {
     if(basePrepared && basePrepared.frameSignature!==frameSignature(card))throw Error('Cannot fill a different native frame');
     if(card.frameProfile && !['current','historical'].includes(card.frameProfile))throw Error('Missing original frame resources for '+card.frameProfile);
     const selection=card.frameProfile==='historical'?historicalSelection(card):null;
+    const textProfile=card.textProfile||selection?.textProfile||null;
+    if(card.textProfile && (card.kind!=='MINION'||!/^ios-[0-9.]+-minion$/.test(card.textProfile)))throw Error('Unsupported explicit native text profile');
     const renderCard=selection?.hideSchool?{...card,school:''}:card;
     const fillArtwork=base=>({...base,parts:base.parts.map(part=>{
       if(!part.blank)return part;
@@ -48,10 +50,10 @@ export class WebGPUCardRenderer {
       return {...part,material,queue:portrait&&!nativeProfile?this.composer.queue(null,material.shader):part.queue};
     })});
     let historical=null,nativeProfile=null;
-    if(selection){
+    if(selection||textProfile){
       if(!this.historicalPromise)this.historicalPromise=HistoricalAdapter.create(this.sources,this.composer).catch(error=>{this.historicalPromise=null;throw error;});
       historical=await this.historicalPromise;
-      if(selection.nativeProfile)nativeProfile=await historical.nativeProfile(this.builder,this.renderer,selection.nativeProfile);
+      if(selection?.nativeProfile)nativeProfile=await historical.nativeProfile(this.builder,this.renderer,selection.nativeProfile);
     }
     // A fill never composes a second frame. Geometry, UVs, class texture,
     // rarity and historical parts remain those already on screen.
@@ -69,14 +71,14 @@ export class WebGPUCardRenderer {
       }
     }
     if(selection){
-      if(selection.catalog&&!basePrepared)await historical.apply(renderCard,frame,selection.catalog,selection.raceLayout);
-      if(selection.component&&!basePrepared){const component=await historical.component('frames',selection.component);if(!component)throw Error('Missing historical component '+selection.component);await historical.apply(renderCard,frame,component.catalog);}
+      if(selection?.catalog&&!basePrepared)await historical.apply(renderCard,frame,selection.catalog,selection.raceLayout);
+      if(selection?.component&&!basePrepared){const component=await historical.component('frames',selection.component);if(!component)throw Error('Missing historical component '+selection.component);await historical.apply(renderCard,frame,component.catalog);}
     }
     const artwork=frame.parts.find(p=>p.blank&&p.material.animation);
     const animation=artwork?new ArtworkAnimation(artwork.material):null;
     const goldenPixels=card.goldenPortrait?new Set(frame.parts.filter(p=>p.blank).flatMap(p=>Object.values(p.material.textures).map(t=>t.pixels).filter(x=>x!==card.artPixels&&x))):new Set();
     if(nativeProfile&&!card.loading)await nativeProfile.ensureFonts(this.raster);
-    const roles={},configs={};for(const [role,value] of Object.entries(card.loading?{}:textValues(renderCard))){if(value===undefined||value===null||value==='')continue;const textPrefab=this.sources.card(card.kind,card.golden).text;if(!textPrefab.bindings.some(x=>x.role===role))continue;let config=nativeProfile?nativeProfile.textConfiguration(renderCard,role,this.sources):historical&&selection.edition?await historical.textConfiguration(renderCard,selection.edition,role):this.sources.textConfiguration(card.kind,card.golden,role);if(historical&&selection.textProfile)config=await historical.profileText(renderCard,selection.textProfile,role,config);if(!config)continue;const fit=fitText(value,config.settings,this.raster.metrics(config.font),role);if(fit){roles[role]=fit;configs[role]=config;}}
+    const roles={},configs={};for(const [role,value] of Object.entries(card.loading?{}:textValues(renderCard))){if(value===undefined||value===null||value==='')continue;const textPrefab=this.sources.card(card.kind,card.golden).text;if(!textPrefab.bindings.some(x=>x.role===role))continue;let config=nativeProfile?nativeProfile.textConfiguration(renderCard,role,this.sources):historical&&selection?.edition?await historical.textConfiguration(renderCard,selection.edition,role):this.sources.textConfiguration(card.kind,card.golden,role);if(historical&&textProfile)config=await historical.profileText(renderCard,textProfile,role,config,!!card.textProfile);if(!config)continue;const fit=fitText(value,config.settings,this.raster.metrics(config.font),role);if(fit){roles[role]=fit;configs[role]=config;}}
     const context=cardSceneContext(frame.fit,card.quantity),textDraws=[];
     for(const [role,fit] of Object.entries(roles)){
       const config=configs[role],s=config.settings,glyph=composeGlyphs(this.raster,config.font,fit,s),atlas={width:glyph.width,height:glyph.height,format:65,levels:[glyph.atlas]},toTexture=!!s.m_RenderToTexture;
@@ -88,7 +90,7 @@ export class WebGPUCardRenderer {
       // readback or any changes to the authored name mesh or texture UVs.
       if(toTexture){local.projection[5]=-local.projection[5];local.projection[13]=-local.projection[13];}
       const groups=[];for(const q of glyph.quads){const key=q.material+':'+q.color.join(','),last=groups[groups.length-1];if(!last||last.key!==key)groups.push({key,quads:[q]});else last.quads.push(q);}
-      const batches=[];for(const group of groups){const q=group.quads[0],part={path:'text:'+role,slot:0,mesh:quadGroup(group.quads),material:glyphMaterial(q,s,atlas),pose};transientMeshes.push(part.mesh);batches.push(...await this.builder.draw(part,local));}
+      const batches=[];for(const group of groups){const q=group.quads[0],part={path:'text:'+role,slot:0,mesh:quadGroup(group.quads),material:glyphMaterial(q,s,atlas),pose};if(nativeProfile&&globalThis.HSCARD_EXPERIMENT_BETA_NATIVE)part.material.shader=nativeProfile.data.textShaders[part.material.shader]||part.material.shader;transientMeshes.push(part.mesh);batches.push(...await this.builder.draw(part,local));}
       if(toTexture){
         for(const draw of batches)if(draw.state.cull)draw.state={...draw.state,cull:draw.state.cull===1?2:1};
         await this.renderer.renderTo(textTargets[textTargets.length-1],batches,color(s[s.m_Outline?'m_OutlineColor':'m_TextColor']).map((v,i)=>i===3?0:v));const width=Number(s.m_Width),height=Number(s.m_Height),resolution=Number(s.m_Resolution),w=Math.trunc(width>=height?resolution:resolution*width/height),h=Math.trunc(height>=width?resolution:resolution*height/width);
@@ -98,6 +100,7 @@ export class WebGPUCardRenderer {
         const image={width:w,height:h,format:28,levels:[null],gpuTexture:textTarget.texture},meshInfo=this.nameMeshes.prefabs[frame.fit.kind?this.sources.card(card.kind,card.golden).name:''];if(!meshInfo)throw Error('Missing shared name geometry');
         const surfaceMesh=config.nativeMesh|| (config.componentMesh?historical.textGeometry(config.componentMesh):meshInfo.mesh?{encoded:meshInfo.mesh,sha256:meshInfo.sha256}:plane(Number(s.m_Width),Number(s.m_Height),s,this.sources.frames.palette)),rotation=[1,0,0,0,0,0,-1,0,0,1,0,0,0,0,0,1],surfacePose=(config.nativeMesh||config.componentMesh||meshInfo.mesh)?config.binding.destinationPose:multiply(config.binding.sourcePose,rotation);
         const material={shader:s.m_AntiAlias?'Hidden/TextAntialiasing':'Hidden/TextPlane',keywords:[],values:{_Color:[1,1,1,1],_OffsetX:[f(Number(s.m_AntiAliasAmount)/w)],_OffsetY:[f(Number(s.m_AntiAliasAmount)/h)],_Edge:[Number(s.m_AntiAliasEdge)]},textures:{_MainTex:{pixels:image,sampler:{filter:1,wrapU:1,wrapV:1,wrapW:1},st:[1,1,0,0]}}};
+        if(nativeProfile&&globalThis.HSCARD_EXPERIMENT_BETA_NATIVE)material.shader=nativeProfile.data.textShaders[material.shader]||material.shader;
         textDraws.push(...await this.builder.draw({path:'text:'+role,slot:0,mesh:surfaceMesh,material,pose:surfacePose},context));
       }else textDraws.push(...batches);
     }

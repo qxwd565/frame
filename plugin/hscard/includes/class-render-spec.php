@@ -28,6 +28,9 @@ final class Render_Spec {
    'id' => isset( $card['card_code'] ) ? (string) $card['card_code'] : '',
    'date' => isset( $card['render_date'] ) ? (string) $card['render_date'] : '',
    'frameProfile' => (string) $frame_profile,
+   // Only an explicit native text profile is selected; a source snapshot
+   // version alone does not establish a historical patch boundary.
+   'textProfile' => isset( $native['textProfile'] ) && is_string( $native['textProfile'] ) ? $native['textProfile'] : '',
    'quantity' => max( 1, absint( isset( $card['count'] ) ? $card['count'] : 1 ) ),
    'set' => isset( $native['set'] ) && is_string( $native['set'] ) ? $native['set'] : '',
    // Only artworks may fall back to imported index metadata. Never take

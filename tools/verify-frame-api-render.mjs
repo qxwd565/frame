@@ -4,6 +4,7 @@ import {spawn} from 'node:child_process';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
 const profile=fileURLToPath(new URL('../.build/preview-browser',import.meta.url));
+const nativeBeta=process.argv.includes('--native-beta');
 const port=19540;
 const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--remote-debugging-port='+port,'--user-data-dir='+profile,'--no-first-run','--no-default-browser-check','--enable-unsafe-webgpu','about:blank'],{windowsHide:true,stdio:'ignore'});
 let ws;
@@ -17,7 +18,7 @@ try{
  await call('Runtime.enable');await call('Network.enable');
  await call('Network.setCacheDisabled',{cacheDisabled:true});
  async function run(source){
-  await call('Page.navigate',{url:'http://127.0.0.1:19420/work/frame-apis.html?source='+source});
+  await call('Page.navigate',{url:'http://127.0.0.1:19420/work/frame-apis.html?source='+source+(nativeBeta?'&native=1':'')});
   for(let i=0;i<900;i++){
    await sleep(500);const r=await call('Runtime.evaluate',{expression:'window.result',returnByValue:true}),value=r.result.value;
    if(value&&!value.running){assert.ok(!value.error,value.error);assert.deepEqual(value.errors,[]);return value.cases;}
@@ -25,7 +26,10 @@ try{
   }
   throw Error('Render verification timed out: '+source);
  }
- const local=await run('local');requests.length=0;
+ const local=await run('local');
+ if(nativeBeta){console.log(JSON.stringify({ok:true,mode:'experimental-original-beta-shaders',cases:local}));process.exitCode=0;}
+ else {
+ requests.length=0;
  const remote=await run('api');
  assert.deepEqual(remote,local,'Moving original resources must not change rendered pixels');
  assert.ok(requests.some(u=>u.includes('/legacy/')&&u.includes('/frame/')));
@@ -33,4 +37,5 @@ try{
  assert.ok(!requests.some(u=>u.includes('hsdeck-frame')||u.includes('/qxwd565/frame/')||u.includes('/resources/')));
  assert.deepEqual(pageErrors,[]);
  console.log(JSON.stringify({ok:true,pixelIdenticalCases:remote.length,requests:requests.length,oldCdnRequests:0,cases:remote}));
+ }
 }finally{ws?.close();chrome.kill();}

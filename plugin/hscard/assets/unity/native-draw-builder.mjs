@@ -19,7 +19,7 @@ function select(stage,keywords){
  info.chosen.set(key,matches[0]);return matches[0];
 }
 const zeroMatrix=new Float32Array(16);
-function matrices(view,projection,world){let vp;const combined=()=>vp??=(multiply(projection,view));return{unity_ObjectToWorld:world,get unity_WorldToObject(){return inverse(world);},get unity_MatrixVP(){return combined();},unity_MatrixV:view,get unity_MatrixInvV(){return inverse(view);},unity_MatrixP:projection,glstate_matrix_projection:projection,get unity_MatrixInvP(){return inverse(projection);},get unity_MatrixInvVP(){return inverse(combined());}};}
+function matrices(view,projection,world){let vp;const combined=()=>vp??=(multiply(projection,view));return{unity_ObjectToWorld:world,_Object2World:world,get _World2Object(){return inverse(world);},get glstate_matrix_mvp(){return multiply(combined(),world);},get unity_WorldToObject(){return inverse(world);},get unity_MatrixVP(){return combined();},unity_MatrixV:view,get unity_MatrixInvV(){return inverse(view);},unity_MatrixP:projection,glstate_matrix_projection:projection,get unity_MatrixInvP(){return inverse(projection);},get unity_MatrixInvVP(){return inverse(combined());}};}
 function value(name,material,properties,ctx){
   if(name.endsWith('_ST')&&material.textures[name.slice(0,-3)])return material.textures[name.slice(0,-3)].st;
   if(name.endsWith('_TexelSize')&&material.textures[name.slice(0,-10)]){const t=material.textures[name.slice(0,-10)].pixels;return[f(1/t.width),f(1/t.height),t.width,t.height];}
@@ -29,6 +29,7 @@ function value(name,material,properties,ctx){
   if(name==='_CosTime')return[8,4,2,1].map(x=>f(Math.cos(f(ctx.time/x))));
   if(name==='_ScreenParams')return[ctx.width,ctx.height,f(1+f(1/ctx.width)),f(1+f(1/ctx.height))];
   if(name==='unity_WorldTransformParams')return[0,0,0,1];if(name==='_GlobalMipBias')return[0,1];
+  if(name==='unity_Scale'||name==='_LightColor0'||name==='glstate_lightmodel_ambient')return[1,1,1,1];
   if(name==='_MainLightColor'||['unity_SHAr','unity_SHAg','unity_SHAb'].includes(name))return name==='_MainLightColor'?[1,1,1,1]:[0,0,0,1];
   const property=properties.get(name);let result=material.values[name]||property?.defaults||[0,0,0,0];
   if(ctx.linear&&property?.m_Type===0)result=result.map((n,i)=>i>=3?n:n<=.04045?f(n/12.92):f(Math.pow((n+.055)/1.055,2.4)));

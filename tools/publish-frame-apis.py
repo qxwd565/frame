@@ -59,7 +59,8 @@ def read(name):
 
 
 def plan():
-    files = {p.relative_to(SOURCE).as_posix(): p for p in SOURCE.rglob('*') if p.is_file()}
+    files = {p.relative_to(SOURCE).as_posix(): p for p in SOURCE.rglob('*') if p.is_file()
+             and p.relative_to(SOURCE).as_posix() != 'historical-frames/native-beta-shaders.json.gz'}
     candidates = collections.defaultdict(set)
 
     def assign(name, source):
@@ -93,6 +94,8 @@ def plan():
     for name in files:
         if name.startswith(prefix + 'components/'):
             assign(name, name.rsplit('/', 1)[1])
+        if name.startswith(prefix + 'native-snapshots/pc-'):
+            assign(name, name.rsplit('/', 1)[1])
     for row in read(prefix + 'native-minion-profiles.json')['profiles']:
         assign(prefix + row['file'], row['version'])
         dependencies(read(prefix + row['file']), row['version'])
@@ -114,7 +117,7 @@ def plan():
         sources = sorted(candidates[name], key=version)
         if sources:
             repo = owner(sources[0])
-            scope = 'native-snapshot'
+            scope = 'native-snapshot-without-textures' if name.startswith(prefix + 'native-snapshots/') else 'native-snapshot'
         elif not name.startswith(prefix):
             repo, scope = CONFIG['currentRepository'], 'renderer-support'
         elif name[len(prefix):] in shared:

@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-63a7df135aff1da6';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-643c69b2f3c412d7';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -189,7 +189,7 @@ export class WebGPUNativeRenderer {
   this.samplers.set(key,value);return value;
  }
  module(id){if(this.modules.has(id))return this.modules.get(id);
-  const task=(async()=>{const spec=typeof this.programs==='function'?await this.programs(id):this.programs[id];if(!spec)throw Error('Missing source WGSL shader '+id);
+  const task=(async()=>{const spec=this.extraPrograms?.get(id)||(typeof this.programs==='function'?await this.programs(id):this.programs[id]);if(!spec)throw Error('Missing source WGSL shader '+id);
    const module=this.device.createShaderModule({label:`HS ${spec.stage} ${id}`,code:spec.wgsl});
    const messages=(await module.getCompilationInfo()).messages.filter(m=>m.type==='error');
    if(messages.length)throw Error(`WGSL compile failed ${id}: `+messages.map(m=>`${m.lineNum}:${m.linePos} ${m.message}`).join('; '));
