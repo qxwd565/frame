@@ -1,5 +1,5 @@
-import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-842a4736645303d0';
-import {validateAnimation} from './artwork-animation.mjs?ver=hscard-842a4736645303d0';
+import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {validateAnimation} from './artwork-animation.mjs?ver=hscard-1b1e8feb48b16fe0';
 
 // Documents are relative to the owning set root, not golden/cards/.
 const indexes=new Map(),materials=new Map(),textures=new Map(),historicalBanks=new Map(),queue=[];
@@ -65,7 +65,7 @@ export async function loadGoldenPortrait(remote,id,dbfId,isCurrent=()=>true,date
   const indexURL=new URL('golden/index.json',root).href,index=await cached(indexes,indexURL,()=>document(indexURL),48,8*1024*1024);
   if(!isCurrent())return null;if(index.schema!==1||!index.cards||typeof index.cards!=='object')throw Error('Invalid golden index');
   const entry=index.cards[id];if(!entry)return null;if(entry.dbfId!==dbfId)throw Error('Golden index identity mismatch');
-  let path=entry.material;if(index.set==='legacy'&&typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)&&Array.isArray(entry.history)){const matches=entry.history.filter(x=>typeof x.from==='string'&&typeof x.until==='string'&&x.from<=date&&date<x.until);if(matches.length>1)throw Error('Overlapping golden history');if(matches.length){path=matches[0].material;historical=true;}else if(entry.history.some(x=>typeof x.until==='string'&&date<x.until)){historical=true;throw Error('Historical golden portrait unavailable at '+date);}}
+  let path=entry.material;if(index.set==='legacy'&&typeof date==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(date)){const history=Array.isArray(entry.history)?entry.history:[],matches=history.filter(x=>typeof x.from==='string'&&typeof x.until==='string'&&x.from<=date&&date<x.until);if(matches.length>1)throw Error('Overlapping golden history');if(matches.length){path=matches[0].material;historical=true;}else if(date<'2014-03-12'||history.some(x=>typeof x.until==='string'&&date<x.until)){historical=true;throw Error('Historical golden portrait unavailable at '+date);}}
   const materialURL=sameSetPath(root,path,/^golden\/(?:cards\/[A-Za-z0-9_]+|history\/cards\/[A-Za-z0-9_]+-[0-9]+)\.json$/);
   const raw=await cached(materials,materialURL,()=>document(materialURL),64,16*1024*1024);if(!isCurrent())return null;
   const data=materialData(raw,id,dbfId,root),[bindings,native]=await Promise.all([Promise.all(Object.entries(data.material.textures).map(async([name,t])=>[name,{pixels:await pixels(root,t.pixels),sampler:{...t.sampler},st:[...t.st]}])),historical?historicalPrograms(root,index,data):Promise.resolve(null)]);

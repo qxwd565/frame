@@ -1,6 +1,6 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-842a4736645303d0';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-842a4736645303d0';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-1b1e8feb48b16fe0';
 
 const artCache = new Map(), tasks = [];
 let active = 0, artBytes = 0;
@@ -156,6 +156,9 @@ export async function resolveCard(element,golden,{isCurrent=()=>true,onMetadata=
  })();
  const goldenTask=golden&&!identity.lockedArt&&origin ?
   loadGoldenPortrait({id:identity.id,dbfId:Number(identity.dbfId),sourceURL:origin},identity.id,Number(identity.dbfId),isCurrent,date):Promise.resolve(null);
+ // The portrait can fail before the independent artwork request finishes.
+ // Mark that rejection handled now; awaiting goldenTask below still reports it.
+ goldenTask.catch(()=>{});
  await waitForFrame();
  if(!isCurrent())throw Error('Card request superseded');
  let pixels=await artTask;
