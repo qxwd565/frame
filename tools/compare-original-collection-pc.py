@@ -47,7 +47,14 @@ try {
    $scene=$reader.MakeGenericMethod($asm.GetType('HSPlus.Models.PortableCardScene')).Invoke($null,@([string]$p.scene))
    $pixels=[byte[]]$rt.GetMethod('RenderPixels',[Reflection.BindingFlags]'Instance,NonPublic').Invoke($renderer,[object[]]@($scene,$callback,[float[]]@(0,0,0,0)))
    $h=[Security.Cryptography.SHA256]::Create();try{$hash=([BitConverter]::ToString($h.ComputeHash($pixels))).Replace('-','').ToLowerInvariant()}finally{$h.Dispose()}
-   [Console]::Out.WriteLine((@{sha256=$hash}|ConvertTo-Json -Compress))
+   $result=@{sha256=$hash}
+   if($p.returnPixels){
+    $buffer=New-Object IO.MemoryStream
+    $zip=New-Object IO.Compression.GzipStream($buffer,[IO.Compression.CompressionMode]::Compress,$true)
+    try{$zip.Write($pixels,0,$pixels.Length)}finally{$zip.Dispose()}
+    $result.pixels=[Convert]::ToBase64String($buffer.ToArray());$buffer.Dispose()
+   }
+   [Console]::Out.WriteLine(($result|ConvertTo-Json -Compress))
   } catch { [Console]::Out.WriteLine((@{error=$_.Exception.ToString()}|ConvertTo-Json -Compress)) }
  }
 } finally { if($renderer){$renderer.Dispose()} }
@@ -76,24 +83,30 @@ def image_read(path):
 
 
 class D3D:
-    def __init__(self):
+    def __init__(self,return_pixels=False):
         command = base64.b64encode(PS.encode('utf-16le')).decode('ascii')
         self.child = subprocess.Popen(['powershell.exe','-NoProfile','-NonInteractive','-EncodedCommand',command],
                                       stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,
                                       text=True,encoding='utf-8',bufsize=1,creationflags=0x08000000)
         self.known = set()
+        self.return_pixels = return_pixels
+        self.last_pixels = None
 
     def render(self,ns,width,height):
         library=json.dumps({'schema':1,'shaders':list(ns['LIB'].values())},separators=(',',':'))
         resources={k:v for k,v in ns['RES'].items() if k not in self.known}
         payload={'libraryKey':hashlib.sha256(library.encode()).hexdigest(),'library':library,
                  'scene':json.dumps({'schema':1,'width':width,'height':height,'draws':ns['DRAWS']},separators=(',',':')),
-                 'resources':resources}
+                 'resources':resources,'returnPixels':self.return_pixels}
         self.child.stdin.write(json.dumps(payload,separators=(',',':'))+'\n');self.child.stdin.flush()
         line=self.child.stdout.readline()
         if not line: raise RuntimeError('Native D3D worker stopped: '+self.child.stderr.read()[-4000:])
         response=json.loads(line)
         if response.get('error'): raise RuntimeError(response['error'])
+        if self.return_pixels:
+            self.last_pixels=gzip.decompress(base64.b64decode(response['pixels']))
+            if hashlib.sha256(self.last_pixels).hexdigest()!=response['sha256']:
+                raise ValueError('Returned pixel bytes differ from the render digest')
         self.known.update(resources)
         return type('Rendered',(),{'digest':response['sha256']})()
 
@@ -126,7 +139,54 @@ def prepared_script():
     return compile(source,str(RENDERER),'exec')
 
 
+def export_images():
+    """Export one original-framebuffer PNG per source/class/type/finish.
+
+    Each image must reproduce the existing t=0, FREE comparison hash. Neither
+    source textures nor the rendered framebuffer is rescaled or retouched.
+    """
+    if not OUTPUT.exists(): raise FileNotFoundError('Run the comparison before exporting its images')
+    with OUTPUT.open(encoding='utf-8-sig',newline='') as stream:
+        rows={(r['버전'],r['유형'],r['직업'],r['마감']):r for r in csv.DictReader(stream)
+              if r['희귀도']=='FREE' and float(r['시각(초)'])==0}
+    output=OUTPUT.parent/'PC 원본 수집품'
+    names={'NEUTRAL':'중립','DRUID':'드루이드','HUNTER':'사냥꾼','MAGE':'마법사','PALADIN':'성기사',
+           'PRIEST':'사제','ROGUE':'도적','SHAMAN':'주술사','WARLOCK':'흑마법사','WARRIOR':'전사'}
+    families={'Ally':'하수인','Ability':'주문','Weapon':'무기'}
+    source=prepared_script();worker=D3D(return_pixels=True);saved_argv=sys.argv[:];count=0
+    try:
+        for build in BUILDS:
+          for family in families:
+           for cls in CLASSES:
+            for finish in ['normal','golden']:
+             version='1.0.0.'+build
+             row=rows[(version,family,cls,finish)]
+             target=output/names[cls]/families[family]/(version+(' - 황금.png' if finish=='golden' else ' - 일반.png'))
+             if target.exists():
+                with Image.open(target) as image:
+                    if image.size!=(1920,1080) or hashlib.sha256(image.convert('RGBA').tobytes()).hexdigest()!=row['현재 렌더 SHA256']:
+                        raise ValueError('Existing image does not match comparison: '+str(target))
+                continue
+             sys.argv=[str(RENDERER),build,family,cls,finish,'--digest-only','--time','0','--rarity','FREE']
+             env={'__name__':'__batch_render__','__file__':str(RENDERER),'BATCH_GZ_JSON':gz_json,
+                  'BATCH_JSON':text_json,'BATCH_GZIP':raw_gzip,'BATCH_IMAGE':image_read,'BATCH_GPU':worker.render}
+             captured=io.StringIO()
+             with contextlib.redirect_stdout(captured):exec(source,env)
+             actual=json.loads(captured.getvalue())
+             if actual['rgbaSha256']!=row['현재 렌더 SHA256'] or len(worker.last_pixels)!=1920*1080*4:
+                 raise ValueError('Image does not reproduce the comparison: '+str(target))
+             target.parent.mkdir(parents=True,exist_ok=True)
+             Image.frombytes('RGBA',(1920,1080),worker.last_pixels).save(target)
+             count+=1
+             if count%30==0:print(json.dumps({'exported':count,'version':version},ensure_ascii=False),flush=True)
+    finally:
+        sys.argv=saved_argv;worker.close()
+    print(json.dumps({'exported':count,'totalExpected':len(BUILDS)*len(families)*len(CLASSES)*2},ensure_ascii=False))
+
+
 def main():
+    if '--export-images' in sys.argv:
+        export_images();return
     resume='--resume' in sys.argv
     limit=int(sys.argv[sys.argv.index('--limit')+1]) if '--limit' in sys.argv else None
     if OUTPUT.exists() and not resume: raise FileExistsError('Comparison table already exists; use --resume')
