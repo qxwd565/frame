@@ -71,8 +71,8 @@ try{
    if(gpu.length!==capture.width*capture.height*4||black.length!==gpu.length||white.length!==gpu.length)throw Error('Reference image size mismatch');
    const options=[false,true].map(flip=>compare(gpu,black,white,capture.width,capture.height,flip));options.sort((a,b)=>a.meanAbsoluteError-b.meanAbsoluteError);
    results.push({version:capture.version,cardClass,golden,scope:'same frame draw commands and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
-   if(options[0].visiblePixels<100000||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000)throw Error('Native/WebGPU frame parity outside verified tolerance');
    console.log(JSON.stringify(results.at(-1)));
+   if(options[0].visiblePixels<100000||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000)throw Error('Native/WebGPU frame parity outside verified tolerance');
   }
  }
  const report={schema:1,scope:'Same generated frame draw commands; PC original D3D bytecode compared to translated WebGPU. Text and card-specific golden portrait animation excluded. Differences are reported as measured; no pixel-exact claim.',cases:results};

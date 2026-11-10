@@ -1,6 +1,23 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-04cee350cdf6eecd';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-6f5666d116dae839';
 
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2,'0')).join('');
+
+/** Decode the original DXT byte stream into its authored GPU mip levels.
+ * This does not resize, regenerate, or decode the compressed pixels. */
+export async function decodeNativeDxtMips(compressed, expected) {
+ if(!expected||![10,12].includes(expected.unityFormat)||!Number.isSafeInteger(expected.width)||!Number.isSafeInteger(expected.height)||expected.width<1||expected.height<1||expected.width*expected.height>16777216||!/^[a-f0-9]{64}$/.test(expected.nativeSha256||''))throw Error('Invalid original texture metadata');
+ const raw=new Uint8Array(await new Response(new Blob([compressed]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer());
+ if(raw.length!==expected.nativeBytes||await digest(raw)!==expected.nativeSha256)throw Error('Original texture byte checksum');
+ if(!Array.isArray(expected.levels)||!expected.levels.length)throw Error('Original texture mip metadata unavailable');
+ let pos=0,w=expected.width,h=expected.height;const levels=[];
+ for(const level of expected.levels){
+  const size=Math.max(1,Math.ceil(w/4))*Math.max(1,Math.ceil(h/4))*(expected.unityFormat===10?8:16);
+  if(level.width!==w||level.height!==h||level.offset!==pos||level.bytes!==size||pos+size>raw.length)throw Error('Original texture mip boundary mismatch');
+  levels.push(raw.slice(pos,pos+size));pos+=size;w=Math.max(1,w>>1);h=Math.max(1,h>>1);
+ }
+ if(pos!==raw.length||(expected.mipmapped&&(expected.levels.at(-1).width!==1||expected.levels.at(-1).height!==1))||(!expected.mipmapped&&levels.length!==1))throw Error('Original texture mip chain incomplete');
+ return {width:expected.width,height:expected.height,format:expected.unityFormat===10?71:77,levels};
+}
 
 export function selectTextureVariant(history, name, date) {
  if (history?.schema !== 1 || !/^\d{4}-\d{2}-\d{2}$/.test(date)) return null;

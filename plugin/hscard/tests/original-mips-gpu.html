@@ -1,0 +1,20 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/">
+<script type="module">
+import {decodeNativeDxtMips} from '/plugin/assets/unity/native-texture-history.mjs';
+window.verifyOriginalMips=async meta=>{
+ const r=await fetch('/resources/historical-frames/'+meta.nativeImage.file);if(!r.ok)throw Error('Source texture unavailable');
+ const pixels=await decodeNativeDxtMips(await r.arrayBuffer(),meta),adapter=await navigator.gpu.requestAdapter();
+ if(!adapter)throw Error('WebGPU unavailable');if(!adapter.features.has('texture-compression-bc'))return {skipped:'BC compression unavailable',levels:pixels.levels.length};
+ const device=await adapter.requestDevice({requiredFeatures:['texture-compression-bc']});device.pushErrorScope('validation');
+ const gpu=device.createTexture({size:[pixels.width,pixels.height],mipLevelCount:pixels.levels.length,format:pixels.format===71?'bc1-rgba-unorm':'bc3-rgba-unorm',usage:GPUTextureUsage.TEXTURE_BINDING|GPUTextureUsage.COPY_DST});
+ try{
+  for(let i=0;i<pixels.levels.length;i++){
+   const w=Math.max(1,pixels.width>>i),h=Math.max(1,pixels.height>>i),cols=Math.ceil(w/4),rows=Math.ceil(h/4),line=(pixels.format===71?8:16)*cols,pitch=Math.ceil(line/256)*256;
+   const padded=new Uint8Array(pitch*rows),raw=pixels.levels[i];for(let y=0;y<rows;y++)padded.set(raw.subarray(y*line,(y+1)*line),y*pitch);
+   device.queue.writeTexture({texture:gpu,mipLevel:i},padded,{bytesPerRow:pitch,rowsPerImage:rows},{width:cols*4,height:rows*4,depthOrArrayLayers:1});
+  }
+  await device.queue.onSubmittedWorkDone();const error=await device.popErrorScope();if(error)throw Error(error.message);
+  return {ok:true,levels:pixels.levels.length,width:pixels.width,height:pixels.height};
+ }finally{gpu.destroy();device.destroy();}
+};window.ready=true;
+</script>

@@ -3,13 +3,13 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-04cee350cdf6eecd';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-6f5666d116dae839';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
 function decodeBase64(s){const binary=atob(s),out=new Uint8Array(binary.length);for(let i=0;i<out.length;i++)out[i]=binary.charCodeAt(i);return out;}
 async function inflate64(value){return new Response(new Blob([decodeBase64(value)]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();}
-function c565(n){return [(n>>11&31)*255/31|0,(n>>5&63)*255/63|0,(n&31)*255/31|0];}
+function c565(n){const r=n>>11&31,g=n>>5&63,b=n&31;return [(r<<3)|(r>>2),(g<<2)|(g>>4),(b<<3)|(b>>2)];}
 /** Decode original DXT1/DXT5 textures when the WebGPU adapter lacks BC. */
 export function decodeBC(bytes,width,height,format){
  const bc1=[71,72].includes(format);if(!bc1&&![77,78].includes(format))throw Error('Not BC1/BC3');

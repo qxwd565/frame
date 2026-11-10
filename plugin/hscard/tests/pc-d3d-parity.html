@@ -14,15 +14,36 @@ const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await
 const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts);
 const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];if(!w)throw Error('Unexpected texture source');return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};});
 const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+// Optional GPU-only sampler bias override for diagnosing D3D/WebGPU parity.
+// The captured original D3D draw commands retain their authored sampler state.
+const originalBindGroup=renderer._bindGroup.bind(renderer);
+renderer._bindGroup=(pipeline,stage,draw)=>{
+ if(stage==='fragment'&&Number.isFinite(window.diagnosticMipBias))draw={...draw,fragmentTextures:draw.fragmentTextures.map(t=>({...t,texture:{...t.texture,sampler:{...t.texture.sampler,bias:window.diagnosticMipBias}}}))};
+ return originalBindGroup(pipeline,stage,draw);
+};
+window.enableOriginalMipDiagnostic=async(forceSoftware=false)=>{
+ const adapterSource=await(await fetch('/plugin/assets/unity/historical-adapter.mjs')).text();
+ const match=/native-minion-profile\.mjs\?ver=[A-Za-z0-9-]+/.exec(adapterSource);if(!match)throw Error('Native profile module revision missing');
+ const {NativeMinionProfile}=await import('/plugin/assets/unity/'+match[0]);
+ const response=await fetch('/resources/historical-frames/early-native/minion-mip-bindings.json.gz');
+ if(!response.ok)throw Error('Original source mip bindings unavailable');
+ const bindings=await new Response(response.body.pipeThrough(new DecompressionStream('gzip'))).json(),load=NativeMinionProfile.load;
+ NativeMinionProfile.load=async function(...args){const profile=await load.apply(this,args),selected=bindings.bindings[profile.data.version];if(!selected)throw Error('Original diagnostic source version missing');
+  for(const item of profile.catalog.textures){const original=bindings.textures[selected[item.id]];if(!original)throw Error('Original diagnostic texture missing: '+item.id);Object.assign(item,original);}
+  return profile;
+ };
+ if(forceSoftware)renderer.bc=false;
+};
 const b64=data=>{let s='';for(let i=0;i<data.length;i+=0x8000)s+=String.fromCharCode(...data.subarray(i,i+0x8000));return btoa(s);};
 const le=(n)=>{const x=new Uint8Array(4);new DataView(x.buffer).setInt32(0,n,true);return x;};
 const concat=parts=>{const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let at=0;for(const p of parts){out.set(p,at);at+=p.length;}return out;};
 const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
-window.capture=async(date,golden,cardClass='MAGE')=>{
+window.capture=async(date,golden,cardClass='MAGE',onlyDraw=null)=>{
  const card={kind:'MINION',cardClass,golden,name:'동일한 카드',text:'전투의 함성: 카드를 뽑습니다.',race:'멀록',cost:3,attack:2,health:4,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,frameProfile:'historical',renderDate:date,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
  const prepared=await cards.prepare(card),target=renderer.createTarget(prepared.context.width,prepared.context.height);
  try{
-  const draws=(await Promise.all(prepared.frame.parts.map(part=>builder.draw(part,{...prepared.context,time:0})))).flat();
+  const allDraws=(await Promise.all(prepared.frame.parts.map(part=>builder.draw(part,{...prepared.context,time:0})))).flat();
+  const draws=onlyDraw===null?allDraws:[allDraws[onlyDraw]];if(draws.some(x=>!x))throw Error('Invalid diagnostic draw');
   await renderer.transparent(target.width,target.height,draws,target);await renderer.device.queue.onSubmittedWorkDone();
   const pitch=Math.ceil(target.width*4/256)*256,buffer=renderer.device.createBuffer({size:pitch*target.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}),encoder=renderer.device.createCommandEncoder();
   encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:pitch},{width:target.width,height:target.height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
@@ -36,15 +57,15 @@ window.capture=async(date,golden,cardClass='MAGE')=>{
    parts.push(le(m.indices.length),new Uint8Array(m.indices.buffer,m.indices.byteOffset,m.indices.byteLength));return put(concat(parts));
   }
   async function texture(entry){
-   const t=entry.texture,p=t.pixels;if(p.format!==28||p.levels.length!==1||!p.levels[0])throw Error('Unsupported reference texture format');
-   const data=concat([le(0x31545048),le(p.width),le(p.height),le(28),le(1),le(p.levels[0].length),p.levels[0]]),s=t.sampler||{};
+   const t=entry.texture,p=t.pixels;if(![28,71,77].includes(p.format)||!p.levels.length||p.levels.some(x=>!x))throw Error('Unsupported reference texture format');
+   const data=concat([le(0x31545048),le(p.width),le(p.height),le(p.format),le(p.levels.length),...p.levels.flatMap(level=>[le(level.length),level])]),s=t.sampler||{};
    return {slot:entry.slot,sampler:entry.sampler,resource:await put(data),srgb:!!entry.srgb,settings:{filter:s.filter??1,wrapU:s.wrapU??1,wrapV:s.wrapV??1,wrapW:s.wrapW??1,anisotropy:Math.max(1,s.anisotropy||1),bias:s.bias||0}};
   }
   const result=[];
   for(const draw of draws)result.push({mesh:await mesh(draw.mesh),vertexProgram:draw.vertexProgram,fragmentProgram:draw.fragmentProgram,
    subshader:0,pass:0,keywords:[],vertexBuffers:draw.vertexBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),fragmentBuffers:draw.fragmentBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),
    vertexTextures:await Promise.all(draw.vertexTextures.map(texture)),fragmentTextures:await Promise.all(draw.fragmentTextures.map(texture)),state:draw.state});
-  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,webgpuPixels:b64(pixels),draws:result,resources};
+  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,totalDraws:allDraws.length,webgpuPixels:b64(pixels),draws:result,resources};
  }finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
 };window.ready=true;
 </script>
