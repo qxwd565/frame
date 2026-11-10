@@ -5,6 +5,7 @@ import hashlib
 import importlib.util
 import json
 import pathlib
+import sys
 import urllib.parse
 import urllib.request
 
@@ -35,7 +36,10 @@ def main():
             'ios':{'conditions':'~1:1 flat-front texel density of 512px source, each version original GLES shader, mesh and PVRTC mip chain in desktop WebGL. Actual iOS runtime camera and GPU precision remain unverified. RGBA hash refers to the common full WebGL framebuffer.', 'cases':ios_cases}}
     raw=(json.dumps(report,ensure_ascii=False,sort_keys=True,separators=(',',':'))+'\n').encode();payload=gzip.compress(raw,compresslevel=6,mtime=0)
     target=SOURCE/NAME
-    if target.exists() and target.read_bytes()!=payload:raise FileExistsError('Existing comparison evidence differs')
+    expected=sys.argv[sys.argv.index('--replace-sha256')+1] if '--replace-sha256' in sys.argv else None
+    if expected and (len(expected)!=64 or any(c not in '0123456789abcdef' for c in expected)):raise ValueError('Invalid prior SHA256')
+    if target.exists() and target.read_bytes()!=payload and hashlib.sha256(target.read_bytes()).hexdigest()!=expected:
+        raise FileExistsError('Existing comparison evidence differs and was not explicitly identified')
     target.write_bytes(payload)
     spec=importlib.util.spec_from_file_location('api',ROOT/'tools/publish-frame-apis.py');api=importlib.util.module_from_spec(spec);spec.loader.exec_module(api)
     record=api.plan()[NAME]
@@ -44,7 +48,12 @@ def main():
     def get(commit,name):
         url='https://raw.githubusercontent.com/qxwd565/legacy/'+commit+'/frame/'+urllib.parse.quote(name,safe='/')
         with urllib.request.urlopen(url,timeout=90) as response:return response.read()
-    catalog=json.loads(get(parent,'index.json'));catalog['files'][NAME]=record
+    catalog=json.loads(get(parent,'index.json'))
+    if NAME in catalog['files']:
+        remote_hash=hashlib.sha256(get(parent,NAME)).hexdigest()
+        if remote_hash!=hashlib.sha256(payload).hexdigest() and remote_hash!=expected:
+            raise ValueError('Remote comparison changed since the identified previous evidence')
+    catalog['files'][NAME]=record
     updates={NAME:api.git('hash-object','--no-filters','-w','--stdin',data=payload).decode().strip(),
              'index.json':api.git('hash-object','--no-filters','-w','--stdin',data=api.encoded(catalog)).decode().strip()}
     tree=api.tree_entries(parent);tree['frame']=('040000','tree',api.overlay_tree(tree['frame'][2],updates));tree_id=api.write_tree(tree)

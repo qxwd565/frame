@@ -185,20 +185,30 @@ if replacement_build:
     previous_mips = next(v for v in all_mips['versions'] if v['source']['platform']=='Windows' and v['source']['version']=='1.0.0.'+replacement_build)
     previous_mips_by_key = {t['key']:t for t in previous_mips['textures']}
     for name in sorted(old_names.keys() & current_names.keys()):
-        if len(old_names[name]) != 1 or len(current_names[name]) != 1: continue
-        before, current = old_names[name][0], current_names[name][0]
-        if before['width'] != 2*current['width'] or before['height'] != 2*current['height']: continue
-        item = assets[current['key']]
+        # The same source texture can be serialized into multiple bundles.
+        # A name is unambiguous only when all duplicates have identical source
+        # bytes, dimensions and sampler state. Replace every matching reference.
+        def signature(row):
+            return (row['width'],row['height'],row['nativeSha256'],row['rgbaSha256'],
+                    json.dumps(row.get('sampler'),sort_keys=True))
+        if len({signature(x) for x in old_names[name]})!=1 or len({signature(x) for x in current_names[name]})!=1:
+            continue
+        before = old_names[name][0]
+        if before['width'] != 2*current_names[name][0]['width'] or before['height'] != 2*current_names[name][0]['height']:
+            continue
         image = Image.open(ROOT / before['png']['file']).convert('RGBA')
         pixels = image.tobytes()
         if image.size != (before['width'],before['height']) or hashlib.sha256(pixels).hexdigest()!=before['rgbaSha256']:
             raise ValueError('Previous original texture checksum mismatch: '+name)
-        item.update({'width':before['width'],'height':before['height'],'pixels':pixels,
-                     'sourceMip':previous_mips_by_key[before['key']]})
-        replacements[current['key']] = {'name':name,'fromVersion':'1.0.0.'+replacement_build,
-                                         'fromSize':[before['width'],before['height']],
-                                         'currentSize':[current['width'],current['height']],
-                                         'sourceRgbaSha256':before['rgbaSha256']}
+        for current in current_names[name]:
+            if before['width'] != 2*current['width'] or before['height'] != 2*current['height']: continue
+            item = assets[current['key']]
+            item.update({'width':before['width'],'height':before['height'],'pixels':pixels,
+                         'sourceMip':previous_mips_by_key[before['key']]})
+            replacements[current['key']] = {'name':name,'fromVersion':'1.0.0.'+replacement_build,
+                                             'fromSize':[before['width'],before['height']],
+                                             'currentSize':[current['width'],current['height']],
+                                             'sourceRgbaSha256':before['rgbaSha256']}
 ns['A'] = assets
 fallback_texture = ns['texture']
 def texture_with_original_mips(item):
