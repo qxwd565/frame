@@ -1,4 +1,4 @@
-import {FontMetrics} from './font-metrics.mjs?ver=hscard-c439ae9cb8d8c30c';
+import {FontMetrics} from './font-metrics.mjs?ver=hscard-11e3f21466ad0fb3';
 
 // The exact font programs come from the installed game via HS Plus's validated
 // font loader. FreeType is compiled from the same 2.13.2 release as HS Plus.
