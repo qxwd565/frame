@@ -1,9 +1,10 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-53c1a4d730446a2a';
-import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-53c1a4d730446a2a';
-import {decodeTexturePng,decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-53c1a4d730446a2a';
-import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-53c1a4d730446a2a';
-import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-53c1a4d730446a2a';
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-53c1a4d730446a2a';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-13b870ed5737dccf';
+import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-13b870ed5737dccf';
+import {Native3664CardProfile} from './native-3664-card-profile.mjs?ver=hscard-13b870ed5737dccf';
+import {decodeTexturePng,decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-13b870ed5737dccf';
+import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-13b870ed5737dccf';
+import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-13b870ed5737dccf';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-13b870ed5737dccf';
 const f=Math.fround,identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function trs(t){const [x,y,z,w]=t.rotation,[sx,sy,sz]=t.scale,[px,py,pz]=t.position;return [f((1-2*(y*y+z*z))*sx),f(2*(x*y+z*w)*sx),f(2*(x*z-y*w)*sx),0,f(2*(x*y-z*w)*sy),f((1-2*(x*x+z*z))*sy),f(2*(y*z+x*w)*sy),0,f(2*(x*z+y*w)*sz),f(2*(y*z-x*w)*sz),f((1-2*(x*x+y*y))*sz),0,px,py,pz,1];}
 function oldPose(n){if(!n.chain)return trs(n);return n.chain.reduce((m,t)=>multiply(m,trs(t)),identity());}
@@ -12,6 +13,7 @@ export function historicalSelection(card){
  const date=String(card.renderDate||'');if(!/^\d{4}-\d{2}-\d{2}$/.test(date))return null;
  const parsed=new Date(date+'T00:00:00Z');if(!Number.isFinite(parsed.valueOf())||parsed.toISOString().slice(0,10)!==date)return null;
  const classes=originalClasses(card),one=classes.length===1,cls=classes[0],isDK=one&&cls==='DEATHKNIGHT',singleRace=!!card.race&&!card.race.includes(',');let catalog=null,edition=null,component=null,textProfile=null,raceLayout=false;
+ if(['SPELL','WEAPON'].includes(card.kind)&&one&&['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'].includes(cls)&&date>='2013-08-17'&&date<'2013-10-03')return{nativeProfile:'1.0.0.3664',nativeKind:card.kind,evidence:'observed-pc-build'};
  if(card.kind==='MINION'&&one&&['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'].includes(cls)&&date>='2013-08-17'&&date<'2016-04-25')return{
   nativeProfile:date<'2013-10-03'?'1.0.0.3664':date<'2013-12-12'?'1.0.0.3890':date<'2014-03-13'?'1.0.0.4217':'1.0.0.4944',
   evidence:date>'2014-03-13'?'last-observed-pc-build; later versions not verified':'observed-pc-build'
@@ -35,7 +37,17 @@ function cloneMaterial(m){return {...m,values:{...m.values},textures:{...m.textu
 export class HistoricalAdapter {
  constructor(sources,composer,history){Object.assign(this,{sources,composer,history});this.textures=new Map();this.meshes=new WeakMap();this.textureBytes=0;this.textureLimit=96*1024*1024;}
  static async create(sources,composer){return new HistoricalAdapter(sources,composer,await HistoricalFrames.load());}
- async nativeProfile(builder,renderer,version){this.nativeProfiles??=new Map();if(!this.nativeProfiles.has(version))this.nativeProfiles.set(version,NativeMinionProfile.load(this,builder,renderer,version).catch(error=>{this.nativeProfiles.delete(version);throw error;}));return this.nativeProfiles.get(version);}
+ async nativeProfile(builder,renderer,version,kind='MINION'){this.nativeProfiles??=new Map();const key=version+':'+kind;if(!this.nativeProfiles.has(key)){const pending=kind==='MINION'?NativeMinionProfile.load(this,builder,renderer,version):Native3664CardProfile.load(this,builder,renderer);this.nativeProfiles.set(key,pending.catch(error=>{this.nativeProfiles.delete(key);throw error;}));}return this.nativeProfiles.get(key);}
+ async native3664EffectTexture(name){
+  if(typeof name!=='string'||!/^AllyInHand[A-Za-z0-9_]+$/.test(name))throw Error('Invalid original hand-effect texture name');
+  if(!this.native3664Effects)this.native3664Effects=(async()=>{
+   const response=await resourceFetch(new URL('early-native/pc-1.0.0.3664-effects.json',this.history.base));
+   if(!response.ok)throw Error('Original hand-effect manifest HTTP '+response.status);
+   const manifest=await response.json();if(manifest.schema!==1||manifest.sourceVersion!=='1.0.0.3664'||!Array.isArray(manifest.textures))throw Error('Invalid original hand-effect manifest');
+   return {edition:'1.0.0.3664-effects',textures:manifest.textures.map(row=>({id:row.name,...row,encoding:'unity-dxt-mips',file:row.nativeImage.file,filterMode:row.sampler.m_FilterMode,wrapMode:row.sampler.m_WrapMode,aniso:row.sampler.m_Aniso,mipBias:row.sampler.m_MipBias}))};
+  })().catch(error=>{this.native3664Effects=null;throw error;});
+  return this.texture(await this.native3664Effects,name);
+ }
  async component(type,id){
   if(!['frames','texts'].includes(type)||!/^[-.A-Za-z0-9_]{1,96}$/.test(id))throw Error('Invalid historical component');
   this.componentPromises??=new Map();const key=type+':'+id;

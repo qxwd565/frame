@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-53c1a4d730446a2a';
-import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-53c1a4d730446a2a';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-13b870ed5737dccf';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-13b870ed5737dccf';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -51,6 +51,13 @@ export class NativeMinionProfile {
    const bank=await adapter.betaShaderBank;
    if(bank.schema!==1||!Array.isArray(bank.shaders)||!bank.programs)throw Error('Invalid beta shader bank');
    renderer.extraPrograms??=new Map();
+   if(version==='1.0.0.3664'){
+    if(!adapter.native3664ShaderBank)adapter.native3664ShaderBank=json(base,'native-3664-card-shaders.json.gz').catch(error=>{adapter.native3664ShaderBank=null;throw error;});
+    const extra=await adapter.native3664ShaderBank;
+    if(extra.schema!==1||extra.sourceVersion!==version||extra.shaders.length!==14)throw Error('Invalid original 3664 shader bank');
+    for(const shader of extra.shaders)builder.shaders.set(shader.name,shader);
+    for(const [id,program] of Object.entries(extra.programs))renderer.extraPrograms.set(id,program);
+   }
    const byName=new Map(bank.shaders.map(shader=>[shader.name,shader]));
    for(const shader of bank.shaders)builder.shaders.set(shader.name,shader);
    for(const [id,program] of Object.entries(bank.programs))renderer.extraPrograms.set(id,program);

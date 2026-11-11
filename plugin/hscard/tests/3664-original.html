@@ -1,0 +1,47 @@
+<!doctype html><meta charset="utf-8"><meta name="hscard-resource-base" content="http://127.0.0.1:19420/resources/"><canvas></canvas>
+<script>if(new URL(location.href).searchParams.get('source')==='api')document.querySelector('meta[name="hscard-resource-base"]').content='https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';</script>
+<script type="module">
+import {HSPlusSources} from '/plugin/assets/unity/hsplus-sources.mjs';
+import {FrameComposer} from '/plugin/assets/unity/frame-composition.mjs';
+import {NativeDrawBuilder} from '/plugin/assets/unity/native-draw-builder.mjs';
+import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
+import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
+import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
+import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+import {HistoricalAdapter} from '/plugin/assets/unity/historical-adapter.mjs';
+window.result={running:true};const errors=[],cases=[];
+try{
+ const bytes=async n=>new Uint8Array(await(await fetch('/resources/'+n)).arrayBuffer());
+ const json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
+ const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
+ const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts),textures=new Map();
+ const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;const key=t.key||t.embedded;if(!textures.has(key))textures.set(key,(async()=>{if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};})());return textures.get(key);});
+ const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+ renderer.device.addEventListener('uncapturederror',e=>errors.push(e.error.message));
+ async function hashTarget(target){
+  const {width,height}=target,stride=Math.ceil(width*4/256)*256,buffer=renderer.device.createBuffer({size:stride*height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ});
+  try{const encoder=renderer.device.createCommandEncoder();encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:stride},{width,height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);const padded=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(width*height*4);for(let y=0;y<height;y++)pixels.set(padded.subarray(y*stride,y*stride+width*4),y*width*4);return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',pixels)),b=>b.toString(16).padStart(2,'0')).join('');}finally{buffer.destroy();}
+ }
+ const classes=['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'];
+ const base={name:'원본 주문과 무기',text:'<b>전투의 함성:</b>\n원본 문구',race:'',cost:3,attack:2,health:2,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
+ for(const kind of ['SPELL','WEAPON'])for(const cardClass of classes)for(const golden of [false,true]){
+  window.result={running:true,case:[kind,cardClass,golden],completed:cases.length};
+  const prepared=await cards.prepare({...base,kind,cardClass,golden,frameProfile:'historical',renderDate:'2013-08-17'});
+  if(prepared.frame.nativeVersion!=='1.0.0.3664')throw Error('Wrong original frame version');
+  if(!prepared.frame.parts.length||prepared.frame.parts.some(p=>!p.material.shader.startsWith('Native/')))throw Error('Original frame shader replaced');
+  if(!prepared.textDraws.length)throw Error('Missing card text');
+  const compressed=prepared.frame.parts.flatMap(p=>Object.values(p.material.textures)).filter(t=>[71,77].includes(t.pixels?.format));
+  if(!compressed.length)throw Error('Original compressed texture absent');
+  const target=renderer.createTarget(prepared.context.width,prepared.context.height);
+  try{await cards.renderPrepared(prepared,{transparent:true,time:0,destination:target});cases.push({kind,cardClass,golden,parts:prepared.frame.parts.length,compressed:compressed.length,rgbaSha256:await hashTarget(target)});}
+  finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
+ }
+ const historical=await HistoricalAdapter.create(sources,composer),effectNames=['AllyInHandSummonForge','AllyInHandSummon_Lrg','AllyInHandSummon_Premium','AllyInHandTwistedGlow','AllyInHandSummon','AllyInHandFuse','AllyInHandBurn1','AllyInHandExchangeDis1'];
+ for(const name of effectNames){const texture=await historical.native3664EffectTexture(name);if(![71,77].includes(texture.pixels.format)||!texture.pixels.levels.length)throw Error('Original hand-effect texture missing: '+name);}
+ await historical.nativeProfile(builder,renderer,'1.0.0.3664','SPELL');const shaderBank=await historical.native3664ShaderBank;
+ if(!shaderBank||shaderBank.shaders.length!==14)throw Error('Original shader inventory incomplete');
+ for(const program of Object.values(shaderBank.programs)){const module=renderer.device.createShaderModule({code:program.wgsl}),info=await module.getCompilationInfo();if(info.messages.some(m=>m.type==='error'))throw Error('Original shader failed WebGPU compilation: '+program.id);}
+ let rejected=false;try{await historical.native3664EffectTexture('../invalid');}catch{rejected=true;}if(!rejected)throw Error('Invalid hand-effect texture name accepted');
+ renderer.dispose();raster.dispose();window.result={running:false,cases,errors,effectTextures:effectNames.length,shaders:shaderBank.shaders.length,programs:Object.keys(shaderBank.programs).length};
+}catch(error){window.result={running:false,error:error.stack,cases,errors};}
+</script>

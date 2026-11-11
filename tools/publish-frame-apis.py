@@ -125,6 +125,9 @@ def plan():
         parity=prefix+'early-native/pc-webgpu-d3d-parity.json'
         if parity in files:
             for build in ['3664','3890','4217','4944']:assign(parity,'1.0.0.'+build)
+        card_parity=prefix+'early-native/pc-3664-spell-weapon-parity.json'
+        if card_parity in files:
+            assign(card_parity,'1.0.0.3664')
         ios_render=prefix+'early-native/ios-gles-render-comparison.json'
         if ios_render in files:
             for row in read(early_index)['snapshots']:
@@ -145,6 +148,16 @@ def plan():
     for row in read(prefix + 'native-minion-profiles.json')['profiles']:
         assign(prefix + row['file'], row['version'])
         dependencies(read(prefix + row['file']), row['version'])
+    card_3664 = prefix + 'card-3664-spell-weapon.json.gz'
+    shaders_3664 = prefix + 'native-3664-card-shaders.json.gz'
+    effects_3664 = prefix + 'early-native/pc-1.0.0.3664-effects.json'
+    if card_3664 in files:
+        assign(card_3664, '1.0.0.3664')
+        assign(shaders_3664, '1.0.0.3664')
+        dependencies(read(card_3664), '1.0.0.3664')
+    if effects_3664 in files:
+        assign(effects_3664, '1.0.0.3664')
+        dependencies(read(effects_3664), '1.0.0.3664')
     for key, rows in manifest.get('atlasSnapshots', {}).items():
         dependencies(rows, key)
     for stem, source in [('41010956', '6.2.15153'), ('41010957', '6.2.15153'),

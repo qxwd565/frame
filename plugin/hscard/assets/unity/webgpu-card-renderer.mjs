@@ -1,10 +1,10 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-53c1a4d730446a2a';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-53c1a4d730446a2a';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-53c1a4d730446a2a';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-53c1a4d730446a2a';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-53c1a4d730446a2a';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-53c1a4d730446a2a';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-53c1a4d730446a2a';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-13b870ed5737dccf';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-13b870ed5737dccf';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-13b870ed5737dccf';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-13b870ed5737dccf';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-13b870ed5737dccf';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-13b870ed5737dccf';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-13b870ed5737dccf';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -55,7 +55,7 @@ export class WebGPUCardRenderer {
     if(selection||textProfile){
       if(!this.historicalPromise)this.historicalPromise=HistoricalAdapter.create(this.sources,this.composer).catch(error=>{this.historicalPromise=null;throw error;});
       historical=await this.historicalPromise;
-      if(selection?.nativeProfile)nativeProfile=await historical.nativeProfile(this.builder,this.renderer,selection.nativeProfile);
+      if(selection?.nativeProfile)nativeProfile=await historical.nativeProfile(this.builder,this.renderer,selection.nativeProfile,selection.nativeKind);
     }
     // A fill never composes a second frame. Geometry, UVs, class texture,
     // rarity and historical parts remain those already on screen.

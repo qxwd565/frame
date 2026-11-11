@@ -51,13 +51,37 @@ try{
  const call=(method,params={})=>new Promise((resolve,reject)=>{const id=++sequence;pending.set(id,{resolve,reject});ws.send(JSON.stringify({id,method,params}));});
  await call('Page.navigate',{url:'http://127.0.0.1:19420/work/pc-d3d-parity.html'});
  for(let i=0;i<400;i++){const r=await call('Runtime.evaluate',{expression:'window.ready===true',returnByValue:true});if(r.result.value)break;if(i===399)throw Error('Original parity page unavailable');await sleep(250);}
+ if(process.argv.includes('--software-bc'))await call('Runtime.evaluate',{expression:'window.enableOriginalMipDiagnostic(true)',awaitPromise:true,returnByValue:true});
  const results=[];
- for(const [date,build] of [['2013-08-17','3664'],['2013-10-03','3890'],['2013-12-12','4217'],['2014-03-13','4944']]){
-  const source=JSON.parse(z.gunzipSync(await fs.readFile(`E:/hearthstone card/하수인 원본 렌더/원본 추출/PC 1.0.0.${build}.json.gz`)));
-  const original=new Map(source.assets.filter(x=>x.type===48).flatMap(s=>s.d3d11Programs.map(p=>[p.sha256,p])));
+ const originalCards=process.argv.includes('--card-3664');
+ const versions=originalCards?[['2013-08-17','3664']]:[['2013-08-17','3664'],['2013-10-03','3890'],['2013-12-12','4217'],['2014-03-13','4944']];
+ for(const [date,build] of versions){
+  const root='v7.14.4-webgpu-20261109/assets/unity/historical-frames/';
+  const source=JSON.parse(z.gunzipSync(await fs.readFile(originalCards?root+'early-native/snapshots/pc-1.0.0.3664.json.gz':`E:/hearthstone card/하수인 원본 렌더/원본 추출/PC 1.0.0.${build}.json.gz`)));
+  const original=new Map();
+  for(const shader of source.assets.filter(x=>x.type===48)){
+   if(!originalCards){for(const p of shader.d3d11Programs)original.set(p.sha256,p);continue;}
+   const raw=z.gunzipSync(await fs.readFile(root+shader.shaderSource.file));
+   if(crypto.createHash('sha256').update(raw).digest('hex')!==shader.shaderSource.rawSha256)throw Error('Original shader source checksum');
+   for(const m of raw.toString().matchAll(/SubProgram "d3d11 " \{([\s\S]*?)"((?:vs|ps)_4_0)\s+([a-p\s]+)"/g)){
+    const chars=m[3].replace(/\s/g,''),bytes=Buffer.alloc(chars.length/2);
+    for(let i=0;i<bytes.length;i++)bytes[i]=((chars.charCodeAt(i*2)-97)<<4)|(chars.charCodeAt(i*2+1)-97);
+    if(bytes.toString('ascii',0,4)!=='DXBC')throw Error('Invalid original shader bytecode');
+    original.set(crypto.createHash('sha256').update(bytes).digest('hex'),{bytecode:bytes.toString('base64'),sha256:crypto.createHash('sha256').update(bytes).digest('hex')});
+   }
+  }
   const classes=process.argv.includes('--all-classes')?['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR']:['MAGE'];
-  for(const cardClass of classes)for(const golden of [false,true]){
-   const response=await call('Runtime.evaluate',{expression:`window.capture(${JSON.stringify(date)},${golden},${JSON.stringify(cardClass)})`,awaitPromise:true,returnByValue:true});
+  for(const kind of originalCards?['SPELL','WEAPON']:['MINION'])for(const cardClass of classes)for(const golden of [false,true]){
+   if(process.argv.includes('--per-draw')&&(kind!=='SPELL'||cardClass!=='MAGE'||!golden))continue;
+   const captureExpression=index=>`window.capture(${JSON.stringify(date)},${golden},${JSON.stringify(cardClass)},${index===null?'null':index},${JSON.stringify(kind)})`;
+   let drawIndices=[null];
+   if(process.argv.includes('--per-draw')){
+    const initial=await call('Runtime.evaluate',{expression:captureExpression(null),awaitPromise:true,returnByValue:true});
+    if(initial.exceptionDetails)throw Error(JSON.stringify(initial.exceptionDetails));
+    drawIndices=Array.from({length:initial.result.value.totalDraws},(_,i)=>i);
+   }
+   for(const drawIndex of drawIndices){
+   const response=await call('Runtime.evaluate',{expression:captureExpression(drawIndex),awaitPromise:true,returnByValue:true});
    if(response.exceptionDetails)throw Error(response.exceptionDetails.text+' '+JSON.stringify(response.exceptionDetails.exception));
    const capture=response.result.value;if(capture.version!=='1.0.0.'+build)throw Error('Incorrect native frame selected');
    const shaders=new Map();for(const draw of capture.draws){
@@ -70,12 +94,16 @@ try{
    const gpu=Buffer.from(capture.webgpuPixels,'base64'),black=Buffer.from(output.black,'base64'),white=Buffer.from(output.white,'base64');
    if(gpu.length!==capture.width*capture.height*4||black.length!==gpu.length||white.length!==gpu.length)throw Error('Reference image size mismatch');
    const options=[false,true].map(flip=>compare(gpu,black,white,capture.width,capture.height,flip));options.sort((a,b)=>a.meanAbsoluteError-b.meanAbsoluteError);
-   results.push({version:capture.version,cardClass,golden,scope:'same frame draw commands and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
+   results.push({version:capture.version,kind,cardClass,golden,drawIndex,source:drawIndex===null?undefined:capture.drawSources[0],scope:'same frame draw commands and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
    console.log(JSON.stringify(results.at(-1)));
-   if(options[0].visiblePixels<100000||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000)throw Error('Native/WebGPU frame parity outside verified tolerance');
+   if((drawIndex===null&&options[0].visiblePixels<100000)||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000){
+    results.at(-1).outsideExistingTolerance=true;
+    if(!process.argv.includes('--measure'))throw Error('Native/WebGPU frame parity outside verified tolerance');
+   }
+   }
   }
  }
  const report={schema:1,scope:'Same generated frame draw commands; PC original D3D bytecode compared to translated WebGPU. Text and card-specific golden portrait animation excluded. Differences are reported as measured; no pixel-exact claim.',cases:results};
- if(!process.argv.includes('--no-write'))await fs.writeFile('v7.14.4-webgpu-20261109/assets/unity/historical-frames/early-native/pc-webgpu-d3d-parity.json',JSON.stringify(report)+'\n');
- console.log(JSON.stringify({completed:true,cases:results.length}));
+ if(!process.argv.includes('--no-write'))await fs.writeFile('v7.14.4-webgpu-20261109/assets/unity/historical-frames/early-native/'+(originalCards?'pc-3664-spell-weapon-parity.json':'pc-webgpu-d3d-parity.json'),JSON.stringify(report)+'\n');
+ console.log(JSON.stringify({completed:true,cases:results.length,outsideExistingTolerance:results.filter(x=>x.outsideExistingTolerance).length}));
 }finally{ws?.close();chrome.kill();}

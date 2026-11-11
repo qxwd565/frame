@@ -271,3 +271,19 @@ or browser exceptions. PHP/JS syntax, 900 skeleton markup cases, source/import
 regressions, 2,047 resource routes and dependency revision checks passed.
 SQLite tests substitute serial success for MySQL advisory-lock SQL; live MySQL
 contention and production WordPress installation/Cron execution are not claimed.
+# 3664 spell and weapon source profiles
+
+The original PC 1.0.0.3664 normal/golden spell and weapon prefabs use their
+source meshes, DXT texture bytes and authored mip boundaries. All 14 archived
+3664 frame shader definitions (33 distinct translated programs) compile as
+WebGPU shader modules. The API also stores eight original hand-effect textures;
+loading those textures does not implement or trigger their particle animations.
+
+Local and published API resources produced identical RGBA hashes for 40
+spell/weapon, neutral/class, normal/golden WebGPU cases. The 36-case
+frame-before-artwork/fill regression also passed. These are not a claim of
+pixel-identical original game output: in the fixed-input, text-excluded D3D11
+comparison, 30 of 40 cases exceeded the pre-existing minion thresholds.
+The full measurements are stored as
+`historical-frames/early-native/pc-3664-spell-weapon-parity.json` in legacy/frame/.
+

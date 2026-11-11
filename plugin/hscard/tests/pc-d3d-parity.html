@@ -38,11 +38,12 @@ const b64=data=>{let s='';for(let i=0;i<data.length;i+=0x8000)s+=String.fromChar
 const le=(n)=>{const x=new Uint8Array(4);new DataView(x.buffer).setInt32(0,n,true);return x;};
 const concat=parts=>{const out=new Uint8Array(parts.reduce((n,p)=>n+p.length,0));let at=0;for(const p of parts){out.set(p,at);at+=p.length;}return out;};
 const hash=async bytes=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');
-window.capture=async(date,golden,cardClass='MAGE',onlyDraw=null)=>{
- const card={kind:'MINION',cardClass,golden,name:'동일한 카드',text:'전투의 함성: 카드를 뽑습니다.',race:'멀록',cost:3,attack:2,health:4,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,frameProfile:'historical',renderDate:date,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
+window.capture=async(date,golden,cardClass='MAGE',onlyDraw=null,kind='MINION')=>{
+ const card={kind,cardClass,golden,name:'동일한 카드',text:'전투의 함성: 카드를 뽑습니다.',race:kind==='MINION'?'멀록':'',cost:3,attack:2,health:4,durability:2,rarity:'RARE',set:'EXPERT1',watermark:'Set1_Icon',quantity:1,frameProfile:'historical',renderDate:date,tags:{},artPixels:{width:1,height:1,format:28,levels:[new Uint8Array([80,130,190,255])]}};
  const prepared=await cards.prepare(card),target=renderer.createTarget(prepared.context.width,prepared.context.height);
  try{
-  const allDraws=(await Promise.all(prepared.frame.parts.map(part=>builder.draw(part,{...prepared.context,time:0})))).flat();
+  const groups=await Promise.all(prepared.frame.parts.map(part=>builder.draw(part,{...prepared.context,time:0})));
+  const allDraws=groups.flat(),drawSources=groups.flatMap((group,i)=>group.map(()=>({path:prepared.frame.parts[i].path,slot:prepared.frame.parts[i].slot,shader:prepared.frame.parts[i].material.shader})));
   const draws=onlyDraw===null?allDraws:[allDraws[onlyDraw]];if(draws.some(x=>!x))throw Error('Invalid diagnostic draw');
   await renderer.transparent(target.width,target.height,draws,target);await renderer.device.queue.onSubmittedWorkDone();
   const pitch=Math.ceil(target.width*4/256)*256,buffer=renderer.device.createBuffer({size:pitch*target.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}),encoder=renderer.device.createCommandEncoder();
@@ -65,7 +66,7 @@ window.capture=async(date,golden,cardClass='MAGE',onlyDraw=null)=>{
   for(const draw of draws)result.push({mesh:await mesh(draw.mesh),vertexProgram:draw.vertexProgram,fragmentProgram:draw.fragmentProgram,
    subshader:0,pass:0,keywords:[],vertexBuffers:draw.vertexBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),fragmentBuffers:draw.fragmentBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),
    vertexTextures:await Promise.all(draw.vertexTextures.map(texture)),fragmentTextures:await Promise.all(draw.fragmentTextures.map(texture)),state:draw.state});
-  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,totalDraws:allDraws.length,webgpuPixels:b64(pixels),draws:result,resources};
+  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,totalDraws:allDraws.length,drawSources:onlyDraw===null?drawSources:[drawSources[onlyDraw]],webgpuPixels:b64(pixels),draws:result,resources};
  }finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
 };window.ready=true;
 </script>
