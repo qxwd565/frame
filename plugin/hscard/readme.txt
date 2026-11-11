@@ -3,7 +3,7 @@ Contributors: hsdeck
 Tags: hearthstone, deck, deckstring, webgpu
 Requires at least: 6.6
 Requires PHP: 7.4
-Stable tag: 7.14.4-webgpu-dates-v1-preview
+Stable tag: 7.14.5-webgpu-beta3664-preview
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 

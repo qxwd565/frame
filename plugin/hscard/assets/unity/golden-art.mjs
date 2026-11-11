@@ -1,5 +1,5 @@
-import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {validateAnimation} from './artwork-animation.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {decodeTexture} from './hsplus-sources.mjs?ver=hscard-58fd7d98a381f0ce';
+import {validateAnimation} from './artwork-animation.mjs?ver=hscard-58fd7d98a381f0ce';
 
 // Documents are relative to the owning set root, not golden/cards/.
 const indexes=new Map(),materials=new Map(),textures=new Map(),historicalBanks=new Map(),queue=[];
@@ -47,8 +47,8 @@ async function historicalPrograms(root,index,data){
  const native=data.native,shader=native?.shader,programs=native?.programs;
  if(index.set!=='legacy'||shader?.name!==data.material.shader||!/^Native\/LegacyBeta\/[0-9]+\/[a-f0-9]{16}$/.test(shader.name)||!programs||Object.keys(programs).length!==2)throw Error('Invalid historical golden shader');
  const descriptor=index.webgpuBank;if(descriptor?.path!=='golden/historical-webgpu.json'||!/^[a-f0-9]{64}$/.test(descriptor.sha256))throw Error('Historical WebGPU bank unavailable');
- const url=sameSetPath(root,descriptor.path,/^golden\/historical-webgpu\.json$/);
- const bank=await cached(historicalBanks,url+':'+descriptor.sha256,async()=>{const bytes=await download(url,4*1024*1024);if(await digest(bytes)!==descriptor.sha256)throw Error('Historical WebGPU bank checksum mismatch');const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(value?.schema!==1||!value.programs||typeof value.programs!=='object')throw Error('Invalid historical WebGPU bank');return{value,bytes:bytes.byteLength};},8,16*1024*1024);
+ const url=new URL(sameSetPath(root,descriptor.path,/^golden\/historical-webgpu\.json$/));url.searchParams.set('sha256',descriptor.sha256);const bankURL=url.href;
+ const bank=await cached(historicalBanks,bankURL,async()=>{const bytes=await download(bankURL,4*1024*1024);if(await digest(bytes)!==descriptor.sha256)throw Error('Historical WebGPU bank checksum mismatch');const value=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));if(value?.schema!==1||!value.programs||typeof value.programs!=='object')throw Error('Invalid historical WebGPU bank');return{value,bytes:bytes.byteLength};},8,16*1024*1024);
  const resolved={};for(const [id,p] of Object.entries(programs)){
   if(!/^[a-f0-9]{64}$/.test(id)||!['vertex','fragment'].includes(p?.stage)||typeof p.source!=='string'||p.source.length>262144||await digest(new TextEncoder().encode(p.source))!==id)throw Error('Historical shader checksum mismatch');
   const spec=bank.programs[id];if(spec?.sourceSha256!==id||spec.stage!==p.stage||typeof spec.wgsl!=='string'||spec.wgsl.length>262144||!/^[a-f0-9]{64}$/.test(spec.wgslSha256)||await digest(new TextEncoder().encode(spec.wgsl))!==spec.wgslSha256)throw Error('Historical WebGPU shader checksum mismatch');

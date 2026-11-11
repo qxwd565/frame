@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-58fd7d98a381f0ce';
 /**
  * Quantity ribbon is part of the same Unity-compatible WebGL card scene.
  * A quantity of 1 has no ribbon; any positive quantity >= 2 is drawn on the

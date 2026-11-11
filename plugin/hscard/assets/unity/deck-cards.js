@@ -1,5 +1,5 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-58fd7d98a381f0ce';
+import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-58fd7d98a381f0ce';
 /*
  * EXPERIMENTAL: WebGPU-only migration, not production validated.
  * A single WebGPU device supplies every desktop card in the article.
@@ -8,16 +8,16 @@ import {loadShaderIndex} from './wgsl-programs.mjs?ver=hscard-1b1e8feb48b16fe0';
  * long asynchronous card renders are in progress; a separate, cheap present
  * pass recomputes exact positions whenever the renderer becomes idle.
  */
-import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {FrameComposer} from './frame-composition.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {createFontRasterizer} from './font-raster.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {resolveCard} from './card-data.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-1b1e8feb48b16fe0';
-import {trimCardCache} from './card-render-cache.mjs?ver=hscard-1b1e8feb48b16fe0';
+import {HSPlusSources} from './hsplus-sources.mjs?ver=hscard-58fd7d98a381f0ce';
+import {FrameComposer} from './frame-composition.mjs?ver=hscard-58fd7d98a381f0ce';
+import {NativeDrawBuilder} from './native-draw-builder.mjs?ver=hscard-58fd7d98a381f0ce';
+import {WebGPUNativeRenderer} from './webgpu-native.mjs?ver=hscard-58fd7d98a381f0ce';
+import {WebGPUCardRenderer} from './webgpu-card-renderer.mjs?ver=hscard-58fd7d98a381f0ce';
+import {createFontRasterizer} from './font-raster.mjs?ver=hscard-58fd7d98a381f0ce';
+import {resolveCard} from './card-data.mjs?ver=hscard-58fd7d98a381f0ce';
+import {startDeckHydration} from './deck-hydration.mjs?ver=hscard-58fd7d98a381f0ce';
+import {WebGPUMultiCardSurface} from './webgpu-multi-card-surface.mjs?ver=hscard-58fd7d98a381f0ce';
+import {trimCardCache} from './card-render-cache.mjs?ver=hscard-58fd7d98a381f0ce';
 const desktop=matchMedia('(min-width:821px)'),reduced=matchMedia('(prefers-reduced-motion:reduce)'),items=new Map(),OVERSCAN=160;
 let runtime,ready,frame=0,layoutFrame=0,running=false,pending=false,layoutDirty=true,observer,resizeObserver,sequence=0,epoch=0,visibilitySequence=0,paintedAnchor=null,hovered=null;
 let deviceRecovery=null,deviceRecoveries=0,closing=false;

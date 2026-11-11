@@ -3,7 +3,7 @@
  * Plugin Name: HScard
  * Plugin URI: https://hsdeck.com/
  * Description: Experimental WebGPU-only HSdeck card renderer with strict dates-v1 JSON. Requires WebGPU; not production validated.
- * Version: 7.14.4-webgpu-dates-v1-preview
+ * Version: 7.14.5-webgpu-beta3664-preview
  * Requires at least: 6.6
  * Requires PHP: 7.4
  * Author: HSdeck
@@ -19,7 +19,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 	exit;
 }
 
-define( 'HSCARD_VERSION', '7.14.4-webgpu-dates-v1-preview' );
+define( 'HSCARD_VERSION', '7.14.5-webgpu-beta3664-preview' );
 define( 'HSCARD_PATH', plugin_dir_path( __FILE__ ) );
 
 require_once HSCARD_PATH . 'includes/class-plugin.php';
