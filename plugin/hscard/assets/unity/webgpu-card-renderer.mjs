@@ -1,11 +1,11 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-11e3f21466ad0fb3';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-11e3f21466ad0fb3';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-11e3f21466ad0fb3';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-11e3f21466ad0fb3';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-11e3f21466ad0fb3';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-11e3f21466ad0fb3';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-11e3f21466ad0fb3';
-import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-11e3f21466ad0fb3';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-a7d0db14c9c42020';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-a7d0db14c9c42020';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-a7d0db14c9c42020';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-a7d0db14c9c42020';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-a7d0db14c9c42020';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-a7d0db14c9c42020';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-a7d0db14c9c42020';
+import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-a7d0db14c9c42020';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -148,7 +148,7 @@ export class WebGPUCardRenderer {
     // selected shader programs, rather than assuming only golden cards move.
     prepared.animated=!!prepared.animation||draws.some(draw=>draw.animated);
     if(!isCurrent())return false;
-    if(transparent){if(await this.renderer.transparent(context.width,context.height,draws,destination,isCurrent)===false)return false;}else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
+    if(transparent){if(await this.renderer.transparent(context.width,context.height,draws,destination,isCurrent,!!frame.exactAlpha)===false)return false;}else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
     return{width:context.width,height:context.height,frameParts:frame.parts.length,textDraws:textDraws.length};
   }
   async render(card,background=[1,1,1,1],transparent=false){

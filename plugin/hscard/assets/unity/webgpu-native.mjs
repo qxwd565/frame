@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-11e3f21466ad0fb3';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-a7d0db14c9c42020';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -296,22 +296,22 @@ export class WebGPUNativeRenderer {
    this.alphaScratch.delete(oldKey);this.releaseTarget(old.black);this.releaseTarget(old.white);}
   return scratch;
  }
- async _alphaPipeline(){
-  if(this.compositor)return this.compositor;
+ async _alphaPipeline(exact=false){
+  const key=exact?'originalCompositor':'compositor';if(this[key])return this[key];
   const shader=`@group(0) @binding(0) var blackImage:texture_2d<f32>; @group(0) @binding(1) var whiteImage:texture_2d<f32>;
 struct V { @builtin(position) pos:vec4f }; @vertex fn vs_main(@builtin(vertex_index) id:u32)->V { let p=vec2f(f32((id<<1u)&2u),f32(id&2u));return V(vec4f(p*2.0-vec2f(1),0,1)); }
-@fragment fn fs_main(@builtin(position) position:vec4f)->@location(0) vec4f {let pix=vec2i(position.xy);let b=textureLoad(blackImage,pix,0).rgb;let w=textureLoad(whiteImage,pix,0).rgb;let a=max(max(b.r,max(b.g,b.b)),round(clamp(255.0-dot(w-b,vec3f(85)),0,255))/255);return vec4f(select(vec3f(0),b/max(a,1e-10),a>0),a);}`;
+@fragment fn fs_main(@builtin(position) position:vec4f)->@location(0) vec4f {let pix=vec2i(position.xy);let b=textureLoad(blackImage,pix,0).rgb;let w=textureLoad(whiteImage,pix,0).rgb;let a=max(max(b.r,max(b.g,b.b)),round(clamp(255.0-dot(w-b,vec3f(85)),0,255))/255);${exact ? "let ai=u32(round(a*255.0));let bi=vec3u(round(b*255.0));let den=max(ai,1u);let numerator=bi*vec3u(255u);let quotient=numerator/vec3u(den);let remainder=numerator%vec3u(den);let twice=remainder*vec3u(2u);let increment=select(vec3u(0u),vec3u(1u),(twice>vec3u(ai))|((twice==vec3u(ai))&((quotient&vec3u(1u))!=vec3u(0u))));let rgb=select(vec3u(0u),quotient+increment,ai>0u);return vec4f(vec3f(rgb)/255.0,f32(ai)/255.0);" : "return vec4f(select(vec3f(0),b/max(a,1e-10),a>0),a);"}}`;
   const module=this.device.createShaderModule({code:shader});
-  this.compositor=this.device.createRenderPipelineAsync({layout:'auto',vertex:{module,entryPoint:'vs_main'},fragment:{module,entryPoint:'fs_main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}}).catch(e=>{this.compositor=null;throw e;});
-  return this.compositor;
+  this[key]=this.device.createRenderPipelineAsync({layout:'auto',vertex:{module,entryPoint:'vs_main'},fragment:{module,entryPoint:'fs_main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}}).catch(e=>{this[key]=null;throw e;});
+  return this[key];
  }
- async transparent(width,height,draws,destination,isCurrent=()=>true){
+ async transparent(width,height,draws,destination,isCurrent=()=>true,exactAlpha=false){
   if(!destination)throw Error('WebGPU native transparent pass requires an explicit render target');
   if(this.lostReason)throw Error('WebGPU device lost: '+this.lostReason);
   // Resolve textures, geometry, uniforms and pipelines once; encode the entire
   // two-pass scene and alpha composite into ONE GPU command buffer/submission.
   // This is particularly important for 30 continuously animated golden cards.
-  const alphaPipeline=await this._alphaPipeline();
+  const alphaPipeline=await this._alphaPipeline(exactAlpha);
   this.arena.reset();const prepared=await this._draws(draws);
   if(!isCurrent())return false;
   const {black,white}=this._alphaTargets(width,height);
