@@ -63,14 +63,13 @@ try{
  const biasArgument=process.argv.find(x=>x.startsWith('--diagnostic-bias='));
  if(biasArgument){const bias=Number(biasArgument.split('=')[1]);if(!Number.isFinite(bias))throw Error('Invalid diagnostic bias');await call('Runtime.evaluate',{expression:`window.diagnosticMipBias=${bias}`,returnByValue:true});}
  const results=[];
- const summon=process.argv.includes('--summon'),originalCards=summon||process.argv.includes('--card-3664');
+ const minion3664=process.argv.includes('--minion-3664'),originalCards=minion3664||process.argv.includes('--card-3664');
  const versions=originalCards?[['2013-08-17','3664']]:[['2013-08-17','3664'],['2013-10-03','3890'],['2013-12-12','4217'],['2014-03-13','4944']];
  for(const [date,build] of versions){
   const root='v7.14.4-webgpu-20261109/assets/unity/historical-frames/';
   const source=JSON.parse(z.gunzipSync(await fs.readFile(originalCards?root+'early-native/snapshots/pc-1.0.0.3664.json.gz':`E:/hearthstone card/하수인 원본 렌더/원본 추출/PC 1.0.0.${build}.json.gz`)));
   const original=new Map();
   const sourcePrograms=source.assets.filter(x=>x.type===48);
-  if(summon){const effect=JSON.parse(await fs.readFile(root+'early-native/pc-1.0.0.3664-summon-source.json','utf8'));const obj=effect.objects.find(x=>x.type==='Shader'&&x.fields.m_Name==='Additive');if(!obj)throw Error('Original summon shader missing');const packed=await fs.readFile(root+obj.sourceObject.file),raw=z.gunzipSync(packed);if(crypto.createHash('sha256').update(raw).digest('hex')!==obj.sourceObject.rawSha256)throw Error('Original summon shader object checksum');sourcePrograms.push({effectSource:obj.fields.m_Script});}
   for(const shader of sourcePrograms){
    if(!originalCards){for(const p of shader.d3d11Programs)original.set(p.sha256,p);continue;}
    const raw=shader.effectSource?Buffer.from(shader.effectSource):z.gunzipSync(await fs.readFile(root+shader.shaderSource.file));
@@ -83,10 +82,10 @@ try{
    }
   }
   const classes=process.argv.includes('--all-classes')?['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR']:['MAGE'];
-  for(const kind of summon?['SUMMON']:originalCards?['SPELL','WEAPON']:['MINION'])for(const cardClass of classes)for(const golden of summon?[false]:[false,true])for(const effectTime of summon?[0,.05,.2,.4,.8,1.2]:[null]){
+  for(const kind of minion3664?['MINION']:originalCards?['SPELL','WEAPON']:['MINION'])for(const cardClass of classes)for(const golden of [false,true]){
    const diagnosticKind=process.argv.find(x=>x.startsWith('--diagnostic-kind='))?.split('=')[1]||'SPELL';
    if(process.argv.includes('--per-draw')&&(kind!==diagnosticKind||cardClass!=='MAGE'||golden===process.argv.includes('--normal')))continue;
-   const captureExpression=index=>`window.capture(${JSON.stringify(date)},${golden},${JSON.stringify(cardClass)},${index===null?'null':index},${JSON.stringify(kind)},${effectTime})`;
+   const captureExpression=index=>`window.capture(${JSON.stringify(date)},${golden},${JSON.stringify(cardClass)},${index===null?'null':index},${JSON.stringify(kind)})`;
    let drawIndices=[null];
    if(process.argv.includes('--per-draw')){
     const initial=await call('Runtime.evaluate',{expression:captureExpression(null),awaitPromise:true,returnByValue:true});
@@ -112,16 +111,16 @@ try{
    const gpu=Buffer.from(capture.webgpuPixels,'base64'),black=Buffer.from(output.black,'base64'),white=Buffer.from(output.white,'base64');
    if(gpu.length!==capture.width*capture.height*4||black.length!==gpu.length||white.length!==gpu.length)throw Error('Reference image size mismatch');
    const options=[false,true].map(flip=>compare(gpu,black,white,capture.width,capture.height,flip));options.sort((a,b)=>a.meanAbsoluteError-b.meanAbsoluteError);
-   results.push({version:capture.version,kind,cardClass,golden,drawIndex,effectTime,anisotropicFiltering:capture.anisotropicFiltering,source:drawIndex===null?undefined:capture.drawSources[0],scope:summon?'same recorded particle replay and scry draw commands, original D3D bytecode versus WebGPU; not a full original Unity scene comparison':'same frame draw commands, filtering state and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
+   results.push({version:capture.version,kind,cardClass,golden,drawIndex,anisotropicFiltering:capture.anisotropicFiltering,source:drawIndex===null?undefined:capture.drawSources[0],scope:'same frame draw commands, filtering state and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
    console.log(JSON.stringify(results.at(-1)));
-   if((summon&&effectTime>0&&options[0].visiblePixels===0)||(!summon&&drawIndex===null&&options[0].visiblePixels<100000)||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000||(process.argv.includes('--exact')&&!options[0].exact)){
+   if((drawIndex===null&&options[0].visiblePixels<100000)||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000||(process.argv.includes('--exact')&&!options[0].exact)){
     results.at(-1).outsideExistingTolerance=true;
     if(!process.argv.includes('--measure'))throw Error('Native/WebGPU frame parity outside verified tolerance');
    }
    }
   }
  }
- const report={schema:1,scope:summon?'Same recorded-particle replay and scry draw commands; original D3D bytecode compared to WebGPU. This is not a full Unity scene comparison.':'Same generated frame draw commands; PC original D3D bytecode compared to translated WebGPU. Text and card-specific golden portrait animation excluded.',cases:results};
- if(!process.argv.includes('--no-write'))await fs.writeFile('v7.14.4-webgpu-20261109/assets/unity/historical-frames/early-native/'+(summon?'pc-3664-summon-d3d-parity.json':originalCards?'pc-3664-spell-weapon-parity.json':'pc-webgpu-d3d-parity.json'),JSON.stringify(report)+'\n');
+ const report={schema:1,scope:'Same generated frame draw commands; PC original D3D bytecode compared to translated WebGPU. Text and card-specific golden portrait animation excluded.',cases:results};
+ if(!process.argv.includes('--no-write'))await fs.writeFile('v7.14.4-webgpu-20261109/assets/unity/historical-frames/early-native/'+(minion3664?'pc-3664-minion-d3d-parity.json':originalCards?'pc-3664-spell-weapon-parity.json':'pc-webgpu-d3d-parity.json'),JSON.stringify(report)+'\n');
  console.log(JSON.stringify({completed:true,cases:results.length,outsideExistingTolerance:results.filter(x=>x.outsideExistingTolerance).length}));
 }finally{ws?.close();chrome.kill();}

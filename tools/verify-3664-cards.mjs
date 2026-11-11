@@ -12,23 +12,18 @@ try{
  const call=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});ws.send(JSON.stringify({id:key,method,params}));});
  const fill=process.argv.includes('--frame-fill'),server=Number(process.argv.find(x=>x.startsWith('--server='))?.split('=')[1]||19420);
  await call('Runtime.enable');
- if(process.argv.includes('--summon')||process.argv.includes('--hero')){
+ if(process.argv.includes('--hero')){
   await call('Page.navigate',{url:'http://127.0.0.1:'+server+'/work/pc-d3d-parity.html'+(process.argv.includes('--api')?'?source=api':'')});
   for(let i=0;i<400;i++){const r=await call('Runtime.evaluate',{expression:'window.ready===true',returnByValue:true});if(r.result.value)break;if(i===399)throw Error('Summon test page unavailable');await sleep(250);}
-  const hero=process.argv.includes('--hero');
-  const r=await call('Runtime.evaluate',{expression:hero?'window.verifyHeroPower()':'window.verifySummon()',awaitPromise:true,returnByValue:true});
+  const r=await call('Runtime.evaluate',{expression:'window.verifyHeroPower()',awaitPromise:true,returnByValue:true});
   if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));
-  if(hero){if(r.result.value.version!=='1.0.0.3664'||r.result.value.parts<2)throw Error('Hero power regression: '+JSON.stringify(r.result.value));console.log(JSON.stringify({ok:true,heroPower:r.result.value}));}
-  else{
-  const frames=r.result.value;if(frames.length!==6||!frames[1].paths.includes('3664:SummonIn/ScryLines')||!frames[1].paths.includes('3664:SummonIn/FX_BlueRays')||frames.at(-1).paths.length||!frames.at(-1).complete||new Set(frames.map(x=>x.sha256)).size<3)throw Error('Summon playback verification failed: '+JSON.stringify(frames));
-  console.log(JSON.stringify({ok:true,frames}));
-  }
+  if(r.result.value.version!=='1.0.0.3664'||r.result.value.parts<2)throw Error('Hero power regression: '+JSON.stringify(r.result.value));console.log(JSON.stringify({ok:true,heroPower:r.result.value}));
  }else{
  async function run(api){
   await call('Page.navigate',{url:'http://127.0.0.1:'+server+'/work/'+(fill?'native-frame-fill.html':'3664-original.html'+(api?'?source=api':''))});
   for(let i=0;i<900;i++){
    await sleep(500);const result=(await call('Runtime.evaluate',{expression:'window.result',returnByValue:true})).result.value;
-   if(result&&!result.running){if(result.error||result.errors.length||result.cases.length!==(fill?36:40)||(!fill&&result.effectTextures!==8))throw Error(JSON.stringify(result));return result;}
+   if(result&&!result.running){if(result.error||result.errors.length||result.cases.length!==(fill?36:40)||(!fill&&result.effectTextures!==4))throw Error(JSON.stringify(result));return result;}
   }
   throw Error('3664 WebGPU verification timed out');
  }

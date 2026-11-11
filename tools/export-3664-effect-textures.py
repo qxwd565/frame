@@ -19,8 +19,7 @@ spec = importlib.util.spec_from_file_location('texture_mips', ROOT / 'tools/audi
 mips = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(mips)
 sha = lambda b: hashlib.sha256(b).hexdigest()
-names = {'AllyInHandSummonForge', 'AllyInHandSummon_Lrg', 'AllyInHandSummon_Premium', 'AllyInHandTwistedGlow',
-         'AllyInHandSummon', 'AllyInHandFuse', 'AllyInHandBurn1', 'AllyInHandExchangeDis1'}
+names = {'AllyInHandTwistedGlow', 'AllyInHandFuse', 'AllyInHandBurn1', 'AllyInHandExchangeDis1'}
 with (COMPARISON / '중복 정리 내역.csv').open(encoding='utf-8-sig', newline='') as source:
     rows = {r['Texture']: r for r in csv.DictReader(source)
             if r['Texture'] in names and r['Version'] == '1.0.0.3664' and r['Platform'] == 'PC'}

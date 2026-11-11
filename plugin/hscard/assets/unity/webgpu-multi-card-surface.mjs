@@ -38,7 +38,7 @@ struct Placement { rect:vec4f, surface:vec2f };
    {binding:0,resource:target.view},{binding:1,resource:this.presentationSampler},{binding:2,resource:{buffer:ubo}}]});
   entry={ubo,group,target};this.presentationEntries.set(key,entry);return entry;
  }
- remove(key){this._releasePresentation('card:'+key);this._releasePresentation('preview:'+key);const item=this.items.get(key);if(!item)return;item.summon?.effect.dispose?.();for(const target of [item.target,item.previewTarget])this.renderer.releaseTarget(target);
+ remove(key){this._releasePresentation('card:'+key);this._releasePresentation('preview:'+key);const item=this.items.get(key);if(!item)return;for(const target of [item.target,item.previewTarget])this.renderer.releaseTarget(target);
   this.items.delete(key);this.cards.releasePrepared(item.prepared);
   for(const pixels of item.prepared.goldenPixels||[]){const count=(this.goldenRefs.get(pixels)||1)-1;if(count)this.goldenRefs.set(pixels,count);else{this.goldenRefs.delete(pixels);this.renderer.releaseTexture(pixels);}}
  }
@@ -68,18 +68,8 @@ struct Placement { rect:vec4f, surface:vec2f };
    committed=true;return true;
   }finally{if(!committed){this.cards.releasePrepared(next);for(const pixels of next.goldenPixels||[])if(!this.goldenRefs.has(pixels))this.renderer.releaseTexture(pixels);}}
  }
- async startOriginal3664Summon(key,random,isCurrent=()=>true){
-  const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);
-  const prepared=item.prepared;
-  if(item.prepared.frame.nativeVersion!=='1.0.0.3664'||item.prepared.summonKind!=='MINION'||item.prepared.summonGolden)throw Error('Original 3664 normal minion summon source unavailable for this card');
-  const effect=await this.cards.createOriginal3664Summon(random);
-  if(this.items.get(key)!==item||item.prepared!==prepared||!isCurrent()){effect.dispose?.();return false;}
-  item.summon?.effect.dispose?.();item.summon={effect,started:performance.now()};return true;
- }
- hasActiveSummon(key){return !!this.items.get(key)?.summon;}
- async update(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);const active=item.summon;
-  const result=await this.cards.renderPrepared(item.prepared,{transparent:true,time,destination:item.target,...(active?{summon:active.effect,summonTime:Math.max(0,(performance.now()-active.started)/1000)}:{})});
-  if(active&&result?.summonComplete&&item.summon===active){active.effect.dispose?.();item.summon=null;}}
+ async update(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);
+  await this.cards.renderPrepared(item.prepared,{transparent:true,time,destination:item.target});}
  async updatePreview(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);if(!item.previewTarget)item.previewTarget=this.createTarget(item.target.width,item.target.height);
   await this.cards.renderPrepared({...item.prepared,quantityDraws:[]},{transparent:true,time,destination:item.previewTarget});}
  trimPreviews(keep){for(const [key,item] of this.items)if(key!==keep&&item.previewTarget){this.renderer.releaseTarget(item.previewTarget);item.previewTarget=null;this._releasePresentation('preview:'+key);}}

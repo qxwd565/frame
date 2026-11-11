@@ -36,7 +36,7 @@ try{
   try{await cards.renderPrepared(prepared,{transparent:true,time:0,destination:target});cases.push({kind,cardClass,golden,parts:prepared.frame.parts.length,compressed:compressed.length,rgbaSha256:await hashTarget(target)});}
   finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
  }
- const historical=await HistoricalAdapter.create(sources,composer),effectNames=['AllyInHandSummonForge','AllyInHandSummon_Lrg','AllyInHandSummon_Premium','AllyInHandTwistedGlow','AllyInHandSummon','AllyInHandFuse','AllyInHandBurn1','AllyInHandExchangeDis1'];
+ const historical=await HistoricalAdapter.create(sources,composer),effectNames=['AllyInHandTwistedGlow','AllyInHandFuse','AllyInHandBurn1','AllyInHandExchangeDis1'];
  for(const name of effectNames){const texture=await historical.native3664EffectTexture(name);if(![71,77].includes(texture.pixels.format)||!texture.pixels.levels.length)throw Error('Original hand-effect texture missing: '+name);}
  await historical.nativeProfile(builder,renderer,'1.0.0.3664','SPELL');const shaderBank=await historical.native3664ShaderBank;
  if(!shaderBank||shaderBank.shaders.length!==14)throw Error('Original shader inventory incomplete');
