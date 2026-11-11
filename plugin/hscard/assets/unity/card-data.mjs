@@ -1,13 +1,30 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-58fd7d98a381f0ce';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-58fd7d98a381f0ce';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-53c1a4d730446a2a';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-53c1a4d730446a2a';
 
 const artCache = new Map(), tasks = [];
+const historicalArtIndexes = new Map();
 let active = 0, artBytes = 0;
 const races = {ALL:'모두',BEAST:'야수',DEMON:'악마',DRAGON:'용족',DRAENEI:'드레나이',ELEMENTAL:'정령',MECHANICAL:'기계',MURLOC:'멀록',NAGA:'나가',PIRATE:'해적',QUILBOAR:'가시멧돼지',TOTEM:'토템',UNDEAD:'언데드'};
 const schools = {ARCANE:'비전',FEL:'지옥',FIRE:'화염',FROST:'냉기',HOLY:'신성',NATURE:'자연',SHADOW:'암흑'};
 const nativeKinds = new Set(['MINION','SPELL','WEAPON','LOCATION','HERO']);
 function label(value, table) {return String(value || '').split(',').map(x => table[x.trim().toUpperCase()] || x.trim()).filter(Boolean).join(',');}
+async function historicalArtURL(origin,id,dbfId,date){
+ if(date<'2013-08-17'||date>='2013-10-03')return '';
+ let pending=historicalArtIndexes.get(origin);
+ if(!pending){pending=(async()=>{const response=await fetch(new URL('art/historical/3664/index.json',origin),{mode:'cors',credentials:'omit'});if(response.status===404)return null;if(!response.ok)throw Error('Historical artwork index HTTP '+response.status);const value=await response.json();if(value?.schema!==1||value.set!=='legacy'||value.build!=='1.0.0.3664'||value.from!=='2013-08-17'||value.until!=='2013-10-03'||!value.cards||typeof value.cards!=='object')throw Error('Invalid historical artwork index');return value;})().catch(error=>{historicalArtIndexes.delete(origin);throw error;});historicalArtIndexes.set(origin,pending);}
+ const index=await pending,entry=index?.cards?.[id];if(!entry){const unavailable=index?.unavailable?.[id];if(unavailable){if(unavailable.dbfId!==dbfId)throw Error('Invalid historical artwork identity for '+id);throw Error('Historical artwork absent in original 3664 for '+id);}return '';}
+ const expected='art/historical/3664/'+id+'.webp';if(entry.dbfId!==dbfId||entry.path!==expected)throw Error('Invalid historical artwork entry for '+id);
+ return entry;
+}
+const nativeArtCache=new Map();let nativeArtBytes=0;
+async function nativeArtPixels(origin,entry){
+ const sha=entry.sourceSha256,path=entry.nativePath,w=entry.width,h=entry.height,f=entry.format;
+ if(!/^[a-f0-9]{64}$/.test(sha)||![10,12].includes(f)||!Number.isInteger(w)||!Number.isInteger(h)||w<1||h<1||w>4096||h>4096||!['golden/original/3664/assets/'+sha+'.bin','art/historical/3664/native/'+sha+'.bin'].includes(path))throw Error('Invalid native historical artwork');
+ const url=new URL(path,origin).href,hit=nativeArtCache.get(url);if(hit){nativeArtCache.delete(url);nativeArtCache.set(url,hit);return hit;}
+ const promise=limited(async()=>{const res=await fetch(url,{mode:'cors',credentials:'omit'});if(!res.ok)throw Error('Historical texture HTTP '+res.status);const bytes=new Uint8Array(await res.arrayBuffer()),size=Math.ceil(w/4)*Math.ceil(h/4)*(f===10?8:16);if(bytes.byteLength!==size)throw Error('Historical texture size mismatch');const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');if(digest!==sha)throw Error('Historical texture checksum mismatch');return{width:w,height:h,format:f===10?71:77,levels:[bytes],originalSampler:{filter:1,wrapU:0,wrapV:0,wrapW:1,anisotropy:1,bias:0}};}).catch(error=>{nativeArtCache.delete(url);throw error;});
+ nativeArtCache.set(url,promise);const value=await promise;nativeArtBytes+=value.levels[0].byteLength;while(nativeArtCache.size>64||nativeArtBytes>64*1024*1024){const key=nativeArtCache.keys().next().value;if(key===url&&nativeArtCache.size===1)break;const old=nativeArtCache.get(key);nativeArtCache.delete(key);old.then(p=>{nativeArtBytes=Math.max(0,nativeArtBytes-p.levels[0].byteLength);},()=>{});}return value;
+}
 function rawURL(value) {
  try {
   const url = new URL(value);
@@ -147,13 +164,18 @@ export async function resolveCard(element,golden,{isCurrent=()=>true,onMetadata=
   rawURL(identity.art).endsWith('/'+card.art) ? rawURL(identity.art) : '';
  const imageURL=identity.lockedArt ? rawURL(identity.art) :
   (artHasExplicitField ? (explicitArt||localArtFallback) : rawURL(identity.art));
- const artTask=imageURL?artPixels(imageURL):Promise.resolve(null);
  const origin=(()=>{
   try{
    const data=new URL(url);if(/\/data\/[A-Za-z0-9_]+\.json$/.test(data.pathname))return new URL('../cards.json',data).href;
    const art=rawURL(identity.art);if(art&&/\/art\/[A-Za-z0-9_]+\.(?:png|jpg|webp)$/.test(new URL(art).pathname))return new URL('../cards.json',art).href;
   }catch{}return '';
  })();
+ const artTask=(async()=>{
+  const historical=!identity.lockedArt&&!artHasExplicitField&&origin?await historicalArtURL(origin,identity.id,Number(identity.dbfId),date):'';
+  if(historical){const pixels=await nativeArtPixels(origin,historical);if(!pixels)throw Error('Historical artwork unavailable for '+identity.id);return pixels;}
+  return imageURL?artPixels(imageURL):null;
+ })();
+ artTask.catch(()=>{});
  const goldenTask=golden&&!identity.lockedArt&&origin ?
   loadGoldenPortrait({id:identity.id,dbfId:Number(identity.dbfId),sourceURL:origin},identity.id,Number(identity.dbfId),isCurrent,date):Promise.resolve(null);
  // The portrait can fail before the independent artwork request finishes.

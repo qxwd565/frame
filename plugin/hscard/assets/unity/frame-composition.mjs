@@ -1,4 +1,4 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-58fd7d98a381f0ce';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-53c1a4d730446a2a';
 
 const classNames=['NEUTRAL','DEATHKNIGHT','DEMONHUNTER','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'];
 function reference(frame,key){const target=frame.actor?.[key]?.ref;if(!target)return null;const node=frame.nodes.find(n=>(n.componentSources||[]).includes(target));return node?.source||target;}
@@ -57,7 +57,7 @@ export class FrameComposer {
         if(!portrait.material)throw Error('Missing original blank portrait material');
         material={shader:portrait.material.shader,keywords:portrait.material.keywords,values:structuredClone(portrait.material.values),textures:{}};
         for(const [key,t] of Object.entries(portrait.material.textures)){
-          material.textures[key]=t.blank?{pixels:card.artPixels||{width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]},sampler:t.sampler,st:[...t.st]}:{key:t.key,sampler:t.sampler,st:[...t.st]};
+          material.textures[key]=t.blank?{pixels:card.artPixels||{width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]},sampler:card.artPixels?.originalSampler||t.sampler,st:[...t.st]}:{key:t.key,sampler:t.sampler,st:[...t.st]};
         }
         if(!material.textures._MainTex)throw Error('Missing original portrait texture binding');
       }else material=this.sources.material(materialKey);
