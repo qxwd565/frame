@@ -1,13 +1,13 @@
 /** Native card data adapter for strict dates-v1 JSON. No legacy catalog reads. */
-import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-13b870ed5737dccf';
-import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-13b870ed5737dccf';
+import {loadGoldenPortrait} from './golden-art.mjs?ver=hscard-c439ae9cb8d8c30c';
+import {artUrlForSnapshot, cardSourceURL, loadCardSnapshot, normalizeForRender, validKoreanDate} from './card-snapshots.mjs?ver=hscard-c439ae9cb8d8c30c';
 
 const artCache = new Map(), tasks = [];
 const historicalArtIndexes = new Map();
 let active = 0, artBytes = 0;
 const races = {ALL:'모두',BEAST:'야수',DEMON:'악마',DRAGON:'용족',DRAENEI:'드레나이',ELEMENTAL:'정령',MECHANICAL:'기계',MURLOC:'멀록',NAGA:'나가',PIRATE:'해적',QUILBOAR:'가시멧돼지',TOTEM:'토템',UNDEAD:'언데드'};
 const schools = {ARCANE:'비전',FEL:'지옥',FIRE:'화염',FROST:'냉기',HOLY:'신성',NATURE:'자연',SHADOW:'암흑'};
-const nativeKinds = new Set(['MINION','SPELL','WEAPON','LOCATION','HERO']);
+const nativeKinds = new Set(['MINION','SPELL','WEAPON','LOCATION','HERO','HERO_POWER']);
 function label(value, table) {return String(value || '').split(',').map(x => table[x.trim().toUpperCase()] || x.trim()).filter(Boolean).join(',');}
 async function historicalArtURL(origin,id,dbfId,date){
  if(date<'2013-08-17'||date>='2013-10-03')return '';
@@ -24,6 +24,11 @@ async function nativeArtPixels(origin,entry){
  const url=new URL(path,origin).href,hit=nativeArtCache.get(url);if(hit){nativeArtCache.delete(url);nativeArtCache.set(url,hit);return hit;}
  const promise=limited(async()=>{const res=await fetch(url,{mode:'cors',credentials:'omit'});if(!res.ok)throw Error('Historical texture HTTP '+res.status);const bytes=new Uint8Array(await res.arrayBuffer()),size=Math.ceil(w/4)*Math.ceil(h/4)*(f===10?8:16);if(bytes.byteLength!==size)throw Error('Historical texture size mismatch');const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',bytes)),b=>b.toString(16).padStart(2,'0')).join('');if(digest!==sha)throw Error('Historical texture checksum mismatch');return{width:w,height:h,format:f===10?71:77,levels:[bytes],originalSampler:{filter:1,wrapU:0,wrapV:0,wrapW:1,anisotropy:1,bias:0}};}).catch(error=>{nativeArtCache.delete(url);throw error;});
  nativeArtCache.set(url,promise);const value=await promise;nativeArtBytes+=value.levels[0].byteLength;while(nativeArtCache.size>64||nativeArtBytes>64*1024*1024){const key=nativeArtCache.keys().next().value;if(key===url&&nativeArtCache.size===1)break;const old=nativeArtCache.get(key);nativeArtCache.delete(key);old.then(p=>{nativeArtBytes=Math.max(0,nativeArtBytes-p.levels[0].byteLength);},()=>{});}return value;
+}
+export async function historicalArtImageURL(dated){
+ if(!dated||dated.identity.lockedArt||Object.hasOwn(dated.card.raw,'art'))return '';
+ let origin='';try{const data=new URL(dated.url),parts=data.pathname.split('/');if(parts.at(-2)==='data'&&parts.at(-1).endsWith('.json'))origin=new URL('../cards.json',data).href;else{const art=rawURL(dated.identity.art);if(art){const path=new URL(art).pathname.split('/'),file=path.at(-1).toLowerCase();if(path.at(-2)==='art'&&['.png','.jpg','.webp'].some(ext=>file.endsWith(ext)))origin=new URL('../cards.json',art).href;}}}catch{}
+ if(!origin)return '';const entry=await historicalArtURL(origin,dated.identity.id,Number(dated.identity.dbfId),dated.date);return entry?new URL(entry.path,origin).href:'';
 }
 function rawURL(value) {
  try {
@@ -105,6 +110,7 @@ export async function resolveCard(element,golden,{isCurrent=()=>true,onMetadata=
  if(!['current','historical'].includes(frameProfile))throw Error('Uninstalled historical frame profile '+frameProfile);
  const kind=card.type;
  if(!nativeKinds.has(kind))throw Error('3D card frame unavailable for '+kind);
+ if(kind==='HERO_POWER'&&(golden||date<'2013-08-17'||date>='2013-10-03'))throw Error('Original hero-power frame unavailable for selected date or finish');
  const tags={};
  for(const tag of card.nativeTags){if(Number.isSafeInteger(tag.id)&&Number.isFinite(tag.value))tags[tag.id]=tag.value;}
  // Explicit classes/runes can be present even without Unity's native tags.

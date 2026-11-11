@@ -2,7 +2,7 @@
 // WordPress enqueue contract; no database or server installation required.
 define('ABSPATH', __DIR__);
 define('HSCARD_PATH', dirname(__DIR__) . '/');
-define('HSCARD_VERSION', '7.14.6-webgpu-beta3664-art-preview');
+define('HSCARD_VERSION', '7.14.7-webgpu-beta3664-heropower-preview');
 $calls = array();
 function plugins_url($file, $plugin) { return 'https://example.test/hscard/' . $file; }
 function wp_enqueue_script_module($id, $url, $deps, $version) {

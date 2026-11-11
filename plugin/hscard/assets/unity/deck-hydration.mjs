@@ -1,12 +1,12 @@
 /** Synchronize mobile deck tiles and GPU placeholders with ONE dates-v1 reducer. */
-import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-13b870ed5737dccf';
-import {readDatedCard} from './card-data.mjs?ver=hscard-13b870ed5737dccf';
+import {artUrlForSnapshot} from './card-snapshots.mjs?ver=hscard-c439ae9cb8d8c30c';
+import {readDatedCard,historicalArtImageURL} from './card-data.mjs?ver=hscard-c439ae9cb8d8c30c';
 
 const activeDecks = new WeakMap();
 const raritySet = new Set(['LEGENDARY','EPIC','RARE','COMMON','FREE']);
 const frameKinds = new Set(['MINION','SPELL','WEAPON','HERO','LOCATION']);
 
-function refreshCard(element, dated) {
+async function refreshCard(element, dated, isCurrent=()=>true) {
  const li = element.closest('.hscard-deck-card');
  if (!li) return;
  if (!dated) {
@@ -15,6 +15,9 @@ function refreshCard(element, dated) {
   element.dispatchEvent(new CustomEvent('hscard-card-not-released',{bubbles:true}));
   return;
  }
+ let historicalArt='',artUnavailable=false;
+ if(li.querySelector('.hscard-deck-tile')){try{historicalArt=await historicalArtImageURL(dated);}catch{artUnavailable=true;}}
+ if(!isCurrent())return;
  const {card,identity,url} = dated;
  li.hidden = false;li.classList.remove('is-card-not-released','is-snapshot-error','is-snapshot-pending');
  li.dataset.hscardCost = String(card.cost??0);li.dataset.hscardName = card.name;
@@ -33,7 +36,7 @@ function refreshCard(element, dated) {
  const artTag=tile?.querySelector('.hscard-deck-tile-art');
  // If an art change explicitly removes the art, do not resurrect the index image.
  const hasArt=Object.hasOwn(card.raw,'art');
- const newArt=identity.lockedArt ? identity.art : (hasArt ? artUrlForSnapshot(card.art,url) : identity.art);
+ const newArt=artUnavailable?'':(historicalArt||(identity.lockedArt ? identity.art : (hasArt ? artUrlForSnapshot(card.art,url) : identity.art)));
  if(artTag){if(newArt)artTag.src=newArt;else artTag.remove();}
  else if(tile&&newArt){const image=document.createElement('img');image.className='hscard-deck-tile-art';image.alt='';image.loading='lazy';image.decoding='async';image.draggable=false;image.src=newArt;tile.insertBefore(image,tile.firstChild);}
  tile?.classList.toggle('is-art-error',!newArt);
@@ -44,7 +47,7 @@ function refreshCard(element, dated) {
  element.dataset.hscardFrameSchool=card.school?'1':'0';
  element.dataset.hscardFrameAttack=(card.attack??0)>0?'1':'0';
  element.dataset.hscardFrameArmor=(card.armor??0)>0?'1':'0';
- element.classList.toggle('is-frame-unavailable',!frameKinds.has(card.type));
+ element.classList.toggle('is-frame-unavailable',!(frameKinds.has(card.type)||(card.type==='HERO_POWER'&&dated.date>='2013-08-17'&&dated.date<'2013-10-03')));
  const placeholder=element.querySelector('.hscard-card-placeholder');
  if(placeholder)placeholder.setAttribute('aria-label',card.name+', 마나 '+String(card.cost??0)+', '+String(identity.quantity??1)+'장');
  element.dataset.hscardReady='true';
@@ -91,7 +94,7 @@ async function hydrateDeck(deck){
   try{
    const dated=await readDatedCard(element);
    if(activeDecks.get(deck)!==token)return;
-   refreshCard(element,dated);
+   await refreshCard(element,dated,()=>activeDecks.get(deck)===token);
   }catch(error){
    if(activeDecks.get(deck)!==token)return;
    const li=element.closest('.hscard-deck-card');

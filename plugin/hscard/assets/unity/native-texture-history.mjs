@@ -1,4 +1,4 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-13b870ed5737dccf';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-c439ae9cb8d8c30c';
 
 const digest = async bytes => Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', bytes)), b => b.toString(16).padStart(2,'0')).join('');
 

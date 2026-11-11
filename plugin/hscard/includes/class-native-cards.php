@@ -77,7 +77,7 @@ final class Native_Cards {
   $details = Render_Spec::payload( $card, $frame_profile );
   $card_data = wp_json_encode( $details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES );
   $kind = strtoupper( isset( $card['card_type'] ) ? (string) $card['card_type'] : '' );
-  $heights = array( 'MINION' => 560, 'SPELL' => 549, 'WEAPON' => 551, 'LOCATION' => 610, 'HERO' => 560 );
+  $heights = array( 'MINION' => 560, 'SPELL' => 549, 'WEAPON' => 551, 'LOCATION' => 610, 'HERO' => 560, 'HERO_POWER' => 555 );
   if ( ! isset( $heights[ $kind ] ) ) {
    $label = sprintf( __( '%1$s, 마나 %2$d, %3$d장', 'hscard' ), $card['display_name'], $card['mana'], $card['count'] );
    ob_start(); ?>
