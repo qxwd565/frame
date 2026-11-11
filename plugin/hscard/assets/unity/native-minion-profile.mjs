@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-154ea4bb60362c5b';
-import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-154ea4bb60362c5b';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-c05928b9339b5271';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-c05928b9339b5271';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 

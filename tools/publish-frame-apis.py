@@ -60,7 +60,7 @@ def read(name):
 
 def plan():
     # The excluded mesh is only used by disabled GhostCard effects.
-    excluded = {'historical-frames/early-native/objects/unity-object/7eb90af5ca002df2132e957a29f675da6c7f34638eb71e71fd8849bedffedad5.bin.gz'}
+    excluded = {'historical-frames/early-native/objects/unity-object/' + digest + '.bin.gz' for digest in ('7eb90af5ca002df2132e957a29f675da6c7f34638eb71e71fd8849bedffedad5','4b3372fab0247b044f07cd311a79970e40552bd0eb021b7ef0f036fb51662b48','38dce936048087aba158a476ace777853766cbefc1f20ba8389e208af22349c5','72826f88a76b9bb2f8d74b8bee167655979f9ba0da72413b66eacb71c71d4f2e')}
     files = {p.relative_to(SOURCE).as_posix(): p for p in SOURCE.rglob('*') if p.is_file() and p.relative_to(SOURCE).as_posix() not in excluded}
     candidates = collections.defaultdict(set)
 
