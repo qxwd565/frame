@@ -59,7 +59,9 @@ def read(name):
 
 
 def plan():
-    files = {p.relative_to(SOURCE).as_posix(): p for p in SOURCE.rglob('*') if p.is_file()}
+    # The excluded mesh is only used by disabled GhostCard effects.
+    excluded = {'historical-frames/early-native/objects/unity-object/7eb90af5ca002df2132e957a29f675da6c7f34638eb71e71fd8849bedffedad5.bin.gz'}
+    files = {p.relative_to(SOURCE).as_posix(): p for p in SOURCE.rglob('*') if p.is_file() and p.relative_to(SOURCE).as_posix() not in excluded}
     candidates = collections.defaultdict(set)
 
     def assign(name, source):

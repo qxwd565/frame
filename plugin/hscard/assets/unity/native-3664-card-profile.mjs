@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-b94353efeefc88c9';
-import {NativeMinionProfile,installOriginal3664TextAntialiasing} from './native-minion-profile.mjs?ver=hscard-b94353efeefc88c9';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-154ea4bb60362c5b';
+import {NativeMinionProfile,installOriginal3664TextAntialiasing} from './native-minion-profile.mjs?ver=hscard-154ea4bb60362c5b';
 
 async function loadJson(base,name){
  const response=await resourceFetch(new URL(name,base));
