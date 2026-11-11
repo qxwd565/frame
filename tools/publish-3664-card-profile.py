@@ -8,6 +8,7 @@ import hashlib
 import importlib.util
 import json
 import pathlib
+import struct
 import urllib.parse
 import urllib.request
 
@@ -27,6 +28,7 @@ def plan():
     profile = json.loads(gzip.decompress((SOURCE / (PREFIX + 'card-3664-spell-weapon.json.gz')).read_bytes()))
     shaders = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-card-shaders.json.gz')).read_bytes()))
     parity = json.loads((SOURCE / (PREFIX + 'early-native/pc-3664-spell-weapon-parity.json')).read_bytes())
+    summon_parity = json.loads((SOURCE / (PREFIX + 'early-native/pc-3664-summon-d3d-parity.json')).read_bytes())
     summon = json.loads((SOURCE / (PREFIX + 'early-native/pc-1.0.0.3664-summon-source.json')).read_bytes())
     summon_profile = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-summon.json.gz')).read_bytes()))
     summon_shaders = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-summon-shaders.json.gz')).read_bytes()))
@@ -36,13 +38,25 @@ def plan():
         raise ValueError('Unexpected original card profile')
     if shaders['sourceVersion'] != '1.0.0.3664' or len(shaders['shaders']) != 14:
         raise ValueError('Unexpected original shader bank')
-    if len(parity['cases']) != 40:
+    if len(parity['cases']) != 40 or not all(case.get('exact') for case in parity['cases']):
         raise ValueError('Incomplete original D3D comparison')
+    if len(summon_parity['cases']) != 6 or not all(case.get('exact') for case in summon_parity['cases']):
+        raise ValueError('Incomplete summon replay D3D comparison')
+    recording_name = PREFIX + 'early-native/pc-1.0.0.3664-unity-rendered-particles-60fps.bin'
+    recording = (SOURCE / recording_name).read_bytes()
+    if len(recording) < 24 or struct.unpack_from('<6I', recording) != (0x31465248, 436, 682, 60, 241, 123456):
+        raise ValueError('Invalid original Unity particle recording')
+    unity_parity_name = PREFIX + 'early-native/pc-3664-unity-particle-replay-parity.json'
+    unity_parity = json.loads((SOURCE / unity_parity_name).read_bytes())
+    if len(unity_parity['cases']) != 4 or any(case['changedPixels'] != 0 for case in unity_parity['cases']):
+        raise ValueError('Incomplete original Unity particle comparison')
     if summon['sourceVersion'] != '1.0.0.3664' or len(summon['objects']) != 17 or summon_profile['sourceVersion'] != '1.0.0.3664' or len(summon_shaders['shaders']) != 1:
         raise ValueError('Incomplete original summon evidence')
     names = {PREFIX + 'card-3664-spell-weapon.json.gz', PREFIX + 'native-3664-card-shaders.json.gz',
              PREFIX + 'native-beta-shaders.json.gz', PREFIX + 'native-3664-summon.json.gz', PREFIX + 'native-3664-summon-shaders.json.gz',
-             PREFIX + 'early-native/pc-1.0.0.3664-summon-source.json', PREFIX + 'early-native/pc-1.0.0.3664-effects.json', PREFIX + 'early-native/pc-3664-spell-weapon-parity.json'}
+             PREFIX + 'early-native/pc-1.0.0.3664-summon-source.json', PREFIX + 'early-native/pc-1.0.0.3664-effects.json', PREFIX + 'early-native/pc-3664-spell-weapon-parity.json', PREFIX + 'early-native/pc-3664-summon-d3d-parity.json'}
+    names.add(recording_name)
+    names.add(unity_parity_name)
     for item in [*(obj['sourceObject'] for obj in summon['objects']), summon['qualitySettings']['sourceObject']]:
         name = PREFIX + item['file']
         data = (SOURCE / name).read_bytes()

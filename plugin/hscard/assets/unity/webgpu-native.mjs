@@ -3,7 +3,7 @@
  * Material programs are compiled from current-game DXBC with HLSLcc and Naga.
  * WebGPU-only: no WebGL context creation or silent fallback.
  */
-import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-c488a93de0fce637';
+import {decodeMesh} from './hsplus-sources.mjs?ver=hscard-f182721a261a42e5';
 const ALIGN=256;
 const round=(v,a)=>Math.ceil(v/a)*a;
 const rgba=(r,g,b,a)=>[r,g,b,a];
@@ -300,7 +300,7 @@ export class WebGPUNativeRenderer {
   const key=exact?'originalCompositor':'compositor';if(this[key])return this[key];
   const shader=`@group(0) @binding(0) var blackImage:texture_2d<f32>; @group(0) @binding(1) var whiteImage:texture_2d<f32>;
 struct V { @builtin(position) pos:vec4f }; @vertex fn vs_main(@builtin(vertex_index) id:u32)->V { let p=vec2f(f32((id<<1u)&2u),f32(id&2u));return V(vec4f(p*2.0-vec2f(1),0,1)); }
-@fragment fn fs_main(@builtin(position) position:vec4f)->@location(0) vec4f {let pix=vec2i(position.xy);let b=textureLoad(blackImage,pix,0).rgb;let w=textureLoad(whiteImage,pix,0).rgb;let a=max(max(b.r,max(b.g,b.b)),round(clamp(255.0-dot(w-b,vec3f(85)),0,255))/255);${exact ? "let ai=u32(round(a*255.0));let bi=vec3u(round(b*255.0));let den=max(ai,1u);let numerator=bi*vec3u(255u);let quotient=numerator/vec3u(den);let remainder=numerator%vec3u(den);let twice=remainder*vec3u(2u);let increment=select(vec3u(0u),vec3u(1u),(twice>vec3u(ai))|((twice==vec3u(ai))&((quotient&vec3u(1u))!=vec3u(0u))));let rgb=select(vec3u(0u),quotient+increment,ai>0u);return vec4f(vec3f(rgb)/255.0,f32(ai)/255.0);" : "return vec4f(select(vec3f(0),b/max(a,1e-10),a>0),a);"}}`;
+@fragment fn fs_main(@builtin(position) position:vec4f)->@location(0) vec4f {let pix=vec2i(position.xy);let b=textureLoad(blackImage,pix,0).rgb;let w=textureLoad(whiteImage,pix,0).rgb;let a=max(max(b.r,max(b.g,b.b)),round(clamp(255.0-dot(w-b,vec3f(85)),0,255))/255);${exact ? "let ai=u32(round(a*255.0));let bi=vec3u(round(b*255.0));let den=max(ai,1u);let numerator=bi*vec3u(255u);let quotient=numerator/vec3u(den);let remainder=numerator%vec3u(den);let twice=remainder*vec3u(2u);let increment=select(vec3u(0u),vec3u(1u),(twice>vec3u(ai))|((twice==vec3u(ai))&((quotient&vec3u(1u))!=vec3u(0u))));let rgb=select(vec3u(0u),quotient+increment,ai>0u);return vec4f(vec3f(rgb)/255.0,f32(ai)/255.0);" : "let bi=vec3i(round(b*255.0));let wi=vec3i(round(w*255.0));let sum=(wi.r-bi.r)+(wi.g-bi.g)+(wi.b-bi.b);let reconstructed=clamp((2*(765-sum)+3)/6,0,255);let ai=max(max(bi.r,max(bi.g,bi.b)),reconstructed);var rgb=vec3i(0);if(ai>0){rgb=min(vec3i(255),(bi*510+vec3i(ai))/(2*ai));}return vec4f(vec3f(rgb)/255.0,f32(ai)/255.0);"}}`;
   const module=this.device.createShaderModule({code:shader});
   this[key]=this.device.createRenderPipelineAsync({layout:'auto',vertex:{module,entryPoint:'vs_main'},fragment:{module,entryPoint:'fs_main',targets:[{format:'rgba8unorm'}]},primitive:{topology:'triangle-list'}}).catch(e=>{this[key]=null;throw e;});
   return this[key];

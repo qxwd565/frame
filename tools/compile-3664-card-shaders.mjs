@@ -79,6 +79,14 @@ try{
       let count=0;wgsl=wgsl.replace(/\(\((_e\d+(?:\.[xyzw]+)?) \* (_e\d+(?:\.[xyzw]+)?)\) \+ (_e\d+(?:\.[xyzw]+)?)\)/g,(_,a,b,c)=>{count++;return `fma(${a}, ${b}, ${c})`;});
       if(count<3)throw Error('Original vertex MAD translation changed unexpectedly');
      }
+     // D3DDisassemble confirms both instructions in this exact portrait
+     // pixel program are MAD, including the negated third operand.
+     if(stage==='fragment'&&p.sha256==='fbd446513ec709b812b14c058f9b2e9bacc4fe54d275b50e6ca0600595e0eb86'){
+      for(const [from,to] of [
+       ['((_e53.xyz * _e55.xyz) + -(_e58.xyz))','fma(_e53.xyz, _e55.xyz, -_e58.xyz)'],
+       ['((_e70.www * _e72.xyz) + _e75.xyz)','fma(_e70.www, _e72.xyz, _e75.xyz)']
+      ]){if(wgsl.split(from).length!==2)throw Error('Original portrait MAD translation changed');wgsl=wgsl.replace(from,to);}
+     }
      programs[p.sha256]={id:p.sha256,...adapted.meta,wgsl,sourceSha256:p.sha256,wgslSha256:sha(wgsl)};
     }finally{info?.free();module.free();}}
    }
