@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-02a760ad8c5700b6';
-import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-02a760ad8c5700b6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-bf5621bb967110d6';
+import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-bf5621bb967110d6';
 
 async function loadJson(base,name){
  const response=await resourceFetch(new URL(name,base));

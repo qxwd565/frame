@@ -43,20 +43,23 @@ function wrap3664(text,metrics,size,scale,settings,spacing,ellipsize=false){
 function fitText3664(value,settings,metrics){
  const text=clean(String(value??'').replace(/\r\n?/g,'\n').replace(/<br\s*\/?>/gi,'\n'));if(!text)return null;
  const size=Number(settings.m_FontSize),spacing=f(Number(settings.m_LineSpacing)),limit=Number(settings.m_Width),height=Number(settings.m_Height);
- let scale=f(Number(settings.m_CharacterSize)*.01),result=text;
- const layout=ellipsize=>settings.m_WordWrap?wrap3664(text,metrics,size,scale,settings,spacing,ellipsize):text;
+ let scale=f(Number(settings.m_CharacterSize)*.01),result=text,measureSpacing=spacing;
+ const layout=ellipsize=>settings.m_WordWrap?wrap3664(text,metrics,size,scale,settings,measureSpacing,ellipsize):text;
  result=layout(false);
  if(settings.m_ResizeToFit){
+  // 3664 IsMultiLine tests the number of newline characters against one.
+  // ReduceText_CharSize temporarily sets spacing to zero when it is false.
+  if(result.split('\n').length-1<=1)measureSpacing=0;
   for(let n=0;n<40;n++){
    const lines=result.split('\n'),longest=Math.max(0,...lines.map(row=>width(plain(row),metrics,size,scale)));
-   const vertical=f(f(metrics.lineHeight(size)*scale*.1)*f(1+f((lines.length-1)*spacing)));
+   const vertical=f(f(metrics.lineHeight(size)*scale*.1)*f(1+f((lines.length-1)*measureSpacing)));
    if(longest<=limit&&vertical<=height)break;
    const minimum=f(Number(settings.m_MinCharacterSize||0)*.01),next=f(scale*.95);
    if(next<=minimum){scale=minimum;result=layout(true);break;}
    scale=next;result=layout(false);
   }
  }
- return{Text:result,FontSize:size,CharacterSize:scale,LineSpacing:spacing};
+ return{Text:result,FontSize:size,CharacterSize:scale,LineSpacing:settings.m_ResizeToFit&&result.split('\n').length-1>1?measureSpacing:spacing};
 }
 
 export function fitText(value,settings,metrics,role){
