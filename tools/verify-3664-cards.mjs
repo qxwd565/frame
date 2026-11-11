@@ -12,6 +12,18 @@ try{
  const call=(method,params={})=>new Promise((resolve,reject)=>{const key=++id;pending.set(key,{resolve,reject});ws.send(JSON.stringify({id:key,method,params}));});
  const fill=process.argv.includes('--frame-fill'),server=Number(process.argv.find(x=>x.startsWith('--server='))?.split('=')[1]||19420);
  await call('Runtime.enable');
+ if(process.argv.includes('--summon')||process.argv.includes('--hero')){
+  await call('Page.navigate',{url:'http://127.0.0.1:'+server+'/work/pc-d3d-parity.html'+(process.argv.includes('--api')?'?source=api':'')});
+  for(let i=0;i<400;i++){const r=await call('Runtime.evaluate',{expression:'window.ready===true',returnByValue:true});if(r.result.value)break;if(i===399)throw Error('Summon test page unavailable');await sleep(250);}
+  const hero=process.argv.includes('--hero');
+  const r=await call('Runtime.evaluate',{expression:hero?'window.verifyHeroPower()':'window.verifySummon()',awaitPromise:true,returnByValue:true});
+  if(r.exceptionDetails)throw Error(JSON.stringify(r.exceptionDetails));
+  if(hero){if(r.result.value.version!=='1.0.0.3664'||r.result.value.parts<2)throw Error('Hero power regression: '+JSON.stringify(r.result.value));console.log(JSON.stringify({ok:true,heroPower:r.result.value}));}
+  else{
+  const frames=r.result.value;if(frames.length!==6||!frames[1].paths.includes('3664:SummonIn/ScryLines')||!frames[1].paths.includes('3664:SummonIn/FX_BlueRays')||frames.at(-1).paths.length||!frames.at(-1).complete||new Set(frames.map(x=>x.sha256)).size<3)throw Error('Summon playback verification failed: '+JSON.stringify(frames));
+  console.log(JSON.stringify({ok:true,frames}));
+  }
+ }else{
  async function run(api){
   await call('Page.navigate',{url:'http://127.0.0.1:'+server+'/work/'+(fill?'native-frame-fill.html':'3664-original.html'+(api?'?source=api':''))});
   for(let i=0;i<900;i++){
@@ -25,4 +37,5 @@ try{
   const remote=await run(true);if(JSON.stringify(local.cases)!==JSON.stringify(remote.cases))throw Error('Local and API 3664 output pixels differ');
  }
  console.log(JSON.stringify({ok:true,cases:local.cases.length,effectTextures:local.effectTextures,apiPixelsIdentical:process.argv.includes('--compare-api'),results:local.cases}));
+ }
 }finally{ws?.close();chrome.kill();}

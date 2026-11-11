@@ -27,6 +27,9 @@ def plan():
     profile = json.loads(gzip.decompress((SOURCE / (PREFIX + 'card-3664-spell-weapon.json.gz')).read_bytes()))
     shaders = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-card-shaders.json.gz')).read_bytes()))
     parity = json.loads((SOURCE / (PREFIX + 'early-native/pc-3664-spell-weapon-parity.json')).read_bytes())
+    summon = json.loads((SOURCE / (PREFIX + 'early-native/pc-1.0.0.3664-summon-source.json')).read_bytes())
+    summon_profile = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-summon.json.gz')).read_bytes()))
+    summon_shaders = json.loads(gzip.decompress((SOURCE / (PREFIX + 'native-3664-summon-shaders.json.gz')).read_bytes()))
     if effects['sourceVersion'] != '1.0.0.3664' or len(effects['textures']) != 8:
         raise ValueError('Unexpected original effect manifest')
     if profile['version'] != '1.0.0.3664' or len(profile['packages']) != 4:
@@ -35,8 +38,17 @@ def plan():
         raise ValueError('Unexpected original shader bank')
     if len(parity['cases']) != 40:
         raise ValueError('Incomplete original D3D comparison')
+    if summon['sourceVersion'] != '1.0.0.3664' or len(summon['objects']) != 17 or summon_profile['sourceVersion'] != '1.0.0.3664' or len(summon_shaders['shaders']) != 1:
+        raise ValueError('Incomplete original summon evidence')
     names = {PREFIX + 'card-3664-spell-weapon.json.gz', PREFIX + 'native-3664-card-shaders.json.gz',
-             PREFIX + 'early-native/pc-1.0.0.3664-effects.json', PREFIX + 'early-native/pc-3664-spell-weapon-parity.json'}
+             PREFIX + 'native-beta-shaders.json.gz', PREFIX + 'native-3664-summon.json.gz', PREFIX + 'native-3664-summon-shaders.json.gz',
+             PREFIX + 'early-native/pc-1.0.0.3664-summon-source.json', PREFIX + 'early-native/pc-1.0.0.3664-effects.json', PREFIX + 'early-native/pc-3664-spell-weapon-parity.json'}
+    for item in [*(obj['sourceObject'] for obj in summon['objects']), summon['qualitySettings']['sourceObject']]:
+        name = PREFIX + item['file']
+        data = (SOURCE / name).read_bytes()
+        if digest(data) != item['sha256'] or digest(gzip.decompress(data)) != item['rawSha256']:
+            raise ValueError('Original summon Unity object differs: ' + name)
+        names.add(name)
     for row in [*effects['textures'], effects['sampleArt']]:
         for field in ('png', 'nativeImage', 'originalObject'):
             item = row[field]
@@ -58,8 +70,9 @@ def plan():
     result = {}
     for name in sorted(names):
         data = (SOURCE / name).read_bytes()
-        result[name] = {'repository': 'legacy', 'bytes': len(data), 'sha256': digest(data),
-                        'sourceVersions': ['1.0.0.3664'], 'scope': 'original-3664-card-resource'}
+        old = index['files'].get(name) if name == PREFIX + 'native-beta-shaders.json.gz' else None
+        result[name] = {**(old or {'repository': 'legacy', 'sourceVersions': ['1.0.0.3664'], 'scope': 'original-3664-card-resource'}),
+                        'bytes': len(data), 'sha256': digest(data)}
     return result
 
 def main():

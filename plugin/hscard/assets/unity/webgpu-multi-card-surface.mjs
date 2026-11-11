@@ -68,7 +68,18 @@ struct Placement { rect:vec4f, surface:vec2f };
    committed=true;return true;
   }finally{if(!committed){this.cards.releasePrepared(next);for(const pixels of next.goldenPixels||[])if(!this.goldenRefs.has(pixels))this.renderer.releaseTexture(pixels);}}
  }
- async update(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);await this.cards.renderPrepared(item.prepared,{transparent:true,time,destination:item.target});}
+ async startOriginal3664Summon(key,random,isCurrent=()=>true){
+  const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);
+  const prepared=item.prepared;
+  if(item.prepared.frame.nativeVersion!=='1.0.0.3664'||item.prepared.summonKind!=='MINION'||item.prepared.summonGolden)throw Error('Original 3664 normal minion summon source unavailable for this card');
+  const effect=await this.cards.createOriginal3664Summon(random);
+  if(this.items.get(key)!==item||item.prepared!==prepared||!isCurrent())return false;
+  item.summon={effect,started:performance.now()};return true;
+ }
+ hasActiveSummon(key){return !!this.items.get(key)?.summon;}
+ async update(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);const active=item.summon;
+  const result=await this.cards.renderPrepared(item.prepared,{transparent:true,time,destination:item.target,...(active?{summon:active.effect,summonTime:Math.max(0,(performance.now()-active.started)/1000)}:{})});
+  if(active&&result?.summonComplete&&item.summon===active)item.summon=null;}
  async updatePreview(key,time){const item=this.items.get(key);if(!item)throw Error('Unknown card '+key);if(!item.previewTarget)item.previewTarget=this.createTarget(item.target.width,item.target.height);
   await this.cards.renderPrepared({...item.prepared,quantityDraws:[]},{transparent:true,time,destination:item.previewTarget});}
  trimPreviews(keep){for(const [key,item] of this.items)if(key!==keep&&item.previewTarget){this.renderer.releaseTarget(item.previewTarget);item.previewTarget=null;this._releasePresentation('preview:'+key);}}

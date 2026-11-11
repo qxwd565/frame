@@ -1,11 +1,12 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-a7d0db14c9c42020';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-a7d0db14c9c42020';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-a7d0db14c9c42020';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-a7d0db14c9c42020';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-a7d0db14c9c42020';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-a7d0db14c9c42020';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-a7d0db14c9c42020';
-import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-a7d0db14c9c42020';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {loadOriginal3664Summon} from './original-3664-summon.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-3058f5ccf1f1cda6';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -33,6 +34,10 @@ function frameStructureSignature(card){
 function frameSignature(card){const tags=card.tags||{};return JSON.stringify([frameStructureSignature(card),card.watermark,card.set,Number(tags[183]||0),Number(tags[1107]||0)]);}
 export class WebGPUCardRenderer {
   constructor({sources,composer,builder,renderer,raster,nameMeshes,layouts,variantLayouts}){Object.assign(this,{sources,composer,builder,renderer,raster,nameMeshes,layouts,variantLayouts});}
+  async createOriginal3664Summon(random){
+    if(!this.summon3664Promise)this.summon3664Promise=loadOriginal3664Summon(this.builder,this.renderer).catch(error=>{this.summon3664Promise=null;throw error;});
+    return (await this.summon3664Promise).create(random);
+  }
   async prepare(card,basePrepared=null){
     const textTargets=[],transientMeshes=[],transientTextures=[];
     try{
@@ -115,7 +120,7 @@ export class WebGPUCardRenderer {
       ? await this.builder.draw(await quantityRibbonPart(context,card.quantity),context)
       : [];
     for(const draw of quantityDraws)if(draw.mesh.attributes)transientMeshes.push(draw.mesh);
-    return{frame,context,textDraws,quantityDraws,animation,artwork,goldenPixels,textTargets,transientMeshes,transientTextures,portraitPixels:card.artPixels,frameSignature:frameSignature(card)};
+    return{frame,context,textDraws,quantityDraws,animation,artwork,goldenPixels,textTargets,transientMeshes,transientTextures,portraitPixels:card.artPixels,frameSignature:frameSignature(card),summonKind:card.kind,summonGolden:!!card.golden};
     }catch(error){this.releasePrepared({textTargets,transientMeshes,transientTextures});throw error;}
   }
   releasePrepared(prepared){for(const target of prepared?.textTargets||[])this.renderer.releaseTextTarget(target);for(const mesh of prepared?.transientMeshes||[])this.renderer.releaseMesh(mesh);for(const texture of prepared?.transientTextures||[])this.renderer.releaseTexture(texture);}
@@ -134,7 +139,7 @@ export class WebGPUCardRenderer {
       retained=true;return prepared;
     }finally{if(!retained)this.releasePrepared(prepared);}
   }
-  async renderPrepared(prepared,{background=[1,1,1,1],transparent=false,time=1,destination=null,isCurrent=()=>true}={}){
+  async renderPrepared(prepared,{background=[1,1,1,1],transparent=false,time=1,destination=null,isCurrent=()=>true,summon=null,summonTime=0,summonParent=null}={}){
     const {frame,textDraws,quantityDraws}=prepared,context={...prepared.context,time};
     // Assembling draw commands does not submit GPU commands. Fetch/decode each
     // independent native frame component concurrently, then draw in the exact
@@ -144,12 +149,16 @@ export class WebGPUCardRenderer {
       return this.builder.draw(current,context);
     }));
     const draws=groups.flat();draws.push(...textDraws,...quantityDraws);
+    const effect=summon?await summon.draws(summonTime,context,summonParent||undefined):null;
+    if(effect)draws.push(...effect.draws);
     // Native mana/stat effects animate on normal frames too. Classify the
     // selected shader programs, rather than assuming only golden cards move.
     prepared.animated=!!prepared.animation||draws.some(draw=>draw.animated);
-    if(!isCurrent())return false;
-    if(transparent){if(await this.renderer.transparent(context.width,context.height,draws,destination,isCurrent,!!frame.exactAlpha)===false)return false;}else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
-    return{width:context.width,height:context.height,frameParts:frame.parts.length,textDraws:textDraws.length};
+    try{
+      if(!isCurrent())return false;
+      if(transparent){if(await this.renderer.transparent(context.width,context.height,draws,destination,isCurrent,!!frame.exactAlpha)===false)return false;}else {if(!destination)throw Error('WebGPU opaque native pass requires a target');await this.renderer.renderTo(destination,draws,background);}
+      return{width:context.width,height:context.height,frameParts:frame.parts.length,textDraws:textDraws.length,summonComplete:effect?.complete};
+    }finally{for(const mesh of effect?.transient||[])this.renderer.releaseMesh(mesh);}
   }
   async render(card,background=[1,1,1,1],transparent=false){
     const prepared=await this.prepare(card);

@@ -36,16 +36,29 @@ try{
     const bytecode=Buffer.from(original.bytecode,'base64');if(digest(bytecode)!==variant.sha256)throw Error('Original bytecode checksum');
     const glsl=await translate(withReflection(bytecode,variant.layout,stage));if(!glsl)throw Error('Original DXBC translation failed: '+name);
     const adapted=bind(glsl,stage),module=parseGlsl(adapted.source,{stage});let info;
-    try{info=validate(module);const wgsl=writeWgsl(module,info);programs[variant.sha256]={id:variant.sha256,...adapted.meta,wgsl,sourceSha256:variant.sha256,wgslSha256:digest(wgsl)};}finally{info?.free();module.free();}
+    try{info=validate(module);let wgsl=writeWgsl(module,info);
+     // These original DXBC vertex programs were independently disassembled:
+     // their corresponding matrix operations are MAD instructions.
+     if(stage==='vertex'&&new Set([
+      '8ccb9c4435189ed73c5d5565da94f2cc6720dc2fb76dc8abb1da9bc6225f8113',
+      '719a0281e659f557852778b96cd235451232a1ead20db83c8ec93200aec6cc7a',
+      '739e364f90e0e08c117f579e7530cefb8123979e578a0332b610c2d066670307'
+     ]).has(variant.sha256)){
+      let count=0;wgsl=wgsl.replace(/\(\((_e\d+(?:\.[xyzw]+)?) \* (_e\d+(?:\.[xyzw]+)?)\) \+ (_e\d+(?:\.[xyzw]+)?)\)/g,(_,a,b,c)=>{count++;return `fma(${a}, ${b}, ${c})`;});
+      if(count<3)throw Error('Original vertex MAD translation changed unexpectedly');
+     }
+     programs[variant.sha256]={id:variant.sha256,...adapted.meta,wgsl,sourceSha256:variant.sha256,wgslSha256:digest(wgsl)};
+    }finally{info?.free();module.free();}
    }
   }
  }
 }finally{child.stdin.end();}
 if(error.trim())console.error(error.slice(0,500));
 const data=z.gzipSync(JSON.stringify({schema:1,shaders:Object.values(shaders),programs}),{level:9,mtime:0});
+const previous=await fs.readFile(out).catch(error=>{if(error.code==='ENOENT')return null;throw error;});
 await fs.writeFile(out,data);
 console.log(JSON.stringify({file:out,shaders:Object.keys(shaders).length,programs:Object.keys(programs).length,bytes:data.length,sha256:digest(data)}));
 // Preserve the later verified 4944 shader when rebuilding the beta bank.
 const later=spawn(process.execPath,['tools/compile-pc-4944-shader.mjs'],{windowsHide:true,stdio:'inherit'});
 const status=await new Promise((resolve,reject)=>{later.on('error',reject);later.on('close',resolve);});
-if(status!==0)throw Error('4944 shader compilation failed: '+status);
+if(status!==0){if(previous)await fs.writeFile(out,previous);else await fs.rm(out,{force:true});throw Error('4944 shader compilation failed; previous shader bank restored: '+status);}

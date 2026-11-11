@@ -7,7 +7,9 @@ import z from 'node:zlib';
 import {setTimeout as sleep} from 'node:timers/promises';
 import {fileURLToPath} from 'node:url';
 const profile=fileURLToPath(new URL('../.build/preview-browser',import.meta.url)),port=19540;
-const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--remote-debugging-port='+port,'--user-data-dir='+profile,'--no-first-run','--no-default-browser-check','--enable-unsafe-webgpu','about:blank'],{windowsHide:true,stdio:'ignore'});
+const backend=process.argv.find(x=>x.startsWith('--dawn-backend='))?.split('=')[1];
+if(backend&&!['d3d11','d3d12'].includes(backend))throw Error('Unsupported diagnostic Dawn backend');
+const chrome=spawn('C:/Program Files/Google/Chrome/Application/chrome.exe',['--headless=new','--remote-debugging-port='+port,'--user-data-dir='+profile,'--no-first-run','--no-default-browser-check','--enable-unsafe-webgpu',...(backend?['--use-dawn-backend='+backend]:[]),'about:blank'],{windowsHide:true,stdio:'ignore'});
 const ps=`$ErrorActionPreference='Stop'
 $p=[Console]::In.ReadToEnd()|ConvertFrom-Json
 $asm=[Reflection.Assembly]::LoadFrom('E:\\HSPlus\\development\\plugins\\hsplugin\\HSPlugin.exe')
@@ -31,16 +33,16 @@ function nativeRender(payload){return new Promise((resolve,reject)=>{
  child.stdin.end(JSON.stringify(payload));
 });}
 function compare(expected,black,white,width,height,flip){
- let total=0,max=0,changed=0,visible=0,changedOpaque=0,changedTranslucent=0;const reconstructed=Buffer.alloc(expected.length);
+ let total=0,max=0,changed=0,visible=0,changedOpaque=0,changedTranslucent=0;const reconstructed=Buffer.alloc(expected.length),samples=[];
  for(let y=0;y<height;y++)for(let x=0;x<width;x++){
   const out=(y*width+x)*4,i=((flip?height-1-y:y)*width+x)*4;
   const alpha=Math.max(black[i],black[i+1],black[i+2],Math.round(Math.max(0,Math.min(255,255-((white[i]-black[i])+(white[i+1]-black[i+1])+(white[i+2]-black[i+2]))/3))));
   const rgba=[0,1,2].map(c=>alpha?Math.min(255,Math.round(black[i+c]*255/alpha)):0);rgba.push(alpha);
   for(let c=0;c<4;c++)reconstructed[out+c]=rgba[c];
   if(alpha||expected[out+3])visible++;
-  let difference=0;for(let c=0;c<4;c++){const n=Math.abs(expected[out+c]-rgba[c]);difference+=n;total+=n;max=Math.max(max,n);}if(difference){changed++;if(alpha===255&&expected[out+3]===255)changedOpaque++;else changedTranslucent++;}
+  let difference=0;for(let c=0;c<4;c++){const n=Math.abs(expected[out+c]-rgba[c]);difference+=n;total+=n;max=Math.max(max,n);}if(difference){changed++;if(alpha===255&&expected[out+3]===255)changedOpaque++;else changedTranslucent++;if(process.argv.includes('--diff-details')&&samples.length<5)samples.push({x,y,d3d:rgba,webgpu:[...expected.subarray(out,out+4)],black:[...black.subarray(i,i+4)],white:[...white.subarray(i,i+4)]});}
  }
- return{flip,meanAbsoluteError:total/(width*height*4),maxChannelError:max,changedPixels:changed,changedOpaque,changedTranslucent,visiblePixels:visible,exact:changed===0,
+ return{flip,meanAbsoluteError:total/(width*height*4),maxChannelError:max,changedPixels:changed,changedOpaque,changedTranslucent,visiblePixels:visible,exact:changed===0,...(process.argv.includes('--diff-details')?{samples}:{}),
   nativeRgbaSha256:crypto.createHash('sha256').update(reconstructed).digest('hex'),webgpuRgbaSha256:crypto.createHash('sha256').update(expected).digest('hex')};
 }
 let ws;
@@ -52,6 +54,12 @@ try{
  await call('Page.navigate',{url:'http://127.0.0.1:19420/work/pc-d3d-parity.html'});
  for(let i=0;i<400;i++){const r=await call('Runtime.evaluate',{expression:'window.ready===true',returnByValue:true});if(r.result.value)break;if(i===399)throw Error('Original parity page unavailable');await sleep(250);}
  if(process.argv.includes('--software-bc'))await call('Runtime.evaluate',{expression:'window.enableOriginalMipDiagnostic(true)',awaitPromise:true,returnByValue:true});
+ if(process.argv.includes('--diagnostic-fma'))await call('Runtime.evaluate',{expression:'window.useFmaDiagnostic=true',returnByValue:true});
+ const fmaStage=process.argv.find(x=>x.startsWith('--diagnostic-fma-stage='))?.split('=')[1];
+ if(fmaStage){if(!['vertex','fragment'].includes(fmaStage))throw Error('Invalid FMA diagnostic stage');await call('Runtime.evaluate',{expression:`window.useFmaDiagnostic=true;window.fmaStageDiagnostic=${JSON.stringify(fmaStage)}`,returnByValue:true});}
+ if(process.argv.includes('--diagnostic-implicit-sample'))await call('Runtime.evaluate',{expression:'window.useImplicitSampleDiagnostic=true',returnByValue:true});
+ const biasArgument=process.argv.find(x=>x.startsWith('--diagnostic-bias='));
+ if(biasArgument){const bias=Number(biasArgument.split('=')[1]);if(!Number.isFinite(bias))throw Error('Invalid diagnostic bias');await call('Runtime.evaluate',{expression:`window.diagnosticMipBias=${bias}`,returnByValue:true});}
  const results=[];
  const originalCards=process.argv.includes('--card-3664');
  const versions=originalCards?[['2013-08-17','3664']]:[['2013-08-17','3664'],['2013-10-03','3890'],['2013-12-12','4217'],['2014-03-13','4944']];
@@ -72,7 +80,8 @@ try{
   }
   const classes=process.argv.includes('--all-classes')?['NEUTRAL','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR']:['MAGE'];
   for(const kind of originalCards?['SPELL','WEAPON']:['MINION'])for(const cardClass of classes)for(const golden of [false,true]){
-   if(process.argv.includes('--per-draw')&&(kind!=='SPELL'||cardClass!=='MAGE'||!golden))continue;
+   const diagnosticKind=process.argv.find(x=>x.startsWith('--diagnostic-kind='))?.split('=')[1]||'SPELL';
+   if(process.argv.includes('--per-draw')&&(kind!==diagnosticKind||cardClass!=='MAGE'||golden===process.argv.includes('--normal')))continue;
    const captureExpression=index=>`window.capture(${JSON.stringify(date)},${golden},${JSON.stringify(cardClass)},${index===null?'null':index},${JSON.stringify(kind)})`;
    let drawIndices=[null];
    if(process.argv.includes('--per-draw')){
@@ -90,13 +99,18 @@ try{
     if(!shaders.has(id))shaders.set(id,{name:id,subshaders:[{passes:[{index:0,vertex:{variants:[{keywords:[],code:vp.bytecode,sha256:vp.sha256}]},fragment:{variants:[{keywords:[],code:fp.bytecode,sha256:fp.sha256}]}}]}]});
     delete draw.vertexProgram;delete draw.fragmentProgram;
    }
-   const output=await nativeRender({library:JSON.stringify({schema:1,shaders:[...shaders.values()]}),scene:JSON.stringify({schema:1,width:capture.width,height:capture.height,draws:capture.draws}),resources:capture.resources});
+   if(![0,1,2].includes(capture.anisotropicFiltering))throw Error('WebGPU quality setting missing from comparison');
+   // Compare the same filtering state on each backend. The original 3664
+   // client supports Low/Medium=0 and High=2; this is the selected render
+   // quality, not a claim that the game always ran at one quality level.
+   const scene={schema:1,width:capture.width,height:capture.height,draws:capture.draws,environment:{anisotropicFiltering:capture.anisotropicFiltering}};
+   const output=await nativeRender({library:JSON.stringify({schema:1,shaders:[...shaders.values()]}),scene:JSON.stringify(scene),resources:capture.resources});
    const gpu=Buffer.from(capture.webgpuPixels,'base64'),black=Buffer.from(output.black,'base64'),white=Buffer.from(output.white,'base64');
    if(gpu.length!==capture.width*capture.height*4||black.length!==gpu.length||white.length!==gpu.length)throw Error('Reference image size mismatch');
    const options=[false,true].map(flip=>compare(gpu,black,white,capture.width,capture.height,flip));options.sort((a,b)=>a.meanAbsoluteError-b.meanAbsoluteError);
-   results.push({version:capture.version,kind,cardClass,golden,drawIndex,source:drawIndex===null?undefined:capture.drawSources[0],scope:'same frame draw commands and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
+   results.push({version:capture.version,kind,cardClass,golden,drawIndex,anisotropicFiltering:capture.anisotropicFiltering,source:drawIndex===null?undefined:capture.drawSources[0],scope:'same frame draw commands, filtering state and original D3D bytecode; text excluded',width:capture.width,height:capture.height,...options[0]});
    console.log(JSON.stringify(results.at(-1)));
-   if((drawIndex===null&&options[0].visiblePixels<100000)||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000){
+   if((drawIndex===null&&options[0].visiblePixels<100000)||options[0].meanAbsoluteError>=0.01||options[0].changedPixels>=2000||(process.argv.includes('--exact')&&!options[0].exact)){
     results.at(-1).outsideExistingTolerance=true;
     if(!process.argv.includes('--measure'))throw Error('Native/WebGPU frame parity outside verified tolerance');
    }

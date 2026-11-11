@@ -1,0 +1,33 @@
+import assert from 'node:assert/strict';
+import {readFile} from 'node:fs/promises';
+import {gunzipSync} from 'node:zlib';
+import {createHash} from 'node:crypto';
+import {sampleOriginalCurve,create3664Burst} from '../assets/unity/original-3664-summon.mjs';
+
+const root=new URL('../../../v7.14.4-webgpu-20261109/assets/unity/historical-frames/',import.meta.url);
+const read=async name=>readFile(new URL(name,root));
+const sha=data=>createHash('sha256').update(data).digest('hex');
+const source=JSON.parse(await read('early-native/pc-1.0.0.3664-summon-source.json'));
+const profile=JSON.parse(gunzipSync(await read('native-3664-summon.json.gz')));
+const bank=JSON.parse(gunzipSync(await read('native-3664-summon-shaders.json.gz')));
+assert.equal(source.sourceVersion,'1.0.0.3664');assert.equal(source.objects.length,17);
+for(const object of source.objects){const value=object.sourceObject,packed=await read(value.file);assert.equal(sha(packed),value.sha256);const raw=gunzipSync(packed);assert.equal(raw.length,value.rawBytes);assert.equal(sha(raw),value.rawSha256);}
+assert.equal(profile.sourceVersion,source.sourceVersion);
+assert.equal(profile.particleSystem.EmissionModule.cnt0,200);
+assert.equal(profile.particleSystem.EmissionModule.m_BurstCount,1);
+assert.equal(profile.particleSystem.looping,false);
+const particles=create3664Burst(profile,()=>.5);
+assert.equal(particles.length,200);assert.ok(Math.abs(particles[0].life-2.15)<1e-5);
+assert.ok(Math.abs(particles[0].size-.2)<1e-5);assert.deepEqual(particles[0].position,[0,0,0]);
+assert.equal(bank.shaders.length,1);assert.equal(Object.keys(bank.programs).length,2);
+for(const value of Object.values(bank.programs))assert.equal(sha(value.wgsl),value.wgslSha256);
+const curves=Object.fromEntries(profile.animation.m_FloatCurves.map(c=>[c.attribute,c.curve.m_Curve.map(k=>({...k,inSlope:Number(k.inSlope),outSlope:Number(k.outSlope)}))]));
+for(const keys of Object.values(curves))for(const key of keys)assert.equal(sampleOriginalCurve(keys,key.time),key.value);
+const alpha=curves['_TintColor.a'],enabled=curves.m_Enabled;
+assert.equal(sampleOriginalCurve(alpha,0),0);
+assert.ok(sampleOriginalCurve(alpha,.16)>0&&sampleOriginalCurve(alpha,.16)<.502);
+assert.ok(Math.abs(sampleOriginalCurve(alpha,.5)-.501960813999176)<1e-8);
+assert.equal(sampleOriginalCurve(enabled,1.34),1);
+assert.equal(sampleOriginalCurve(enabled,1.36),0);
+assert.throws(()=>sampleOriginalCurve([],0));
+console.log(JSON.stringify({ok:true,sourceObjects:source.objects.length,shaderPrograms:Object.keys(bank.programs).length,burst:200}));

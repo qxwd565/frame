@@ -47,6 +47,14 @@ try {
  assert(await surface.fill('test',latest,{isCurrent:()=>current})===false,'Stale fill accepted');renderer._draws=draws;
  assert(hash(await read(old.target))===oldPixels,'Stale fill wrote GPU target');
  const single=await cards.prepare({...base,kind:'MINION',quantity:1});assert(single.quantityDraws.length===0&&single.context.height===682,'Single quantity changed grid');cards.releasePrepared(single);
+ await surface.prepare('summon',{...base,kind:'MINION',frameProfile:'historical',renderDate:'2013-08-17',loading:true});
+ assert(!await surface.startOriginal3664Summon('summon',()=>.5,()=>false),'Superseded summon started');
+ assert(!surface.hasActiveSummon('summon'),'Superseded summon remained active');
+ assert(await surface.startOriginal3664Summon('summon',()=>.5),'Original summon start failed');
+ assert(surface.hasActiveSummon('summon'),'Original summon did not start');await surface.update('summon',0);
+ surface.items.get('summon').summon.started-=5000;await surface.update('summon',0);
+ assert(!surface.hasActiveSummon('summon'),'Completed summon kept running');
+ surface.remove('summon');
  surface.dispose();
  renderer.dispose();raster.dispose();window.result={running:false,cases,errors};
 }catch(error){window.result={running:false,error:error.stack,cases,errors};}

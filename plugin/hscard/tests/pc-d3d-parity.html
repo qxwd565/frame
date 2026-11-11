@@ -8,12 +8,28 @@ import {WebGPUNativeRenderer} from '/plugin/assets/unity/webgpu-native.mjs';
 import {WebGPUCardRenderer} from '/plugin/assets/unity/webgpu-card-renderer.mjs';
 import {createFontRasterizer} from '/plugin/assets/unity/font-raster.mjs';
 import {loadShaderIndex} from '/plugin/assets/unity/wgsl-programs.mjs';
+if(new URLSearchParams(location.search).get('source')==='api')document.querySelector('meta[name="hscard-resource-base"]').content='https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';
 const bytes=async n=>new Uint8Array(await(await resourceFetch(resourceURL(n))).arrayBuffer());
 const json=async n=>new Response(new Blob([await bytes(n)]).stream().pipeThrough(new DecompressionStream('gzip'))).json();
 const [frames,settings,portraits,fits,watermarks,library,names,fonts,wasm]=await Promise.all([bytes('frames-constructed.json.gz'),bytes('text-settings.json.gz'),json('portrait-meshes.json.gz'),json('frame-fits.json.gz'),json('watermarks.json.gz'),json('shader-library.json.gz'),json('name-meshes.json.gz'),bytes('original-fonts.json.gz'),bytes('freetype-bridge.wasm')]);
 const sources=await HSPlusSources.load(frames,settings),composer=new FrameComposer(sources,portraits,fits,library,watermarks),raster=await createFontRasterizer(wasm,fonts,sources.text.fonts);
 const builder=new NativeDrawBuilder(library,sources.frames.pipelineKeywords,async t=>{if(t.pixels)return t.pixels;if(t.key)return sources.texture(t.key);const w=watermarks.entries[t.embedded];if(!w)throw Error('Unexpected texture source');return{width:w.width,height:w.height,format:28,levels:[Uint8Array.from(atob(w.data),c=>c.charCodeAt(0))]};});
 const renderer=await WebGPUNativeRenderer.create(document.querySelector('canvas'),await loadShaderIndex(),sources),cards=new WebGPUCardRenderer({sources,composer,builder,renderer,raster,nameMeshes:names});
+// Diagnostic only: compare explicit fused multiply-add with the untranslated
+// D3D MAD instruction. Never alter production programs through this hook.
+const diagnosticModule=renderer.module.bind(renderer);
+renderer.module=id=>{
+ if((window.useFmaDiagnostic||window.useImplicitSampleDiagnostic)&&renderer.extraPrograms?.has(id)){
+  const program=renderer.extraPrograms.get(id);
+  if(!program.fmaDiagnostic){
+   let wgsl=program.wgsl;
+   if(window.useFmaDiagnostic&&(!window.fmaStageDiagnostic||program.stage===window.fmaStageDiagnostic))wgsl=wgsl.replace(/\(\((_e\d+(?:\.[xyzw]+)?) \* (_e\d+(?:\.[xyzw]+)?)\) \+ (_e\d+(?:\.[xyzw]+)?)\)/g,'fma($1, $2, $3)');
+   if(window.useImplicitSampleDiagnostic)wgsl=wgsl.replace(/textureSampleBias\(([^,]+),\s*([^,]+),\s*([^,]+),\s*_e\d+\.x\)/g,'textureSample($1, $2, $3)');
+   renderer.extraPrograms.set(id,{...program,wgsl,fmaDiagnostic:true});
+  }
+ }
+ return diagnosticModule(id);
+};
 // Optional GPU-only sampler bias override for diagnosing D3D/WebGPU parity.
 // The captured original D3D draw commands retain their authored sampler state.
 const originalBindGroup=renderer._bindGroup.bind(renderer);
@@ -66,7 +82,38 @@ window.capture=async(date,golden,cardClass='MAGE',onlyDraw=null,kind='MINION')=>
   for(const draw of draws)result.push({mesh:await mesh(draw.mesh),vertexProgram:draw.vertexProgram,fragmentProgram:draw.fragmentProgram,
    subshader:0,pass:0,keywords:[],vertexBuffers:draw.vertexBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),fragmentBuffers:draw.fragmentBuffers.map(x=>({slot:x.slot,data:b64(x.data)})),
    vertexTextures:await Promise.all(draw.vertexTextures.map(texture)),fragmentTextures:await Promise.all(draw.fragmentTextures.map(texture)),state:draw.state});
-  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,totalDraws:allDraws.length,drawSources:onlyDraw===null?drawSources:[drawSources[onlyDraw]],webgpuPixels:b64(pixels),draws:result,resources};
+  return {version:prepared.frame.nativeVersion,width:target.width,height:target.height,anisotropicFiltering:sources.frames.pipelineAnisotropy??1,totalDraws:allDraws.length,drawSources:onlyDraw===null?drawSources:[drawSources[onlyDraw]],webgpuPixels:b64(pixels),draws:result,resources};
  }finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
+};
+window.verifySummon=async()=>{
+ const card={kind:'MINION',cardClass:'MAGE',golden:false,loading:true,cost:3,attack:2,health:4,rarity:'RARE',quantity:1,frameProfile:'historical',renderDate:'2013-08-17',tags:{}};
+ const prepared=await cards.prepare(card),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+ let seed=123456;const random=()=>{seed^=seed<<13;seed^=seed>>>17;seed^=seed<<5;return(seed>>>0)/4294967296;};
+ try{
+  const summon=await cards.createOriginal3664Summon(random),frames=[];
+  for(const t of [0,.2,.4,1,1.4,4]){
+   const details=await summon.draws(t,{...prepared.context,time:t});
+   const paths=details.draws.map(x=>x.path);
+   const particleDraws=details.draws.filter(x=>x.path==='3664:SummonIn/FX_BlueRays');
+   await renderer.transparent(target.width,target.height,particleDraws,target);
+   const probePitch=Math.ceil(target.width*4/256)*256,probe=renderer.device.createBuffer({size:probePitch*target.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}),probeEncoder=renderer.device.createCommandEncoder();
+   probeEncoder.copyTextureToBuffer({texture:target.texture},{buffer:probe,bytesPerRow:probePitch},{width:target.width,height:target.height});renderer.device.queue.submit([probeEncoder.finish()]);await probe.mapAsync(GPUMapMode.READ);
+   const probeData=new Uint8Array(probe.getMappedRange());let particlePixels=0;for(let y=0;y<target.height;y++)for(let x=0;x<target.width;x++)if(probeData[y*probePitch+x*4+3])particlePixels++;probe.unmap();probe.destroy();
+   for(const mesh of details.transient)renderer.releaseMesh(mesh);
+   const result=await cards.renderPrepared(prepared,{transparent:true,destination:target,time:0,summon,summonTime:t});
+   await renderer.device.queue.onSubmittedWorkDone();
+   const pitch=Math.ceil(target.width*4/256)*256,buffer=renderer.device.createBuffer({size:pitch*target.height,usage:GPUBufferUsage.COPY_DST|GPUBufferUsage.MAP_READ}),encoder=renderer.device.createCommandEncoder();
+   encoder.copyTextureToBuffer({texture:target.texture},{buffer,bytesPerRow:pitch},{width:target.width,height:target.height});renderer.device.queue.submit([encoder.finish()]);await buffer.mapAsync(GPUMapMode.READ);
+   const input=new Uint8Array(buffer.getMappedRange()),pixels=new Uint8Array(target.width*target.height*4);for(let y=0;y<target.height;y++)pixels.set(input.subarray(y*pitch,y*pitch+target.width*4),y*target.width*4);buffer.unmap();buffer.destroy();
+   frames.push({time:t,paths,particlePixels,complete:result.summonComplete,sha256:await hash(pixels)});
+  }
+  return frames;
+ }finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
+};
+window.verifyHeroPower=async()=>{
+ const card={kind:'HERO_POWER',cardClass:'MAGE',golden:false,loading:true,cost:2,rarity:'FREE',quantity:1,frameProfile:'historical',renderDate:'2013-08-17',tags:{}};
+ const prepared=await cards.prepare(card),target=renderer.createTarget(prepared.context.width,prepared.context.height);
+ try{await cards.renderPrepared(prepared,{transparent:true,destination:target,time:0});await renderer.device.queue.onSubmittedWorkDone();return{version:prepared.frame.nativeVersion,parts:prepared.frame.parts.length};}
+ finally{renderer.releaseTarget(target);cards.releasePrepared(prepared);}
 };window.ready=true;
 </script>
