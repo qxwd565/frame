@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-bf5621bb967110d6';
-import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-bf5621bb967110d6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-c488a93de0fce637';
+import {NativeMinionProfile,installOriginal3664TextAntialiasing} from './native-minion-profile.mjs?ver=hscard-c488a93de0fce637';
 
 async function loadJson(base,name){
  const response=await resourceFetch(new URL(name,base));
@@ -28,7 +28,7 @@ export class Native3664CardProfile extends NativeMinionProfile {
    if(!(queue in queues))throw Error('Original shader queue unavailable: '+material.shader);
    materials[key]={...material,queue:material.queue>=0?material.queue:queues[queue]};
   }
-  return new Native3664CardProfile(adapter,{...data,materials},{shaders});
+  return new Native3664CardProfile(adapter,installOriginal3664TextAntialiasing(builder,renderer,{...data,materials}),{shaders});
  }
  package(card){
   const value=this.data.packages.find(p=>p.kind===card.kind&&p.golden===!!card.golden);

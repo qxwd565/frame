@@ -1,10 +1,10 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-bf5621bb967110d6';
-import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-bf5621bb967110d6';
-import {Native3664CardProfile} from './native-3664-card-profile.mjs?ver=hscard-bf5621bb967110d6';
-import {decodeTexturePng,decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-bf5621bb967110d6';
-import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-bf5621bb967110d6';
-import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-bf5621bb967110d6';
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-bf5621bb967110d6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-c488a93de0fce637';
+import {NativeMinionProfile} from './native-minion-profile.mjs?ver=hscard-c488a93de0fce637';
+import {Native3664CardProfile} from './native-3664-card-profile.mjs?ver=hscard-c488a93de0fce637';
+import {decodeTexturePng,decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-c488a93de0fce637';
+import {HistoricalFrames,readTexturePlanes} from './historical-frames.mjs?ver=hscard-c488a93de0fce637';
+import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-c488a93de0fce637';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-c488a93de0fce637';
 const f=Math.fround,identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function trs(t){const [x,y,z,w]=t.rotation,[sx,sy,sz]=t.scale,[px,py,pz]=t.position;return [f((1-2*(y*y+z*z))*sx),f(2*(x*y+z*w)*sx),f(2*(x*z-y*w)*sx),0,f(2*(x*y-z*w)*sy),f((1-2*(x*x+z*z))*sy),f(2*(y*z+x*w)*sy),0,f(2*(x*z+y*w)*sz),f(2*(y*z-x*w)*sz),f((1-2*(x*x+y*y))*sz),0,px,py,pz,1];}
 function oldPose(n){if(!n.chain)return trs(n);return n.chain.reduce((m,t)=>multiply(m,trs(t)),identity());}

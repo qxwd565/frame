@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-bf5621bb967110d6';
-import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-bf5621bb967110d6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-c488a93de0fce637';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-c488a93de0fce637';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -26,6 +26,27 @@ export function applyComponentChanges(base,patch){
  }
  if(data.version!==patch.version)throw Error('Native component version mismatch');
  return data;
+}
+
+
+// The 3664/3749 name plate samples a single-level render texture. Explicit
+// LOD 0 matches the original D3D sampling without changing the shared shader.
+export function installOriginal3664TextAntialiasing(builder,renderer,data){
+ const originalName=data.textShaders?.['Hidden/TextAntialiasing'];
+ const original=builder.shaders.get(originalName);
+ const sourceId='00d1034856f4feda2ce305d719532e6a802a8037f4231ec863c8677cef54b142';
+ const newId='f32e5e8a6602db53c86dca9ac52b6af9ebca86e43c81aefca6682c9871000042';
+ const name='Native/PC3664/Hidden/TextAntialiasing/SingleMip';
+ const program=renderer.extraPrograms?.get(sourceId);
+ if(!original||!program||program.wgslSha256!=='7ffc7eb258da47a16facb7d8e54c877f0e032bf5a76a0b5967d8a9966ed7b5ea')throw Error('Original 3664 text AA shader unavailable');
+ const wgsl=program.wgsl.replaceAll('textureSampleBias(','textureSampleLevel(');
+ if(wgsl===program.wgsl||program.wgsl.split('textureSampleBias(').length!==6)throw Error('Unexpected original text AA shader');
+ const cloned=structuredClone(original);cloned.name=name;let count=0;
+ for(const sub of cloned.subshaders)for(const pass of sub.passes)for(const v of pass.fragment.variants)if(v.sha256===sourceId){v.sha256=newId;count++;}
+ if(count!==1)throw Error('Unexpected original text AA variants');
+ const existing=renderer.extraPrograms.get(newId);if(existing&&existing.wgsl!==wgsl)throw Error('Original text AA program collision');
+ renderer.extraPrograms.set(newId,{...program,id:newId,wgsl,wgslSha256:newId});builder.shaders.set(name,cloned);
+ return {...data,textShaders:{...data.textShaders,'Hidden/TextAntialiasing':name}};
 }
 
 export class NativeMinionProfile {
@@ -68,7 +89,8 @@ export class NativeMinionProfile {
     if(!(queue in queues))throw Error('Original shader queue unavailable: '+material.shader);
     materials[key]={...material,queue:material.queue>=0?material.queue:queues[queue]};
    }
-   return new NativeMinionProfile(adapter,{...data,materials},{shaders:bank.shaders});
+   const resolved={...data,materials},profile=version==='1.0.0.3664'?installOriginal3664TextAntialiasing(builder,renderer,resolved):resolved;
+   return new NativeMinionProfile(adapter,profile,{shaders:bank.shaders});
   }
  }
  constructor(adapter,data,library){

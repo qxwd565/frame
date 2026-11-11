@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-bf5621bb967110d6';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-c488a93de0fce637';
 
 // Shared, lazy WGSL loads. No shader translator or GLSL reaches the browser.
 export async function loadShaderIndex(){

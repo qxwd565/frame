@@ -1,12 +1,12 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-bf5621bb967110d6';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-bf5621bb967110d6';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-bf5621bb967110d6';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-bf5621bb967110d6';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-bf5621bb967110d6';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-bf5621bb967110d6';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-bf5621bb967110d6';
-import {loadOriginal3664Summon} from './original-3664-summon.mjs?ver=hscard-bf5621bb967110d6';
-import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-bf5621bb967110d6';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-c488a93de0fce637';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-c488a93de0fce637';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-c488a93de0fce637';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-c488a93de0fce637';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-c488a93de0fce637';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-c488a93de0fce637';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-c488a93de0fce637';
+import {loadOriginal3664Summon} from './original-3664-summon.mjs?ver=hscard-c488a93de0fce637';
+import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-c488a93de0fce637';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}
@@ -94,7 +94,7 @@ export class WebGPUCardRenderer {
       const config=configs[role],s=config.settings,glyph=composeGlyphs(this.raster,config.font,fit,s),atlas={width:glyph.width,height:glyph.height,format:65,levels:[glyph.atlas]},toTexture=!!s.m_RenderToTexture;
       transientTextures.push(atlas);
       let local=context,pose=config.binding.sourcePose;
-      if(toTexture){const width=Number(s.m_Width),height=Number(s.m_Height),resolution=Number(s.m_Resolution),w=Math.trunc(width>=height?resolution:resolution*width/height),h=Math.trunc(height>=width?resolution:resolution*height/width),view=identity();view[12]=3000;view[13]=-3000;pose=identity();pose[12]=-3000;pose[13]=3000;local={view,projection:ortho(-Number(s.m_Alignment)*width/2,(Number(s.m_Anchor)-2)*height/2,width,height),width:448,height:606,time:1,linear:false};const clear=color(s[s.m_Outline?'m_OutlineColor':'m_TextColor']);clear[3]=0;const textTarget=this.renderer.createTextTarget(w,h);textTargets.push(textTarget);}
+      if(toTexture){const width=Number(s.m_Width),height=Number(s.m_Height),resolution=Number(s.m_Resolution),w=Math.trunc(width>=height?resolution:resolution*width/height),h=Math.trunc(height>=width?resolution:resolution*height/width),view=identity(),cameraWidth=s.nativeLayoutVersion==='1.0.0.3664'?height*w/h:width;view[12]=3000;view[13]=-3000;pose=identity();pose[12]=-3000;pose[13]=3000;local={view,projection:ortho(-Number(s.m_Alignment)*cameraWidth/2,(Number(s.m_Anchor)-2)*height/2,cameraWidth,height),width:448,height:606,time:1,linear:false};const clear=color(s[s.m_Outline?'m_OutlineColor':'m_TextColor']);clear[3]=0;const textTarget=this.renderer.createTextTarget(w,h);textTargets.push(textTarget);}
       // Native name meshes sample the bottom row first. WebGPU render targets
       // start at the top; flip this offscreen projection once, without a GPU
       // readback or any changes to the authored name mesh or texture UVs.
