@@ -18,7 +18,49 @@ function wrap(text,metrics,size,scale,limit){
  }
  lines[lines.length-1]=current.replace(/\s+$/,'');return lines.join('\n');
 }
+
+// The 3664 UberText assembly wraps even text containing authored newlines,
+// reduces character size by 5% (up to 40 times), and reserves the lower
+// ornament area on text objects whose m_Underwear flag is set. Measurements
+// use the selected font's advances; Korean uses the configured fallback font.
+function wrap3664(text,metrics,size,scale,settings,spacing,ellipsize=false){
+ const limit=Number(settings.m_Width),height=Number(settings.m_Height),under=!!settings.m_Underwear;
+ const narrow=f(limit*f(1-Number(settings.m_UnderwearWidth||0))),threshold=f(height*f(1-Number(settings.m_UnderwearHeight||0)));
+ const out=[],tokens=[];let start=0,inTag=false;
+ for(let i=0;i<text.length;i++){const c=text[i];if(c==='<')inTag=true;else if(c==='>')inTag=false;else if(!inTag&&(c===' '||c==='\n')){tokens.push(text.slice(start,i));start=i;}}
+ tokens.push(text.slice(start));let line='',rows=1;
+ const lineHeight=()=>f(f(metrics.lineHeight(size)*scale*.1)*f(1+f((rows-1)*spacing)));
+ for(let token of tokens){
+  if(token.startsWith('\n')){out.push(line);line='';rows++;token=token.slice(1);}
+  const available=under&&lineHeight()>threshold?narrow:limit;
+  if(line&&width(plain(line+token),metrics,size,scale)>=available){
+   if(ellipsize&&f(f(metrics.lineHeight(size)*scale*.1)*f(1+f(rows*spacing)))>height){line+=' ...';break;}
+   out.push(line);rows++;line=token.replace(/^ +/,'');
+  }else line+=token;
+ }
+ out.push(line);return out.join('\n');
+}
+function fitText3664(value,settings,metrics){
+ const text=clean(String(value??'').replace(/\r\n?/g,'\n').replace(/<br\s*\/?>/gi,'\n'));if(!text)return null;
+ const size=Number(settings.m_FontSize),spacing=f(Number(settings.m_LineSpacing)),limit=Number(settings.m_Width),height=Number(settings.m_Height);
+ let scale=f(Number(settings.m_CharacterSize)*.01),result=text;
+ const layout=ellipsize=>settings.m_WordWrap?wrap3664(text,metrics,size,scale,settings,spacing,ellipsize):text;
+ result=layout(false);
+ if(settings.m_ResizeToFit){
+  for(let n=0;n<40;n++){
+   const lines=result.split('\n'),longest=Math.max(0,...lines.map(row=>width(plain(row),metrics,size,scale)));
+   const vertical=f(f(metrics.lineHeight(size)*scale*.1)*f(1+f((lines.length-1)*spacing)));
+   if(longest<=limit&&vertical<=height)break;
+   const minimum=f(Number(settings.m_MinCharacterSize||0)*.01),next=f(scale*.95);
+   if(next<=minimum){scale=minimum;result=layout(true);break;}
+   scale=next;result=layout(false);
+  }
+ }
+ return{Text:result,FontSize:size,CharacterSize:scale,LineSpacing:spacing};
+}
+
 export function fitText(value,settings,metrics,role){
+ if(settings.nativeLayoutVersion==='1.0.0.3664')return fitText3664(value,settings,metrics);
  const normalized=String(value??'').replace(/\r\n?/g,'\n').replace(/<br\s*\/?>/gi,'\n');
  const manual=normalized.includes('\n');
  let text=clean(normalized),size=Number(settings.m_FontSize),scale=f(Number(settings.m_CharacterSize)*Number(settings.m_CharacterSizeModifier??1)*.01),lineSpacing=Number(settings.m_LineSpacing);

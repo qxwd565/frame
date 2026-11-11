@@ -2,7 +2,7 @@
 // Exercise production handlers/markup with in-memory WordPress option/HTTP seams.
 define('ABSPATH', __DIR__);
 define('HSCARD_PATH', dirname(__DIR__) . '/');
-define('HSCARD_VERSION', '7.14.8-webgpu-beta3664-heropower-fix-preview');
+define('HSCARD_VERSION', '7.14.9-webgpu-beta3664-text-preview');
 define('MINUTE_IN_SECONDS', 60);
 class WP_Error { private $message; public function __construct($code,$message){$this->message=$message;} public function get_error_message(){return $this->message;} }
 class Test_Response extends Exception { public $payload; public $status; public function __construct($payload,$status=200){$this->payload=$payload;$this->status=$status;} }

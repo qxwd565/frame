@@ -1,8 +1,8 @@
 // 1.0.0.3664 source curve playback. This module does not claim Unity 4's
 // particle RNG or billboard simulation is reproduced; those are separate.
-import {resourceFetch,resourceURL} from './resource-url.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {resourceFetch,resourceURL} from './resource-url.mjs?ver=hscard-02a760ad8c5700b6';
+import {decodeNativeDxtMips} from './native-texture-history.mjs?ver=hscard-02a760ad8c5700b6';
+import {multiply,inverse} from './native-draw-builder.mjs?ver=hscard-02a760ad8c5700b6';
 
 export function sampleOriginalCurve(keys,time){
  if(!Array.isArray(keys)||!keys.length||!Number.isFinite(time))throw Error('Invalid original animation curve');

@@ -1,12 +1,12 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {multiply} from './native-draw-builder.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {loadOriginal3664Summon} from './original-3664-summon.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-02a760ad8c5700b6';
+import {HistoricalAdapter,historicalSelection} from './historical-adapter.mjs?ver=hscard-02a760ad8c5700b6';
+import {fitText,textValues} from './dynamic-layout.mjs?ver=hscard-02a760ad8c5700b6';
+import {composeGlyphs} from './glyph-layout.mjs?ver=hscard-02a760ad8c5700b6';
+import {multiply} from './native-draw-builder.mjs?ver=hscard-02a760ad8c5700b6';
+import {cardSceneContext,quantityRibbonPart} from './quantity-ribbon.mjs?ver=hscard-02a760ad8c5700b6';
+import {ArtworkAnimation} from './artwork-animation.mjs?ver=hscard-02a760ad8c5700b6';
+import {loadOriginal3664Summon} from './original-3664-summon.mjs?ver=hscard-02a760ad8c5700b6';
+import {NativeHeroPower3664} from './hero-power-3664.mjs?ver=hscard-02a760ad8c5700b6';
 const f=Math.fround;
 const identity=()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1];
 function color(value){return [Number(value.r),Number(value.g),Number(value.b),Number(value.a)];}

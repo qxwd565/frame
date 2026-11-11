@@ -1,5 +1,5 @@
-import {resourceFetch} from './resource-url.mjs?ver=hscard-3058f5ccf1f1cda6';
-import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-3058f5ccf1f1cda6';
+import {resourceFetch} from './resource-url.mjs?ver=hscard-02a760ad8c5700b6';
+import {selectTextureVariant,loadTextureVariant} from './native-texture-history.mjs?ver=hscard-02a760ad8c5700b6';
 // Native minion fronts: an original base plus dated component changes.
 const blankPixels={width:1,height:1,format:28,levels:[new Uint8Array([255,255,255,255])]};
 
@@ -104,8 +104,8 @@ export class NativeMinionProfile {
   const current=row.useCurrentFont?sources.textConfiguration(card.kind,card.golden,role):null;
   // Font-definition modifiers belong to the selected Korean font, while the
   // native text object's position, box, size and line spacing stay unchanged.
-  const modifiers=current?Object.fromEntries(Object.entries(current.settings).filter(([key])=>key.endsWith('Modifier')||key==='m_SingleLineAdjustment')):{};
-  return{...row,font:current?.font||row.font,settings:{...row.settings,...modifiers,nativeLayout:true},nativeMesh:row.mesh?this.adapter.meshGeometry(this.data.meshes[row.mesh],0):null};
+  const modifiers=current&&this.data.version!=='1.0.0.3664'?Object.fromEntries(Object.entries(current.settings).filter(([key])=>key.endsWith('Modifier')||key==='m_SingleLineAdjustment')):{};
+  return{...row,font:current?.font||row.font,settings:{...row.settings,...modifiers,nativeLayout:true,nativeLayoutVersion:this.data.version},nativeMesh:row.mesh?this.adapter.meshGeometry(this.data.meshes[row.mesh],0):null};
  }
  async compose(card,composer){
   const p=this.package(card),d=p.dynamic,cls=card.cardClass||'NEUTRAL',classTexture=this.data.classes[cls];
