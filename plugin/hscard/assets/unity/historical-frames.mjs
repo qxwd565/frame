@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-c05928b9339b5271';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-b9ff08d18e1850c3';
 // Lazy reader for the bundled native historical resources. This does not
 // select a frame for a date or alter the current card renderer.
 const limit = 128 * 1024 * 1024;

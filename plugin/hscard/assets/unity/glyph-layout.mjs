@@ -26,7 +26,7 @@ export function composeGlyphs(raster,font,fit,settings){
   const atlas=new Uint8Array(1024*height);
   for(const glyph of glyphs.values())for(let row=0;row<glyph.Height;row++)atlas.set(glyph.alpha.subarray(row*glyph.Width,(row+1)*glyph.Width),(height-1-glyph.y-row)*1024+glyph.x);
   const metrics=raster.metrics(font),scale=f(f(fit.CharacterSize)*f(.1)),lineHeight=metrics.lineHeight(size),spacing=f(fit.LineSpacing);
-  const fullHeight=f(lineHeight*f(1+f(f(lines.length-1)*spacing))),baseline=f(f(f(settings.m_Anchor)*fullHeight)*f(.5)-metrics.ascent(size)),align=Number(settings.m_Alignment),quads=[];
+  const fullHeight=f(lineHeight*f(1+f(f(lines.length-1)*spacing))),baseline=f(f(f(settings.m_Anchor)*fullHeight)*f(.5)-metrics.ascent(size)+(settings.nativeUnity4KoreanBaseline?f((f(lineHeight*.5)-metrics.ascent(size))*.406):0)),align=Number(settings.m_Alignment),quads=[];
   for(let line=0;line<lines.length;line++){
     const row=lines[line];let width=0;for(const c of row)width=f(width+c.glyph.Advance);let pen=f(f(-align*width)/2);
     for(const c of row){const g=c.glyph;if(c.code!==32&&g.Width>0&&g.Height>0){

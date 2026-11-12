@@ -1,4 +1,4 @@
-import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-c05928b9339b5271';
+import {resourceURL, resourceFetch} from './resource-url.mjs?ver=hscard-b9ff08d18e1850c3';
 // Reads the unmodified HS Plus resource snapshots. No card-specific scenes are used.
 const HAND_PREFABS = Object.freeze({
   MINION: 'Card_Hand_Ally', SPELL: 'Card_Hand_Ability',
@@ -127,7 +127,9 @@ export class HSPlusSources {
   }
 
   textConfiguration(kind, golden, role, locale = 4) {
-    const {text} = this.card(kind, golden), matches = text.bindings.filter(x => x.role === role);
+    const text = kind === 'HERO_POWER' ? this.textPrefabs.get('History_HeroPower' + (golden ? '_Premium' : '')) : this.card(kind, golden).text;
+    if (!text) throw Error('Missing HS Plus hero power text prefab');
+    const matches = text.bindings.filter(x => x.role === role);
     if (matches.length !== 1) throw Error('Missing or ambiguous HS Plus text binding ' + role);
     const binding = matches[0];
     let key = binding.font;

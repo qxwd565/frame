@@ -1,4 +1,4 @@
-import {originalClasses} from './hsplus-sources.mjs?ver=hscard-c05928b9339b5271';
+import {originalClasses} from './hsplus-sources.mjs?ver=hscard-b9ff08d18e1850c3';
 
 const classNames=['NEUTRAL','DEATHKNIGHT','DEMONHUNTER','DRUID','HUNTER','MAGE','PALADIN','PRIEST','ROGUE','SHAMAN','WARLOCK','WARRIOR'];
 function reference(frame,key){const target=frame.actor?.[key]?.ref;if(!target)return null;const node=frame.nodes.find(n=>(n.componentSources||[]).includes(target));return node?.source||target;}

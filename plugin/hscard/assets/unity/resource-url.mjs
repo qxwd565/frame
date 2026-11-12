@@ -1,5 +1,5 @@
 /** Resources live in the corresponding expansion API's frame/ directory. */
-import index from './frame-api-index.json?ver=hscard-c05928b9339b5271' with {type:'json'};
+import index from './frame-api-index.json?ver=hscard-b9ff08d18e1850c3' with {type:'json'};
 const META = 'meta[name="hscard-resource-base"]';
 export const FRAME_API_BASE = 'https://raw.githubusercontent.com/qxwd565/legacy/main/frame/';
 const EARLY_PREFIX='historical-frames/early-native/', EARLY_ROUTES=EARLY_PREFIX+'routes.json.gz';

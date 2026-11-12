@@ -30,7 +30,7 @@ function value(name,material,properties,ctx){
   if(name==='_ScreenParams')return[ctx.width,ctx.height,f(1+f(1/ctx.width)),f(1+f(1/ctx.height))];
   if(name==='unity_WorldTransformParams')return[0,0,0,1];if(name==='_GlobalMipBias')return[0,1];
   if(name==='unity_Scale'||name==='_LightColor0'||name==='glstate_lightmodel_ambient')return[1,1,1,1];
-  if(name==='_MainLightColor'||['unity_SHAr','unity_SHAg','unity_SHAb'].includes(name))return name==='_MainLightColor'?[1,1,1,1]:[0,0,0,1];
+  if(name==='_MainLightColor'||['unity_SHAr','unity_SHAg','unity_SHAb'].includes(name))return name==='_MainLightColor'?[1,1,1,1]:(ctx.ambientSH||[0,0,0,1]);
   const property=properties.get(name);let result=material.values[name]||property?.defaults||[0,0,0,0];
   if(ctx.linear&&property?.m_Type===0)result=result.map((n,i)=>i>=3?n:n<=.04045?f(n/12.92):f(Math.pow((n+.055)/1.055,2.4)));
   return result;
